@@ -110,6 +110,10 @@ public:
     };
     std::vector<Branch> get_branches_parameters() const;
 
+    bool reconstruct_skeleton(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
+
+    bool reconstruct_mesh(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
+
 private:
 
 	/*-------------------------------------------------------------*/
@@ -249,6 +253,7 @@ private:
 	double BoundingDistance_;
 
     bool   quiet_;
+
 };
 
 #endif

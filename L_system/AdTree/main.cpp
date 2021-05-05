@@ -91,7 +91,7 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
         mesh->set_name(branch_filename);
 
         Skeleton *skeleton = new Skeleton();
-        bool status = skeleton->reconstruct_branches(cloud, mesh);
+        bool status = skeleton->reconstruct_skeleton(cloud, mesh);
         if (!status) {
             std::cerr << "failed in reconstructing branches" << std::endl;
             delete cloud;
@@ -99,6 +99,16 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
             delete skeleton;
             continue;
         }
+        
+        status = skeleton->reconstruct_mesh(cloud, mesh);
+        if (!status) {
+            std::cerr << "failed in reconstructing branches" << std::endl;
+            delete cloud;
+            delete mesh;
+            delete skeleton;
+            continue;
+        }
+
 
         // copy translation property from point_cloud to surface_mesh
         SurfaceMesh::ModelProperty<dvec3> prop = mesh->add_model_property<dvec3>("translation");

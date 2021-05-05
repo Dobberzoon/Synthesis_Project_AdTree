@@ -1280,6 +1280,56 @@ bool Skeleton::reconstruct_branches(const PointCloud* cloud, SurfaceMesh* mesh) 
     return true;
 }
 
+bool Skeleton::reconstruct_skeleton(const PointCloud* cloud, SurfaceMesh* mesh) {
+    if (!cloud) {
+        std::cout << "point cloud does not exist" << std::endl;
+        return false;
+    }
+
+    if (!build_delaunay(cloud)) {
+        std::cerr << "failed Delaunay Triangulation" << std::endl;
+        return false;
+    }
+
+    //extract the minimum spanning tree
+    if (!extract_mst()) {
+        std::cerr << "failed extracting MST" << std::endl;
+        return false;
+    }
+
+    //simplify the tree skeleton
+    if (!simplify_skeleton()) {
+        std::cerr << "failed skeleton simplification" << std::endl;
+        return false;
+    }
+
+    //smooth branches
+    if (!smooth_skeleton()) {
+        std::cerr << "failed smoothing branches" << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool Skeleton::reconstruct_mesh(const PointCloud* cloud, SurfaceMesh* mesh) {
+
+    //generate branches
+    if (!compute_branch_radius()) {
+        std::cerr << "failed computing branch radius" << std::endl;
+        return false;
+    }
+
+    //extract surface model
+    if (!extract_branch_surfaces(mesh)) {
+        std::cerr << "failed extracting branches" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+
+
 
 std::vector<Skeleton::Branch> Skeleton::get_branches_parameters() const {
     std::vector<Skeleton::Branch> branches;
@@ -1478,5 +1528,3 @@ bool Skeleton::extract_branch_surfaces(SurfaceMesh* result)
 
     return true;
 }
-
-auto test = "jasper wants a folder";
