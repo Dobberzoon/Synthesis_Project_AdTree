@@ -9,8 +9,8 @@ public:
     /// default constructor ///
     explicit Turtle (double x = 0, double y =0, double z =0) {
         loc = {x, y, z};
-        plane.set_row(0, easy3d::Vec<3, double>{1,0,0});
-        plane.set_row(1, easy3d::Vec<3, double>{0,0,1});
+        plane.set_row(0, easy3d::Vec<3, double>{1,0,0}); // local: x
+        plane.set_row(1, easy3d::Vec<3, double>{0,0,1}); // local: y
     }
 
     /// construct turtle based on another turtle location ///
@@ -23,6 +23,7 @@ public:
     /// initializer override from crooked stems (do not use while walking)///
     //TODO fix this
     void setRotation(double angle, double roll = 0){
+        // roll is executed before the angle
         rollPlane(roll);
         rotatePlane(angle);
     }
@@ -43,7 +44,21 @@ public:
     /// rotate ///
     void rotatePlane(double angle){
         angle = angle * M_PI/180;
-        
+
+        std::cout << angle;
+
+        easy3d::Vec<3, double> uAxis = plane.row(0);
+        easy3d::Vec<3, double> vAxis = plane.row(1);
+
+        easy3d::Vec<3, double> uAxisT = uAxis*cos(angle) - vAxis*sin(angle);
+        easy3d::Vec<3, double> vAxisT = uAxis*sin(angle) + vAxis*cos(angle);
+
+
+        uAxisT.normalize();
+        vAxisT.normalize();
+
+        plane.set_row(0, uAxisT);
+        plane.set_row(1, vAxisT);
     }
 
     /// roll ///
@@ -81,10 +96,9 @@ private:
 int main() {
     Turtle turtle;
     turtle.printLocation();
-    turtle.setRotation(10);
     turtle.stepForward(5);
+    turtle.setRotation(45);
+    turtle.stepForward(1);
     turtle.stepForward(5);
     turtle.printLocation();
-
-
 }
