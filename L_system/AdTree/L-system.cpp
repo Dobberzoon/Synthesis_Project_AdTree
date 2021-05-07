@@ -34,9 +34,67 @@ void Lsystem::printLsystem() {
     std::cout << "axiom:  " << axiom_ << std::endl;
 }
 
-void Lsystem::readSkeleton(Skeleton* skeleton){
-    std::cout << "nr. vertices of smooth skeleton: " << num_vertices(skeleton->get_smoothed_skeleton()) << std::endl;
-    std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skeleton->get_simplified_skeleton()) << std::endl;
-
+void Lsystem::readSkeleton(Skeleton* skel){
+    std::cout << "nr. vertices of smooth skeleton: " << num_vertices(skel->get_smoothed_skeleton()) << std::endl;
+    std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
     printLsystem();
+
+    // get paths
+    std::vector<Path> pathList;
+    skel->get_graph_for_lsystem(pathList);
+
+    std::cout << "number of paths: " << pathList.size() << std::endl;
+
+    // for each path get its coordinates and generate a smooth curve
+    for (std::size_t n_path = 0; n_path < pathList.size(); ++n_path) {
+        Path currentPath = pathList[n_path];
+        std::vector<vec3> interpolatedPoints;
+
+        std::cout << "\n---------- new subpath ----------" << std::endl;
+        std::cout << "subpath length: " << currentPath.size() << std::endl;
+        std::cout << "root subpath:   " << skel->get_simplified_skeleton()[currentPath[0]].cVert << std::endl;
+
+        for (std::size_t n_node = 0; n_node < currentPath.size() - 1; ++n_node) {
+            SGraphVertexDescriptor sourceV = currentPath[n_node];
+            SGraphVertexDescriptor targetV = currentPath[n_node + 1];
+            vec3 pSource = skel->get_simplified_skeleton()[sourceV].cVert;
+            vec3 pTarget = skel->get_simplified_skeleton()[targetV].cVert;
+            float branchlength = easy3d::distance(pSource, pTarget);
+
+            std::cout << "source: " << skel->get_simplified_skeleton()[sourceV].cVert
+                      << " --> target: " << skel->get_simplified_skeleton()[targetV].cVert
+                      << std::endl;
+
+            std::cout << "branch length: " << branchlength << std::endl;
+
+            // compute the tangents
+            vec3 tangentOfSorce;
+            vec3 tangentOfTarget;
+            // if the source vertex is the root
+            if (sourceV == skel->get_simplified_skeleton()[sourceV].nParent)
+                tangentOfSorce = (pTarget - pSource).normalize();
+            else
+            {
+                SGraphVertexDescriptor parentOfSource = skel->get_simplified_skeleton()[sourceV].nParent;
+                tangentOfSorce = (pTarget - skel->get_simplified_skeleton()[parentOfSource].cVert).normalize();
+            }
+            // if the target vertex is leaf
+            if ((out_degree(targetV, skel->get_simplified_skeleton()) == 1) && (targetV != skel->get_simplified_skeleton()[targetV].nParent))
+                tangentOfTarget = (pTarget - pSource).normalize();
+            else
+            {
+                SGraphVertexDescriptor childOfTarget = currentPath[n_node + 2];
+                tangentOfTarget = (skel->get_simplified_skeleton()[childOfTarget].cVert - pSource).normalize();
+            }
+
+
+            std::cout << "source tangent: " << tangentOfSorce
+                      << " | target tangent: " << tangentOfTarget
+                      << std::endl;
+
+            tangentOfSorce *= branchlength;
+            tangentOfTarget *= branchlength;
+        }
+    }
+    std::cout << "writing L-system: done" << std::endl;
 }
