@@ -47,6 +47,10 @@ void Lsystem::readSkeleton(Skeleton* skel){
 
     // for each path get its coordinates and generate a smooth curve
     for (std::size_t n_path = 0; n_path < pathList.size(); ++n_path) {
+        if (n_path != 0){
+            string_ += "]";
+        }
+
         Path currentPath = pathList[n_path];
         std::vector<vec3> interpolatedPoints;
 
@@ -71,22 +75,36 @@ void Lsystem::readSkeleton(Skeleton* skel){
             vec3 tangentOfSorce;
             vec3 tangentOfTarget;
             // if the source vertex is the root
-            if (sourceV == skel->get_simplified_skeleton()[sourceV].nParent)
+            if (sourceV == skel->get_simplified_skeleton()[sourceV].nParent) {
                 tangentOfSorce = (pTarget - pSource).normalize();
+
+                string_ += std::to_string(sourceV);
+            }
             else
             {
                 SGraphVertexDescriptor parentOfSource = skel->get_simplified_skeleton()[sourceV].nParent;
                 tangentOfSorce = (pTarget - skel->get_simplified_skeleton()[parentOfSource].cVert).normalize();
+
+                if (out_degree(sourceV, skel->get_simplified_skeleton()) > 2){
+                    string_ += "[";
+                }
+
             }
             // if the target vertex is leaf
-            if ((out_degree(targetV, skel->get_simplified_skeleton()) == 1) && (targetV != skel->get_simplified_skeleton()[targetV].nParent))
+            if ((out_degree(targetV, skel->get_simplified_skeleton()) == 1)
+            && (targetV != skel->get_simplified_skeleton()[targetV].nParent)){
                 tangentOfTarget = (pTarget - pSource).normalize();
+
+                string_ += std::to_string(targetV);
+                string_ += "]";
+            }
             else
             {
                 SGraphVertexDescriptor childOfTarget = currentPath[n_node + 2];
                 tangentOfTarget = (skel->get_simplified_skeleton()[childOfTarget].cVert - pSource).normalize();
-            }
 
+                string_ += std::to_string(targetV);
+            }
 
             std::cout << "source tangent: " << tangentOfSorce
                       << " | target tangent: " << tangentOfTarget
@@ -97,4 +115,5 @@ void Lsystem::readSkeleton(Skeleton* skel){
         }
     }
     std::cout << "writing L-system: done" << std::endl;
+    printLsystem();
 }
