@@ -1235,7 +1235,7 @@ void Skeleton::get_graph_for_smooth(std::vector<Path> &pathList)
 	return;
 }
 
-
+/// original version
 bool Skeleton::reconstruct_branches(const PointCloud* cloud, SurfaceMesh* mesh) {
     if (!cloud) {
         std::cout << "point cloud does not exist" << std::endl;
@@ -1280,6 +1280,8 @@ bool Skeleton::reconstruct_branches(const PointCloud* cloud, SurfaceMesh* mesh) 
     return true;
 }
 
+/// split version
+// skeleton
 bool Skeleton::reconstruct_skeleton(const PointCloud* cloud, SurfaceMesh* mesh) {
     if (!cloud) {
         std::cout << "point cloud does not exist" << std::endl;
@@ -1312,6 +1314,7 @@ bool Skeleton::reconstruct_skeleton(const PointCloud* cloud, SurfaceMesh* mesh) 
     return true;
 }
 
+// mesh
 bool Skeleton::reconstruct_mesh(const PointCloud* cloud, SurfaceMesh* mesh) {
 
     //generate branches
@@ -1327,9 +1330,7 @@ bool Skeleton::reconstruct_mesh(const PointCloud* cloud, SurfaceMesh* mesh) {
     }
     return true;
 }
-
-
-
+///
 
 std::vector<Skeleton::Branch> Skeleton::get_branches_parameters() const {
     std::vector<Skeleton::Branch> branches;
@@ -1396,6 +1397,7 @@ std::vector<Skeleton::Branch> Skeleton::get_branches_parameters() const {
 
     return branches;
 }
+
 
 void Skeleton::add_generalized_cylinder_to_model(SurfaceMesh *mesh, const Branch& branch, int slices)
 {
