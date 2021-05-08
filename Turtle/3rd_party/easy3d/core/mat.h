@@ -30,8 +30,8 @@
 #include <iostream>
 #include <iomanip>
 
-#include "easy3d/core/vec.h"
-#include "easy3d/core/constant.h"
+#include <easy3d/core/vec.h>
+#include <easy3d/core/constant.h>
 
 
 namespace easy3d {

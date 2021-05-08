@@ -1,0 +1,1 @@
+add_subdirectory(easy3d)

@@ -1,8 +1,12 @@
+#define _USE_MATH_DEFINES
+
+#include <cmath>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
-#include "easy3d/core/vec.h"
-#include "easy3d/core/mat.h"
+#include <easy3d/core/vec.h>
+#include <easy3d/core/mat.h>
 
 
 class Turtle {
@@ -40,12 +44,30 @@ public:
         debug = true;
     }
 
+    std::vector<easy3d::Vec<3, double>> getStoredPoints(){
+        return storedPoints;
+    }
 
     /// initializer override from crooked stems (do not use while walking)///
     void setRotation(double angle, double roll = 0){
         // roll is executed before the angle
         rollPlane(roll);
         rotatePlane(angle);
+    }
+
+    void writeToFile(const std::string& fileName){
+        std::ofstream storageFile;
+        storageFile.open(fileName);
+        storageFile << "x y z\n";
+        for (easy3d::Vec<3, double> p: storedPoints){
+            storageFile << p << std::endl;
+        }
+        storageFile.close();
+    }
+
+    void readFile(std::string path){
+        std::ofstream storageFile;
+        storageFile.open(path);
     }
 
     void readLine(std::string line){
@@ -72,6 +94,11 @@ public:
                 while (line[i] != ']'){i ++;}
                 while (line[i] == ']'){i ++;}
                 i--;
+
+                for (easy3d::Vec<3, double> p: turtle.getStoredPoints()) {
+                    storedPoints.emplace_back(p);
+                }
+
                 continue;
             }
 
@@ -82,6 +109,8 @@ public:
                 else {
                     stepForward(override);
                 }
+                storeLoc();
+
                 if (debug){printLocation();}
 
             } else if (line[i] == '+') {
@@ -128,14 +157,18 @@ private:
     // plane is a 2d plane in a 3d space
     easy3d::Mat<3,3, double> plane;
 
+    // collection of stored points
+    std::vector<easy3d::Vec<3, double>> storedPoints;
+
+    // collection of edges
+
+
     //debug prints location at every step
     bool debug = false;
 
     /// step forward ///
     void stepForward(double distance){
-        loc.x += distance * plane.row(2).x;
-        loc.y += distance * plane.row(2).y;
-        loc.z += distance * plane.row(2).z;
+        loc += distance * plane.row(2);
     }
 
     /// rotate ///
@@ -170,21 +203,25 @@ private:
 
         plane.set_row(0, uAxisT);
         plane.set_row(1, wAxisT);
-
     }
 
-    //TODO custom read
-    //TODO store
-    //TODO write
-    //TODO nesting
+    void storeLoc(){
+        storedPoints.emplace_back(loc);
+    }
+
+
+    //TODO custom rules
+    //TODO edge store
+    //TODO edge write
 };
 
 
 int main() {
-    std::string line = "+(90)[F(10)+(90)F(15)[F(10)[F(1)F(1)]]]F(20)";
+    std::string line = "+(90)[F(10)+(90)F(15)]F(10)F(1)F(1)F(20)";
+    std::string path = "../export.xyz";
+
     Turtle turtle;
     turtle.setDebug();
     turtle.readLine(line);
-    //turtle.printLocation();
-
+    turtle.writeToFile(path);
 }
