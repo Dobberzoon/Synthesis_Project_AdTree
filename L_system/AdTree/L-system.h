@@ -22,6 +22,8 @@ public:
     void printLsystem();
     void readSkeleton(Skeleton* skeleton);
     void makePathsLsystem(Skeleton* skeleton, std::vector<Path> &pathList);
+    void traverseLsystem(Skeleton* skeleton);
+    void traverse(SGraphVertexDescriptor startV, Skeleton *skeleton);
 
 private:
     Graph graph_;

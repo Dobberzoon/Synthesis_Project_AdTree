@@ -45,7 +45,7 @@ void Lsystem::readSkeleton(Skeleton* skel){
 
     std::cout << "number of paths: " << pathList.size() << std::endl;
 
-    // for each path get its coordinates and generate a smooth curve
+    // for each path
     for (std::size_t n_path = 0; n_path < pathList.size(); ++n_path) {
         if (n_path != 0){
             string_ += "]";
@@ -176,4 +176,115 @@ void Lsystem::makePathsLsystem(Skeleton* skel, std::vector<Path> &pathList) {
     }
 
     return;
+}
+
+
+void Lsystem::traverseLsystem(Skeleton *skel) {
+    std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
+    printLsystem();
+
+    SGraphVertexDescriptor root = skel->get_root();
+    traverse(root, skel);
+
+    std::cout << "writing L-system: done" << std::endl;
+    printLsystem();
+}
+
+
+void Lsystem::traverse(SGraphVertexDescriptor startV, Skeleton *skel){
+    vec3 start_coords = skel->get_simplified_skeleton()[startV].cVert;
+    string_ += std::to_string(startV);
+
+    std::cout << "\n---------- new branch ----------" << std::endl;
+    std::cout << "starting node: " << startV << std::endl;
+
+    SGraphVertexDescriptor nextV;
+    std::vector<SGraphVertexDescriptor> slower_children;
+
+    /* if leaf: write & stop
+     else:
+         find fastest child: -> nextV
+         find other children: -> slower_children
+
+         tangent startV <> nextV
+         length edge startV <> nextV
+
+         if degree > 2:
+             begin branch: "["
+
+         write nextV
+         traverse nextV
+
+         if degree > 2:
+             end branch: "]"
+
+         if degree > 2:
+             for each child in slower children:
+                 begin branch: "["
+                 traverse child
+                 end branch: "]"
+
+     output: written string_*/
+
+    /// node is leaf
+    if ((out_degree(startV, skel->get_simplified_skeleton()) == 1)
+        && (startV != skel->get_simplified_skeleton()[startV].nParent)) {
+
+        std::cout << "leaf found: " << startV << std::endl;
+    }
+    else{
+        /// find children of start node
+        double maxR = -1;
+        int isUsed = -1;
+
+        std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies =
+                adjacent_vertices(startV, skel->get_simplified_skeleton());
+
+        for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter)
+        {
+            // exclude parent
+            if (*cIter != skel->get_simplified_skeleton()[startV].nParent)
+            {
+                std::cout << "child found: " << *cIter << std::endl;
+                SGraphEdgeDescriptor currentE = edge(startV, *cIter, skel->get_simplified_skeleton()).first;
+                double radius = skel->get_simplified_skeleton()[currentE].nRadius;
+                if (maxR < radius)
+                {
+                    maxR = radius;
+                    if (isUsed > -1)
+                        slower_children.push_back(nextV);
+                    else
+                        isUsed = 0;
+                    nextV = *cIter;
+                }
+                else
+                    slower_children.push_back(*cIter);
+            }
+        }
+
+
+        std::cout << "fastest child: " << nextV << std::endl;
+        std::cout << "slower children: " ;
+
+        for (int nChild = 0; nChild < slower_children.size(); ++nChild){
+            std::cout << slower_children[nChild] << " ";
+        }
+
+        /// start node has one child: straight segment
+        if (out_degree(startV, skel->get_simplified_skeleton()) == 1){
+            traverse(nextV, skel);
+        }
+        /// start node has multiple children: beginning of 2 or more branches
+        else{
+            string_ += "[";
+            traverse(nextV, skel);
+            string_ += "]";
+
+            for (int nChild = 0; nChild < slower_children.size(); ++nChild){
+                string_ += "[";
+                traverse(slower_children[nChild], skel);
+                string_ += "]";
+            }
+        }
+    }
 }

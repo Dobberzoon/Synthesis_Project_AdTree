@@ -466,7 +466,8 @@ bool TreeViewer::reconstruct_skeleton() {
     /// new: L-system part
     Lsystem *lsys = new Lsystem();
     std::cout << "L system init" << std::endl;
-    lsys->readSkeleton(skeleton_);
+//    lsys->readSkeleton(skeleton_);
+    lsys-> traverseLsystem(skeleton_);
 
     if (status) {
         auto offset = cloud()->get_model_property<dvec3>("translation");
