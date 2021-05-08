@@ -21,6 +21,7 @@ public:
 
     void printLsystem();
     void readSkeleton(Skeleton* skeleton);
+    void makePathsLsystem(Skeleton* skeleton, std::vector<Path> &pathList);
 
 private:
     Graph graph_;

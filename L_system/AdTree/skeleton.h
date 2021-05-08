@@ -114,10 +114,8 @@ public:
 
     bool reconstruct_mesh(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
 
-    /*-------------------------------------------------------------*/
-    /*------------------- L-system method(s) ----------------------*/
-    /*-------------------------------------------------------------*/
-    void get_graph_for_lsystem(std::vector<Path> &pathList);
+    // get root
+    const SGraphVertexDescriptor& get_root() const { return RootV_; }
 
 private:
 

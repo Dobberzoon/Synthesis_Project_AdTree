@@ -1236,66 +1236,6 @@ void Skeleton::get_graph_for_smooth(std::vector<Path> &pathList)
 }
 
 
-// copied the path making, but for the smooth one
-void Skeleton::get_graph_for_lsystem(std::vector<Path> &pathList)
-{
-	pathList.clear();
-	Path currentPath;
-	int cursor = 0;
-	//insert the root vertex to the current path
-	currentPath.push_back(RootV_);
-	pathList.push_back(currentPath);
-	//retrieve the path list
-	while (cursor < pathList.size())
-	{
-		currentPath = pathList[cursor];
-		SGraphVertexDescriptor endV = currentPath.back();
-		// if the current path has reached the leaf
-        if ((out_degree(endV, simplified_skeleton_) == 1) && (endV != simplified_skeleton_[endV].nParent))
-			cursor++;
-		else
-		{
-			//find the fatest child vertex
-			double maxR = -1;
-			int isUsed = -1;
-			SGraphVertexDescriptor fatestChild;
-			std::vector<SGraphVertexDescriptor> notFastestChildren;
-            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies = adjacent_vertices(endV, simplified_skeleton_);
-			for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter)
-			{
-                if (*cIter != simplified_skeleton_[endV].nParent)
-				{
-                    SGraphEdgeDescriptor currentE = edge(endV, *cIter, simplified_skeleton_).first;
-                    double radius = simplified_skeleton_[currentE].nRadius;
-					if (maxR < radius)
-					{
-						maxR = radius;
-						if (isUsed > -1)
-							notFastestChildren.push_back(fatestChild);
-						else
-							isUsed = 0;
-						fatestChild = *cIter;
-					}
-					else
-						notFastestChildren.push_back(*cIter);
-				}
-			}
-			// organize children vertices into a new path
-			for (int nChild = 0; nChild < notFastestChildren.size(); ++nChild)
-			{
-				Path newPath;
-				newPath.push_back(endV);
-				newPath.push_back(notFastestChildren[nChild]);
-				pathList.push_back(newPath);
-			}
-			//put the fatest children into the path list
-			pathList[cursor].push_back(fatestChild);
-		}
-	}
-
-	return;
-}
-
 /// original version
 bool Skeleton::reconstruct_branches(const PointCloud* cloud, SurfaceMesh* mesh) {
     if (!cloud) {

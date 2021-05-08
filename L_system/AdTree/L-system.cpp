@@ -41,7 +41,7 @@ void Lsystem::readSkeleton(Skeleton* skel){
 
     // get paths
     std::vector<Path> pathList;
-    skel->get_graph_for_lsystem(pathList);
+    makePathsLsystem(skel, pathList);
 
     std::cout << "number of paths: " << pathList.size() << std::endl;
 
@@ -116,4 +116,64 @@ void Lsystem::readSkeleton(Skeleton* skel){
     }
     std::cout << "writing L-system: done" << std::endl;
     printLsystem();
+}
+
+
+// copied the path making, but for the smooth one
+void Lsystem::makePathsLsystem(Skeleton* skel, std::vector<Path> &pathList) {
+    pathList.clear();
+    Path currentPath;
+    int cursor = 0;
+    //insert the root vertex to the current path
+    currentPath.push_back(skel->get_root());
+    pathList.push_back(currentPath);
+    //retrieve the path list
+    while (cursor < pathList.size())
+    {
+        currentPath = pathList[cursor];
+        SGraphVertexDescriptor endV = currentPath.back();
+        // if the current path has reached the leaf
+        if ((out_degree(endV, skel->get_simplified_skeleton()) == 1) && (endV != skel->get_simplified_skeleton()[endV].nParent))
+            cursor++;
+        else
+        {
+            //find the fatest child vertex
+            double maxR = -1;
+            int isUsed = -1;
+            SGraphVertexDescriptor fatestChild;
+            std::vector<SGraphVertexDescriptor> notFastestChildren;
+            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies = adjacent_vertices(endV, skel->get_simplified_skeleton());
+            for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter)
+            {
+                if (*cIter != skel->get_simplified_skeleton()[endV].nParent)
+                {
+                    SGraphEdgeDescriptor currentE = edge(endV, *cIter, skel->get_simplified_skeleton()).first;
+                    double radius = skel->get_simplified_skeleton()[currentE].nRadius;
+                    if (maxR < radius)
+                    {
+                        maxR = radius;
+                        if (isUsed > -1)
+                            notFastestChildren.push_back(fatestChild);
+                        else
+                            isUsed = 0;
+                        fatestChild = *cIter;
+                    }
+                    else
+                        notFastestChildren.push_back(*cIter);
+                }
+            }
+            // organize children vertices into a new path
+            for (int nChild = 0; nChild < notFastestChildren.size(); ++nChild)
+            {
+                Path newPath;
+                newPath.push_back(endV);
+                newPath.push_back(notFastestChildren[nChild]);
+                pathList.push_back(newPath);
+            }
+            //put the fatest children into the path list
+            pathList[cursor].push_back(fatestChild);
+        }
+    }
+
+    return;
 }
