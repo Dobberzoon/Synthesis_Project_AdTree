@@ -20,15 +20,23 @@ public:
     Lsystem();
 
     void printLsystem();
+
     void readSkeleton(Skeleton* skeleton);
-    void makePathsLsystem(Skeleton* skeleton, std::vector<Path> &pathList);
-    void traverseLsystem(Skeleton* skeleton);
     void traverse(SGraphVertexDescriptor startV, Skeleton *skeleton);
+
+    void moveToNext(SGraphVertexDescriptor startV, SGraphVertexDescriptor nextV, Skeleton *skeleton);
+
+    void stepForward(double distance);
+    void rotatePlane(double angle);
+    void rollPlane(double angle);
 
 private:
     Graph graph_;
-    std::string string_;
+    std::string Lstring_;
     std::string axiom_;
+
+    easy3d::Vec<3, double> loc_;
+    easy3d::Mat<3,3, double> plane_;
 };
 
 #endif //L_SYSTEM_L_SYSTEM_H
