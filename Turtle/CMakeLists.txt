@@ -5,5 +5,4 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_executable(Turtle main.cpp)
 
-add_subdirectory(3rd_party)
 target_include_directories(Turtle PRIVATE 3rd_party)

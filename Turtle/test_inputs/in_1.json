@@ -1,0 +1,9 @@
+{
+    "recursions": 3,
+    "axiom": "FFA-F+B+F(20)",
+    "rules":
+    {
+        "A" : "-+F",
+        "B": "F+FF"
+    }
+}
