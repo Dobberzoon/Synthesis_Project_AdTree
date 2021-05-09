@@ -26,7 +26,6 @@ public:
         plane.set_row(0, easy3d::Vec<3, double>{1,0,0});
         plane.set_row(1, easy3d::Vec<3, double>{0,1,0});
         plane.set_row(2, easy3d::Vec<3, double>{0,0,1});
-
     }
 
     /// construct a turtle based on another turtle ///
@@ -72,8 +71,7 @@ public:
 
     /// read json file ///
     void readFile(nlohmann::json j){
-        recur = j["recursions"];
-        std::string line = translateLine(j["axiom"], j["rules"]);
+        std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
         readLine(line);
     }
 
@@ -141,18 +139,20 @@ private:
     }
 
     /// translate the complex axiom to a "simple" line ///
-    std::string translateLine(nlohmann::json axiom, nlohmann::json rules){
+    std::string translateLine(nlohmann::json axiom, nlohmann::json rules, nlohmann::json r){
         std::string basicChars = "F+-<>()[]1234567890";
         std::string line = axiom;
 
         bool customValues = false;
 
         // check if custom rules need to be applied
-        for(auto & i : line) {
+        /*for(auto & i : line) {
             if (!std::count(basicChars.begin(), basicChars.end(), i)) {customValues = true; break;}
         }
 
         if (!customValues){return line;}
+
+        */
 
         // custom rules need to be applied
         if (rules.empty()){
@@ -165,24 +165,34 @@ private:
             rulesMap.insert({i.first, i.second});
         }
 
-        std::string simpleLine = line;
-        int offsetter = 0;
+        if (r == 0){r = 1;}
 
-        for(int i = 0; i < line.size(); ++i) {
-            if (!std::count(basicChars.begin(), basicChars.end(), line[i])) {
+        std::string simpleLine = line;
+
+        for (int j = 0; j < r; ++j) {
+            int offsetter = 0;
+            for(int i = 0; i < line.size(); ++i) {
                 std::string s;
                 s.push_back(line[i]);
 
-                std::string replacement = rulesMap[s];
+                if (rulesMap.find(s) != rulesMap.end()){
 
-                simpleLine.insert(i + offsetter, replacement);
-                simpleLine.erase(i + offsetter + replacement.size(), 1);
+                    std::string replacement = rulesMap[s];
 
-                offsetter+= rulesMap.size();
+                    simpleLine.insert(i + offsetter, replacement);
+                    simpleLine.erase(i + offsetter + replacement.size(), 1);
+
+                    offsetter+= replacement.size() -1;
+                }
             }
+            line = simpleLine;
+
         }
-        return simpleLine;
+
+
+        return line;
     }
+
 
     /// translate the "simple" line to 3d points ///
     void readLine(std::string line){
@@ -271,7 +281,6 @@ private:
 
 
 int main() {
-    std::string line = "+(90)[F(10)+(90)F(15)]F(10)F(1)F(1)F(20)";
     std::string inputPath = "../test_inputs/in_1.json";
     std::string outputPath = "../export.xyz";
 
@@ -280,11 +289,9 @@ int main() {
     treeFile >> j;
     treeFile.close();
 
-
     Turtle turtle;
     turtle.setDebug();
     turtle.readFile(j);
 
-    //turtle.readLine(line);
     turtle.writeToFile(outputPath);
 }

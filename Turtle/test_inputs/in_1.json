@@ -1,9 +1,15 @@
 {
     "recursions": 3,
-    "axiom": "FFA-F+B+F(20)",
+    "axiom": "F+F",
     "rules":
     {
-        "A" : "-+F",
-        "B": "F+FF"
+        "F" : "F+F",
+        "+" : "-F-"
+    },
+    "dimensions":
+    {
+        "forward" : 7,
+        "rotation" : 25.7,
+        "roll" : 0
     }
 }
