@@ -33,6 +33,9 @@ public:
         loc = other.loc;
         plane = other.plane;
         debug = other.debug;
+        fValue = other.fValue;
+        rollValue = other.rollValue;
+        rollValue = other.rotateValue;
     }
 
     /// output the current location of the turtle ///
@@ -71,14 +74,12 @@ public:
 
     /// read json file ///
     void readFile(nlohmann::json j){
+        setDefaultValues(j["dimensions"]);
         std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
         readLine(line);
     }
 
 private:
-    // amount of recursion
-    int recur;
-
     // location is a 3d coordinate
     easy3d::Vec<3, double> loc;
 
@@ -87,6 +88,11 @@ private:
 
     // collection of stored points
     std::vector<easy3d::Vec<3, double>> storedPoints;
+
+    // default variables
+    double fValue = 5;
+    double rotateValue = 10;
+    double rollValue = 10;
 
     // collection of edges
     //TODO do this
@@ -138,21 +144,24 @@ private:
         storedPoints.emplace_back(loc);
     }
 
+    void setDefaultValues(nlohmann::json d){
+        if (d.empty()){return;}
+
+        for (const auto& r : d.get<nlohmann::json::object_t>()){
+            if (r.first == "forward"){
+                fValue = r.second;
+            } else if (r.first == "roll"){
+                rollValue = r.second;
+            } else if (r.first == "rotation"){
+                rotateValue = r.second;
+            }
+        }
+    }
+
     /// translate the complex axiom to a "simple" line ///
     std::string translateLine(nlohmann::json axiom, nlohmann::json rules, nlohmann::json r){
         std::string basicChars = "F+-<>()[]1234567890";
         std::string line = axiom;
-
-        bool customValues = false;
-
-        // check if custom rules need to be applied
-        /*for(auto & i : line) {
-            if (!std::count(basicChars.begin(), basicChars.end(), i)) {customValues = true; break;}
-        }
-
-        if (!customValues){return line;}
-
-        */
 
         // custom rules need to be applied
         if (rules.empty()){
@@ -186,17 +195,13 @@ private:
                 }
             }
             line = simpleLine;
-
         }
-
-
         return line;
     }
 
 
     /// translate the "simple" line to 3d points ///
     void readLine(std::string line){
-
         for(int i = 0; i < line.size(); ++i) {
             double override = 0;
             int j = 0;
@@ -214,23 +219,35 @@ private:
 
             // execute normal stings
             if(line[i] == '['){
-                Turtle turtle(*this);
+                int oNested = 1;
+                int cNested = 0;
+                int jump = 0;
+                for (int k = i; k < line.size(); ++k) {
+                    if (line[k] == ']' && oNested == cNested){
+                        Turtle turtle(*this);
+                        if (debug){turtle.setDebug();}
+                        turtle.readLine(line.substr(i + 1, k - i - 1));
 
-                turtle.readLine(line.substr(i + 1));
-                while (line[i] != ']'){i ++;}
-                while (line[i] == ']'){i ++;}
-                i--;
+                        for (easy3d::Vec<3, double> p: turtle.getStoredPoints()) {
+                            storedPoints.emplace_back(p);
+                        }
 
-                for (easy3d::Vec<3, double> p: turtle.getStoredPoints()) {
-                    storedPoints.emplace_back(p);
+                        break;
+                    } else if (line[k] == ']'){
+                        oNested ++;
+                    }else if (line[k] == '['){
+                        cNested ++;
+                    }
+                    jump ++;
                 }
+                i += jump;
 
                 continue;
             }
 
             if (line[i] == 'F') {
                 if (override == 0){
-                    stepForward(5);
+                    stepForward(fValue);
                 }
                 else {
                     stepForward(override);
@@ -241,34 +258,35 @@ private:
 
             } else if (line[i] == '+') {
                 if (override == 0){
-                    rotatePlane(10);
+                    rotatePlane(rotateValue);
                 }
                 else {
                     rotatePlane(override);
                 }
             } else if (line[i] == '-') {
                 if (override == 0){
-                    rotatePlane(-10);
+                    rotatePlane(-rotateValue);
                 }
                 else {
                     rotatePlane(- override);
                 }
             } else if (line[i] == '>') {
                 if (override == 0){
-                    rollPlane(10);
+                    rollPlane(rollValue);
                 }
                 else {
                     rollPlane(override);
                 }
             } else if (line[i] == '<') {
                 if (override == 0){
-                    rollPlane(-10);
+                    rollPlane(-rollValue);
                 }
                 else {
                     rollPlane(-override);
                 }
             } else if (line[i] == ']'){
                 //terminate execution if end of nesting is found
+                std::cout << "term" << std::endl;
                 break;
             }
             i += j;
@@ -290,7 +308,7 @@ int main() {
     treeFile.close();
 
     Turtle turtle;
-    turtle.setDebug();
+    //turtle.setDebug();
     turtle.readFile(j);
 
     turtle.writeToFile(outputPath);

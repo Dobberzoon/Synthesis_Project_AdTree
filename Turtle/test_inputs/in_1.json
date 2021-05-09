@@ -1,10 +1,9 @@
 {
-    "recursions": 3,
-    "axiom": "F+F",
+    "recursions": 7,
+    "axiom": "F",
     "rules":
     {
-        "F" : "F+F",
-        "+" : "-F-"
+        "F":"F[+F]F[-F]F"
     },
     "dimensions":
     {
