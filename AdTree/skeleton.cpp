@@ -320,17 +320,31 @@ bool Skeleton::smooth_skeleton()
 void Skeleton::write_to_file()
 {
     // define a file
+
     std::ofstream outfile;
     outfile.open("data.txt", std::ios::out | std::ios::trunc);
-    outfile<<"ID  "<<"  pSource.x "<<"  pSource.y  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<'\n';
+    if ( !outfile )
+    {
+        std::cerr << "Error: file could not be opened" << std::endl;
+        exit(1);
+    }
+
+    const std::vector<SGraphVertexDescriptor> &endVertices_total = find_end_vertices();
+    std::cout << "endVertices_total size " << endVertices_total.size() << std::endl;
+
+
+    //bool end_vertex = 0;
+    outfile<<"ID  "<<" source_index"<<" target_index"<<"  pSource.x "<<"  pSource.y  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<" endvertex "<<'\n';
     int ID=0;
     //initial a rootRadius
     double rootRadius = 0;
     //for each edge, find its corresponding points
     SGraphEdgeDescriptor currentE;
     std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ep = edges(simplified_skeleton_);
+
     for (SGraphEdgeIterator eIter = ep.first; eIter != ep.second; ++eIter)
     {
+        bool end_vertex = 0;
         //extract two end vertices of the current edge
         currentE = *eIter;
         simplified_skeleton_[currentE].vecPoints.clear();
@@ -353,13 +367,46 @@ void Skeleton::write_to_file()
         if(currentR>rootRadius){
             rootRadius=currentR;
         }
+
+        double lengthOfSubtree = simplified_skeleton_[targetV].lengthOfSubtree;
+        //std::cout << "length of subtree: " << lengthOfSubtree << std::endl;
+
+        if (lengthOfSubtree == 0)
+        {
+            end_vertex = 1;
+        }
+
+
+        //std::cout << "current E: " << currentE << std::endl;
+        int source_index = source(currentE, simplified_skeleton_);
+        //std::cout << "index source: " << source_index << std::endl;
+        int target_index = target(currentE, simplified_skeleton_);
+        //std::cout << "index target: " << target_index << std::endl;
+
         // write data to file
         //pSource.x, pSource.y, pSource.z, pTarget.x, pTarget.y, pTarget.z, currentR
-        outfile<<" "<<ID<<"      "<<pSource.x<<"      "<<pSource.y<<"      "<<pSource.z<<"      "
-               <<pTarget.x<<"      "<<pTarget.y<<"      "<<pTarget.z<<"      "<<currentR<<'\n';
+        outfile<<" "<<ID<<"      "<< source_index<<"      "<< target_index<<"      "<<pSource.x<<"      "<<pSource.y<<"      "<<pSource.z<<"      "
+               <<pTarget.x<<"      "<<pTarget.y<<"      "<<pTarget.z<<"      "<<currentR<<"      "<<end_vertex<<'\n';
         ID += 1;
     }
+
+    // retrieve all leaf vertices at the end of the tree graph
+    /*
+    std::vector<SGraphVertexDescriptor> endVertices;
+    std::pair<SGraphVertexIterator, SGraphVertexIterator> vp = vertices(simplified_skeleton_);
+    for (SGraphVertexIterator cIter = vp.first; cIter != vp.second; ++cIter)
+    {
+        if (out_degree(*cIter, simplified_skeleton_) == 1)
+        {
+            if (*cIter != simplified_skeleton_[*cIter].nParent)
+                endVertices.push_back(*cIter);
+        }
+    }
+    */
     outfile<<"root_radius: "<<rootRadius;
+    //outfile.close();
+
+
 
     return;
 }
