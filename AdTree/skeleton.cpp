@@ -390,19 +390,6 @@ void Skeleton::write_to_file()
         ID += 1;
     }
 
-    // retrieve all leaf vertices at the end of the tree graph
-    /*
-    std::vector<SGraphVertexDescriptor> endVertices;
-    std::pair<SGraphVertexIterator, SGraphVertexIterator> vp = vertices(simplified_skeleton_);
-    for (SGraphVertexIterator cIter = vp.first; cIter != vp.second; ++cIter)
-    {
-        if (out_degree(*cIter, simplified_skeleton_) == 1)
-        {
-            if (*cIter != simplified_skeleton_[*cIter].nParent)
-                endVertices.push_back(*cIter);
-        }
-    }
-    */
     outfile<<"root_radius: "<<rootRadius;
     //outfile.close();
 
