@@ -344,7 +344,7 @@ void Skeleton::write_to_file()
 
     for (SGraphEdgeIterator eIter = ep.first; eIter != ep.second; ++eIter)
     {
-        bool end_vertex = 0;
+        bool end_vertex = 0; //initialize boolean end vertex attribute for each edge
         //extract two end vertices of the current edge
         currentE = *eIter;
         simplified_skeleton_[currentE].vecPoints.clear();
@@ -368,6 +368,7 @@ void Skeleton::write_to_file()
             rootRadius=currentR;
         }
 
+        // determine for each edge if its the end vertex
         double lengthOfSubtree = simplified_skeleton_[targetV].lengthOfSubtree;
         //std::cout << "length of subtree: " << lengthOfSubtree << std::endl;
 
@@ -376,7 +377,7 @@ void Skeleton::write_to_file()
             end_vertex = 1;
         }
 
-
+        //extract the indices for both vertices of currentE(dge)
         //std::cout << "current E: " << currentE << std::endl;
         int source_index = source(currentE, simplified_skeleton_);
         //std::cout << "index source: " << source_index << std::endl;
