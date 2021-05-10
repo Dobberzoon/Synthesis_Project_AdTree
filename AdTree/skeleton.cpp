@@ -320,6 +320,7 @@ bool Skeleton::smooth_skeleton()
 void Skeleton::write_to_file()
 {
     // define a file
+
     std::ofstream outfile;
     outfile.open("data.txt", std::ios::out | std::ios::trunc);
     if ( !outfile )
@@ -327,9 +328,10 @@ void Skeleton::write_to_file()
         std::cerr << "Error: file could not be opened" << std::endl;
         exit(1);
     }
-    //get total number of endVertices
+
     const std::vector<SGraphVertexDescriptor> &endVertices_total = find_end_vertices();
-//    std::cout << "endVertices_total size " << endVertices_total.size() << std::endl;
+    std::cout << "endVertices_total size " << endVertices_total.size() << std::endl;
+
 
     //bool end_vertex = 0;
     outfile<<"ID  "<<" source_index"<<" target_index"<<"  pSource.x "<<"  pSource.y  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<" endvertex "<<'\n';
@@ -342,7 +344,7 @@ void Skeleton::write_to_file()
 
     for (SGraphEdgeIterator eIter = ep.first; eIter != ep.second; ++eIter)
     {
-        bool end_vertex = 0;
+        bool end_vertex = 0; //initialize boolean end vertex attribute for each edge
         //extract two end vertices of the current edge
         currentE = *eIter;
         simplified_skeleton_[currentE].vecPoints.clear();
@@ -366,15 +368,16 @@ void Skeleton::write_to_file()
             rootRadius=currentR;
         }
 
-        //check if the vertex is the end one, if is - 1, if not - 0
+        // determine for each edge if its the end vertex
         double lengthOfSubtree = simplified_skeleton_[targetV].lengthOfSubtree;
         //std::cout << "length of subtree: " << lengthOfSubtree << std::endl;
+
         if (lengthOfSubtree == 0)
         {
             end_vertex = 1;
         }
 
-        //find index of source and target vertex
+        //extract the indices for both vertices of currentE(dge)
         //std::cout << "current E: " << currentE << std::endl;
         int source_index = source(currentE, simplified_skeleton_);
         //std::cout << "index source: " << source_index << std::endl;
@@ -383,14 +386,16 @@ void Skeleton::write_to_file()
 
         // write data to file
         //pSource.x, pSource.y, pSource.z, pTarget.x, pTarget.y, pTarget.z, currentR
-        outfile<<" "<<ID<<"      "<< source_index <<"      "<< target_index <<"      "
-               <<pSource.x<<"      "<<pSource.y<<"      "<<pSource.z<<"      "
-               <<pTarget.x<<"      "<<pTarget.y<<"      "<<pTarget.z<<"      "
-               <<currentR<<"      "<<end_vertex<<'\n';
+        outfile<<" "<<ID<<"      "<< source_index<<"      "<< target_index<<"      "<<pSource.x<<"      "<<pSource.y<<"      "<<pSource.z<<"      "
+               <<pTarget.x<<"      "<<pTarget.y<<"      "<<pTarget.z<<"      "<<currentR<<"      "<<end_vertex<<'\n';
         ID += 1;
     }
+
     outfile<<"root_radius: "<<rootRadius;
     //outfile.close();
+
+
+
     return;
 }
 //============================================================================================================
