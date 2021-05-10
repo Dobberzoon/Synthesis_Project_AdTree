@@ -26,17 +26,15 @@ public:
 
     void moveToNext(SGraphVertexDescriptor startV, SGraphVertexDescriptor nextV, Skeleton *skeleton);
 
-    void stepForward(double distance);
-    void rotatePlane(double angle);
-    void rollPlane(double angle);
 
 private:
     Graph graph_;
     std::string Lstring_;
     std::string axiom_;
+    easy3d::vec3 zaxis_;
 
     easy3d::Vec<3, double> loc_;
-    easy3d::Mat<3,3, double> plane_;
+
 };
 
 #endif //L_SYSTEM_L_SYSTEM_H
