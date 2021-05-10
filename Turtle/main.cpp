@@ -78,9 +78,12 @@ public:
         storageFile.close();
     }
 
+    /// store internalized points and edges to file ///
     void writeToPly(const std::string& fileName){
         std::ofstream storageFile;
         storageFile.open(fileName);
+
+        // write header
         storageFile << "ply" << std::endl;
         storageFile << "format ascii 1.0" << std::endl;
         storageFile << "element vertex " << storedPoints.size() << std::endl;
@@ -92,10 +95,12 @@ public:
         storageFile << "property int vertex2" << std::endl;
         storageFile << "end_header" << std::endl << std::endl;
 
+        // store points
         for (easy3d::Vec<3, double> p: storedPoints){
             storageFile << p << std::endl;
         }
 
+        // store edges
         storageFile << std::endl;
         for (std::vector<unsigned int> i: storedEdges){
             storageFile << i[0] << " " << i[1] << std::endl;
@@ -129,7 +134,7 @@ private:
     double rotateValue = 10;
     double rollValue = 10;
 
-    //debug prints location at every step
+    // prints location at every step
     bool debug = false;
 
     /// step forward ///
@@ -240,6 +245,7 @@ private:
     void readLine(std::string line){
         // store starting point
         storeLoc();
+        unsigned int connection = 0;
 
         unsigned int basepoint = 0;
         bool returnEdge = false;
@@ -272,7 +278,8 @@ private:
 
                         turtle.readLine(line.substr(i + 1, k - i - 1));
 
-                        unsigned int connection = storedPoints.size() - 1;
+                        //unsigned int connection = storedPoints.size() - 1;
+                        unsigned int offset = storedPoints.size() - 1;
                         for (int l = 1; l < turtle.getStoredPoints().size() ; ++l) {
                             storedPoints.emplace_back(turtle.getStoredPoints()[l]);
                         }
@@ -281,11 +288,11 @@ private:
 
                         for (int l = 1; l < turtle.getStoredEdges().size(); ++l) {
                             std::vector<unsigned int> edge = turtle.getStoredEdges()[l];
-                            std::vector<unsigned int> nEdge = {edge[0] + connection, edge[1] + connection};
+                            std::vector<unsigned int> nEdge = {edge[0] + offset, edge[1] + offset};
                             tEdgeList.emplace_back(nEdge);
                         }
 
-                        std::vector<unsigned int> connector = {connection, connection + 1};
+                        std::vector<unsigned int> connector = {connection, offset + 1};
                         storedEdges.emplace_back(connector);
 
                         for (const auto& l: tEdgeList){
@@ -312,14 +319,15 @@ private:
                 if (override == 0){stepForward(fValue);}
                 else {stepForward(override);}
                 storeLoc();
+                connection = storedPoints.size() - 1;
 
                 if (debug){printLocation();}
 
 
                 if (returnEdge){
                     // if the point lies after a nesting a correct link has to be set
-                    unsigned int connection = getStoredPoints().size();
-                    std::vector<unsigned int> edge = {basepoint - 1 , connection - 1};
+                    unsigned int p2 = getStoredPoints().size();
+                    std::vector<unsigned int> edge = {basepoint - 1 , p2 - 1};
                     storedEdges.emplace_back(edge);
 
                     returnEdge = false;
@@ -327,8 +335,8 @@ private:
                     // if the first point in a branch no edges are created
                     continue;
                 } else {
-                    unsigned int connection = getStoredPoints().size();
-                    std::vector<unsigned int> edge = {connection - 2, connection - 1};
+                    unsigned int p2 = getStoredPoints().size();
+                    std::vector<unsigned int> edge = {p2 - 2, p2 - 1};
                     storedEdges.emplace_back(edge);
                 }
                 basepoint = getStoredPoints().size();
