@@ -1,0 +1,29 @@
+ply
+format ascii 1.0
+element vertex 9
+property float x
+property float y
+property float z
+element edge 8
+property int vertex1
+property int vertex2
+end_header
+
+0 0 0
+0 0 7
+0 0 14
+-4.08479 0 19.6846
+-7.1204 0 25.9921
+-9.01461 0 32.731
+1.21554 0 20.8937
+1.21554 0 27.8937
+-4.44089e-16 0 34.7873
+
+0 1
+1 2
+2 3
+3 4
+4 5
+5 6
+6 7
+7 8

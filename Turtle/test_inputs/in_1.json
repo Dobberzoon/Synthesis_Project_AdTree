@@ -1,14 +1,14 @@
 {
-    "recursions": 7,
+    "recursions": 1,
     "axiom": "F",
     "rules":
     {
-        "F":"F[+F]F[-F]F"
+        "F": "FF-[-F+F+F]+[+F-F-F]"
     },
     "dimensions":
     {
         "forward" : 7,
         "rotation" : 25.7,
-        "roll" : 0
+        "roll" : 20
     }
 }
