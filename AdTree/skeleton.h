@@ -44,19 +44,19 @@ namespace easy3d {
 //define the vertex and edge properties
 struct SGraphVertexProp
 {
-	easy3d::vec3  cVert;
-	std::size_t nParent;
+	easy3d::vec3  cVert;//coordinates
+	std::size_t nParent;// index of parent vertex
 	double lengthOfSubtree;
 
-    double radius; // used only by the smoothed skeleton
+    double radius; // used only by the smoothed skeleton  -- ignore
     bool   visited;
 };
 
 struct SGraphEdgeProp
 {
 	double nWeight;
-	double nRadius;
-	std::vector<int> vecPoints;
+	double nRadius;//
+	std::vector<int> vecPoints;//index of coresponding points -- ignore
 };
 
 
@@ -128,6 +128,10 @@ private:
     bool compute_branch_radius();
 
     bool smooth_skeleton();
+
+// ===========================================================
+    void write_to_file();
+// ===========================================================
 
     //extract branch surfaces
     bool extract_branch_surfaces(easy3d::SurfaceMesh* result);

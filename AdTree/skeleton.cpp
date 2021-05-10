@@ -36,13 +36,14 @@
 #include <3rd_party/tetgen/tetgen.h>
 
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 
 
 using namespace boost;
 using namespace easy3d;
 
-Skeleton::Skeleton() 
+Skeleton::Skeleton()
     : Points_(nullptr)
     , KDtree_(nullptr)
     , quiet_(true)
@@ -101,10 +102,10 @@ bool Skeleton::build_delaunay(const PointCloud* cloud)
 	}
 	const std::string str("Q");
 	tetrahedralize(const_cast<char*>(str.c_str()), &tet_in, &tet_out);
-	for (long nTet = 0; nTet < tet_out.numberoftetrahedra; nTet++) 
+	for (long nTet = 0; nTet < tet_out.numberoftetrahedra; nTet++)
 	{
 		long tet_first = nTet * tet_out.numberofcorners;
-		for (long i = tet_first; i < tet_first + tet_out.numberofcorners; i++) 
+		for (long i = tet_first; i < tet_first + tet_out.numberofcorners; i++)
 			for (long j = i + 1; j < tet_first + tet_out.numberofcorners; j++)
                 add_edge(vertex(tet_out.tetrahedronlist[i], delaunay_), vertex(tet_out.tetrahedronlist[j], delaunay_), delaunay_);
 	}
@@ -315,6 +316,54 @@ bool Skeleton::smooth_skeleton()
     return true;
 }
 
+//=============================================================================================
+void Skeleton::write_to_file()
+{
+    // define a file
+    std::ofstream outfile;
+    outfile.open("data.txt", std::ios::out | std::ios::trunc);
+    outfile<<"ID  "<<"  pSource.x "<<"  pSource.x  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<'\n';
+    int ID=0;
+    //initial a rootRadius
+    double rootRadius = 0;
+    //for each edge, find its corresponding points
+    SGraphEdgeDescriptor currentE;
+    std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ep = edges(simplified_skeleton_);
+    for (SGraphEdgeIterator eIter = ep.first; eIter != ep.second; ++eIter)
+    {
+        //extract two end vertices of the current edge
+        currentE = *eIter;
+        simplified_skeleton_[currentE].vecPoints.clear();
+        double currentR = simplified_skeleton_[currentE].nRadius;
+        SGraphVertexDescriptor sourceV, targetV;
+        if (source(currentE, simplified_skeleton_) == simplified_skeleton_[target(currentE, simplified_skeleton_)].nParent)
+        {
+            sourceV = source(currentE, simplified_skeleton_);
+            targetV = target(currentE, simplified_skeleton_);
+        }
+        else
+        {
+            sourceV = target(currentE, simplified_skeleton_);
+            targetV = source(currentE, simplified_skeleton_);
+        }
+        Vector3D pSource(simplified_skeleton_[sourceV].cVert.x, simplified_skeleton_[sourceV].cVert.y, simplified_skeleton_[sourceV].cVert.z);
+        Vector3D pTarget(simplified_skeleton_[targetV].cVert.x, simplified_skeleton_[targetV].cVert.y, simplified_skeleton_[targetV].cVert.z);
+
+        //search the biggest radius
+        if(currentR>rootRadius){
+            rootRadius=currentR;
+        }
+        // write data to file
+        //pSource.x, pSource.y, pSource.z, pTarget.x, pTarget.y, pTarget.z, currentR
+        outfile<<" "<<ID<<"      "<<pSource.x<<"      "<<pSource.y<<"      "<<pSource.z<<"      "
+               <<pTarget.x<<"      "<<pTarget.y<<"      "<<pTarget.z<<"      "<<currentR<<'\n';
+        ID += 1;
+    }
+    outfile<<"root_radius: "<<rootRadius;
+
+    return;
+}
+//============================================================================================================
 
 bool Skeleton::compute_branch_radius()
 {
@@ -324,11 +373,13 @@ bool Skeleton::compute_branch_radius()
 
     if (!quiet_)
         std::cout << "step 2: fit accurate radius to the trunk" << std::endl;
-    fit_trunk();
+    fit_trunk();//compute the trunk
 
     if (!quiet_)
         std::cout << "step 3: adjust the radius for all left branches" << std::endl;
     compute_all_edges_radius(TrunkRadius_);
+
+    write_to_file();
 
     if (!quiet_)
         std::cout << "finish the branches inflation!" << std::endl;
@@ -341,7 +392,7 @@ bool Skeleton::add_leaves()
     if (!quiet_)
         std::cout << "step 1: find leaf vertices in the tree graph" << std::endl;
     std::vector<SGraphVertexDescriptor> leafVertices = find_end_vertices();
-	
+
     if (!quiet_)
         std::cout << "step 2: randomly generate leaves for each leaf vertex" << std::endl;
 	//initialize
@@ -474,12 +525,12 @@ bool Skeleton::check_overlap_child_vertex(Graph* i_Graph, SGraphVertexDescriptor
 	for (SGraphOutEdgeIterator cIter = listAdj.first; cIter != listAdj.second; ++cIter)
 	{
 		SGraphVertexDescriptor currentV;
-		if (source(*cIter, *i_Graph) == i_dVertex) 
+		if (source(*cIter, *i_Graph) == i_dVertex)
 			currentV = target(*cIter, *i_Graph);
 		else if (target(*cIter, *i_Graph) == i_dVertex)
 			currentV = source(*cIter, *i_Graph);
 		//if the current vertex is not the parent
-		if ((*i_Graph)[currentV].nParent == i_dVertex) 
+		if ((*i_Graph)[currentV].nParent == i_dVertex)
 			vecChilds.push_back(currentV);
 	}
 
@@ -511,7 +562,7 @@ bool Skeleton::check_overlap_child_vertex(Graph* i_Graph, SGraphVertexDescriptor
 	}
 
 	//if the merge value is too large, then don't merge
-	if (nMinMergeValue > 1.0) 
+	if (nMinMergeValue > 1.0)
 		return false;
 	else
         return merge_vertices(i_Graph, sourceV, targetV, 0.5, 0.5);
@@ -545,7 +596,7 @@ bool Skeleton::check_single_child_vertex(Graph* i_Graph, SGraphVertexDescriptor 
 
 	//determine the merging threshold and check if current vertex can be merged or not
 	double r = (*i_Graph)[edge(i_dVertex, parentV, *i_Graph).first].nRadius;
-	if (distance >= 1.0 * r) 
+	if (distance >= 1.0 * r)
 		return false;
 	else
 	{
@@ -642,7 +693,7 @@ bool Skeleton::merge_vertices(Graph* i_Graph, SGraphVertexDescriptor i_dSource, 
 
 void Skeleton::compute_delaunay_weight()
 {
-	//set the weight as the length of the edge 
+	//set the weight as the length of the edge
     std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ep = edges(delaunay_);
 	SGraphVertexDescriptor dVertex1, dVertex2;
 	vec3 pVertex1, pVertex2;
@@ -762,7 +813,7 @@ double Skeleton::compute_merge_value(Graph* i_Graph, SGraphVertexDescriptor i_dS
 	dirTarget.normalize();
 	double alpha = dot(dirSource, dirTarget);
 	double nRadiusTarget = (*i_Graph)[edge(i_dTarget, parentV, (*i_Graph)).first].nRadius;
-	
+
 	//if the angle is smaller than 25 degrees
 	if (alpha > 0.9)
 		if(nLengthSource/nLengthTarget >= 0.5 && nLengthSource / nLengthTarget <= 2)
@@ -776,7 +827,7 @@ std::vector<Vector3D> Skeleton::centralize_main_points(PointCloud* cloud)
 {
     if (!quiet_)
         std::cout << "start centralizing the main-branch points" << std::endl;
-	
+
 	//retrive the points from the raw point cloud
 	int nPt = cloud->n_vertices();
 	if (Points_)
@@ -793,7 +844,7 @@ std::vector<Vector3D> Skeleton::centralize_main_points(PointCloud* cloud)
 	}
 	KDtree_ = new KdTree(Points_, nPt, 16);
 
-	//compute the density of each point 
+	//compute the density of each point
 	std::vector<double> densityList;
 	std::vector<Vector3D> vertices;
     obtain_initial_radius(cloud);
@@ -805,7 +856,7 @@ std::vector<Vector3D> Skeleton::centralize_main_points(PointCloud* cloud)
 		double threshold = TrunkRadius_ * (1 - distance / BoundingDistance_); //get the query distance
 		KDtree_->queryRange(pCurrent, threshold, true);
 		int neighbourSize = KDtree_->getNOfFoundNeighbours();
-		if (threshold != 0) 
+		if (threshold != 0)
 			density = neighbourSize / threshold;
 		densityList.push_back(density);
 	}
@@ -819,7 +870,7 @@ std::vector<Vector3D> Skeleton::centralize_main_points(PointCloud* cloud)
 		if (distance != 0) // the point is not the root
 		{
 			//the point doesn't lie far from the root
-			if (distance < epsilon*BoundingDistance_) 
+			if (distance < epsilon*BoundingDistance_)
 			{
 				double ptDensity = densityList[j];
 				double dendiff = 0.0;
@@ -1053,7 +1104,7 @@ void Skeleton::fit_trunk()
 	Cylinder currentC = Cylinder(pSource, pTarget, simplified_skeleton_[trunkE].nRadius);
 
 	//non linear leastsquares adjustment
-	if (currentC.LeastSquaresFit(ptlist.begin(), ptlist.end())) 
+	if (currentC.LeastSquaresFit(ptlist.begin(), ptlist.end()))
 	{
 		Vector3D pSourceAdjust = currentC.GetAxisPosition1();
 		Vector3D pTargetAdjust = currentC.GetAxisPosition2();
@@ -1076,11 +1127,9 @@ void Skeleton::fit_trunk()
 			if (dis > maxDis) maxDis = dis;
 			disList.push_back(dis);
 		}
-		
 		//update the weights
 		for (int np = 0; np < pCount; np++)
 			ptlist[np][3] = 1.0 - disList[np] / maxDis;
-		
 		//conduct the second round of weighted least squares
 		if (currentC.LeastSquaresFit(ptlist.begin(), ptlist.end()))
 		{
@@ -1231,7 +1280,7 @@ void Skeleton::get_graph_for_smooth(std::vector<Path> &pathList)
 			pathList[cursor].push_back(fatestChild);
 		}
 	}
-	
+
 	return;
 }
 
@@ -1343,6 +1392,45 @@ std::vector<Skeleton::Branch> Skeleton::get_branches_parameters() const {
 
          branches.push_back(branch);
     }
+//==========my added code ==================================================================
+	//count number of branches
+//    std::cout << "branches cnt: " << branches.size() << '\n';//2504
+    //explore first branch in branches
+
+//    std::cout << "branch[0] points cnt: " << branches[0].points.size() << '\n';//154
+//    std::cout << "branch[0] radii cnt: "  << branches[0].radii.size() << '\n';//154
+//    std::cout << "branch[1] points cnt: " << branches[1].points.size() << '\n';//88
+//    std::cout << "branch[1] radii cnt: "  << branches[1].radii.size() << '\n';//88
+
+
+//	int branch_number=0; // Accumulate 17296
+//	traverse the branches and WHY branch_x has xxx radii/points
+//    for(int branches_cnt=0;branches_cnt<10;branches_cnt++) {
+//        int branch_number=0;//each branches.radii.size()
+//        for(int branch_cnt=0;branch_cnt<branches[branches_cnt].radii.size();branch_cnt++){
+//            branch_number+=1;
+//        }
+//        std::cout << "branch " << branches_cnt <<": " << branch_number << '\n';
+//        branch 0: 154
+//        branch 1: 88
+//        branch 2: 80
+//        branch 3: 114
+//        branch 4: 78
+//        branch 5: 103
+//        branch 6: 84
+//        branch 7: 83
+//        branch 8: 53
+//        branch 9: 30
+    //}
+
+
+
+   /* for(int i=0;i<10;i++) {
+        std::cout << "branch "<< i << ":" << branches[i].radii[0] << '\n';
+		std::cout << "branch " << i << ":" << branches[i].radii[1] << '\n';
+    }*/
+
+//==========my added code ===================================================================
 
     return branches;
 }
