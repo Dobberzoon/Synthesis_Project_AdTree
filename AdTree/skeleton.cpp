@@ -322,7 +322,7 @@ void Skeleton::write_to_file()
     // define a file
     std::ofstream outfile;
     outfile.open("data.txt", std::ios::out | std::ios::trunc);
-    outfile<<"ID  "<<"  pSource.x "<<"  pSource.x  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<'\n';
+    outfile<<"ID  "<<"  pSource.x "<<"  pSource.y  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<'\n';
     int ID=0;
     //initial a rootRadius
     double rootRadius = 0;
