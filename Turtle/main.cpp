@@ -36,8 +36,7 @@ public:
         debug = other.debug;
         fValue = other.fValue;
         rollValue = other.rollValue;
-        rollValue = other.rotateValue;
-
+        rotateValue = other.rotateValue;
     }
 
     /// output the current location of the turtle ///
@@ -54,8 +53,8 @@ public:
     }
 
     /// debug mode prints the location of the turtle after every move ///
-    void setDebug(){
-        debug = true;
+    void setDebug(bool b){
+        debug = b;
     }
 
     /// return the points that were internalized ///
@@ -63,6 +62,7 @@ public:
         return storedPoints;
     }
 
+    /// return the stored edges that were internalized ///
     std::vector<std::vector<unsigned int>> getStoredEdges(){
         return storedEdges;
     }
@@ -109,10 +109,15 @@ public:
     }
 
     /// read json file ///
-    void readFile(nlohmann::json j){
+    void readFile(std::string path){
+        std::ifstream treeFile(path, std::ifstream::binary);
+        nlohmann::json j;
+        treeFile >> j;
+        treeFile.close();
+
         setDefaultValues(j["dimensions"]);
         std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
-
+        line = cleanLine(line);
         readLine(line);
     }
 
@@ -136,6 +141,9 @@ private:
 
     // prints location at every step
     bool debug = false;
+
+    // commnicate with user
+    bool com = true;
 
     /// step forward ///
     void stepForward(double distance){
@@ -181,10 +189,6 @@ private:
         storedPoints.emplace_back(loc);
     }
 
-    void storeEdge(){
-
-    }
-
     void setDefaultValues(nlohmann::json d){
         if (d.empty()){return;}
 
@@ -199,28 +203,51 @@ private:
         }
     }
 
+    std::string cleanLine(std::string line){
+        std::string cleanLine = line;
+
+        // useless increment calls are removed from the loop to avoid bugs and extra computations
+        for (int l = line.size(); l > 0; --l) {
+            if (line[l] == ']'){
+                int nested = 0;
+
+                for (int m = l - 1; m > 0; --m) {
+                    if (line[m] == 'F'){break;}
+                    else if (line[m] == '[' && nested == 0){cleanLine.erase(m, l - m + 1);}
+                    else if (line[m] == ']'){nested ++;}
+                    else if (line[m] == '['){nested --;}
+                }
+            }
+        }
+        return cleanLine;
+    }
+
     /// translate the complex axiom to a "simple" line ///
     std::string translateLine(nlohmann::json axiom, nlohmann::json rules, nlohmann::json r){
-        std::string basicChars = "F+-<>()[]1234567890";
+
         std::string line = axiom;
 
         // custom rules need to be applied
         if (rules.empty()){
-            std::cout << "WARNING: custom rules are present in axiom but no explanation has been supplied" << std::endl;
+            std::cout << "WARNING: no rules supplied" << std::endl;
             return line;
         }
 
+        // make a map of the rules
         std::map<std::string, std::string> rulesMap = rules;
         for (const auto& i : rules.get<nlohmann::json::object_t>()){
             rulesMap.insert({i.first, i.second});
         }
 
+        // if the recursion is set in the file to 0 it is changed to 1 to allow one set to be created
         if (r == 0){r = 1;}
 
         std::string simpleLine = line;
 
+        // TODO allow for multichar rules
+        // TODO allow for override rules
         for (int j = 0; j < r; ++j) {
-            int offsetter = 0;
+            unsigned int offsetter = 0;
             for(int i = 0; i < line.size(); ++i) {
                 std::string s;
                 s.push_back(line[i]);
@@ -245,9 +272,14 @@ private:
     void readLine(std::string line){
         // store starting point
         storeLoc();
-        unsigned int connection = 0;
 
-        unsigned int basepoint = 0;
+        // set trunk location to grow from
+        unsigned int trunk = 0;
+
+        // set point counter
+        unsigned int pCount = 0;
+
+        // allow to connect recursion to the trunk
         bool returnEdge = false;
 
         for(int i = 0; i < line.size(); ++i) {
@@ -272,18 +304,21 @@ private:
                 int jump = 0;
                 for (int k = i; k < line.size(); ++k) {
                     if (line[k] == ']' && oNested == cNested){
+                        // recurse turtle
                         Turtle turtle(*this);
 
-                        if (debug){turtle.setDebug();}
+                        // allow to debug
+                        turtle.setDebug(debug);
 
                         turtle.readLine(line.substr(i + 1, k - i - 1));
 
-                        //unsigned int connection = storedPoints.size() - 1;
+                        // store the points recursion
                         unsigned int offset = storedPoints.size() - 1;
                         for (int l = 1; l < turtle.getStoredPoints().size() ; ++l) {
                             storedPoints.emplace_back(turtle.getStoredPoints()[l]);
                         }
 
+                        // store edges of recursion temporary
                         std::vector<std::vector<unsigned int>> tEdgeList;
 
                         for (int l = 1; l < turtle.getStoredEdges().size(); ++l) {
@@ -292,16 +327,19 @@ private:
                             tEdgeList.emplace_back(nEdge);
                         }
 
-                        std::vector<unsigned int> connector = {connection, offset + 1};
+                        // connect first point of recursion to last point of the trunk
+                        std::vector<unsigned int> connector = {trunk, offset + 1};
                         storedEdges.emplace_back(connector);
 
+                        // store temporary edges
                         for (const auto& l: tEdgeList){
                             storedEdges.emplace_back(l);
                         }
 
-
+                        // set return to true to allow later growth from the trunk
                         returnEdge = true;
                         break;
+
                     } else if (line[k] == ']'){
                         oNested ++;
                     }else if (line[k] == '['){
@@ -319,15 +357,14 @@ private:
                 if (override == 0){stepForward(fValue);}
                 else {stepForward(override);}
                 storeLoc();
-                connection = storedPoints.size() - 1;
+                trunk = storedPoints.size() - 1;
 
                 if (debug){printLocation();}
-
 
                 if (returnEdge){
                     // if the point lies after a nesting a correct link has to be set
                     unsigned int p2 = getStoredPoints().size();
-                    std::vector<unsigned int> edge = {basepoint - 1 , p2 - 1};
+                    std::vector<unsigned int> edge = {pCount - 1 , p2 - 1};
                     storedEdges.emplace_back(edge);
 
                     returnEdge = false;
@@ -339,7 +376,7 @@ private:
                     std::vector<unsigned int> edge = {p2 - 2, p2 - 1};
                     storedEdges.emplace_back(edge);
                 }
-                basepoint = getStoredPoints().size();
+                pCount = getStoredPoints().size();
 
             } else if (line[i] == '+') {
                 if (override == 0){
@@ -385,15 +422,9 @@ int main() {
     std::string outputPath = "../export.xyz";
     std::string outputPath2 = "../export.ply";
 
-
-    std::ifstream treeFile(inputPath, std::ifstream::binary);
-    nlohmann::json j;
-    treeFile >> j;
-    treeFile.close();
-
     Turtle turtle;
-    //turtle.setDebug();
-    turtle.readFile(j);
+    turtle.setDebug(false);
+    turtle.readFile(inputPath);
 
     turtle.writeToXYZ(outputPath);
     turtle.writeToPly(outputPath2);
