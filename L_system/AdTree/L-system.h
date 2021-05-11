@@ -22,10 +22,16 @@ public:
     void printLsystem();
 
     void readSkeleton(Skeleton* skeleton);
-    void traverse(SGraphVertexDescriptor startV, Skeleton *skeleton);
+    void traverse(SGraphVertexDescriptor prevV,
+                  SGraphVertexDescriptor startV,
+                  Skeleton *skeleton);
 
-    void moveToNext(SGraphVertexDescriptor startV, SGraphVertexDescriptor nextV, Skeleton *skeleton);
-
+    std::tuple<double, double, double> moveToNext(SGraphVertexDescriptor startV,
+                                                  SGraphVertexDescriptor nextV,
+                                                  Skeleton *skeleton);
+    void Lsystem::writeMovement(SGraphVertexDescriptor startV,
+                                SGraphVertexDescriptor nextV,
+                                Skeleton *skel);
 
 private:
     Graph graph_;
@@ -34,6 +40,8 @@ private:
     easy3d::vec3 zaxis_;
 
     easy3d::Vec<3, double> loc_;
+
+    // todo: remove attributes we will never use
 
 };
 
