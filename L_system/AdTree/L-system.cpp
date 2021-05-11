@@ -138,7 +138,7 @@ void Lsystem::traverse(SGraphVertexDescriptor startV, Skeleton *skel){
 
 void Lsystem::moveToNext(SGraphVertexDescriptor startV, SGraphVertexDescriptor nextV, Skeleton *skel) {
     // get previous node (parent of start)
-    // todo: this may break if start is the origin?
+    // todo: wrong if start is [0 0 0] (is it's own parent, so vector between them is 0)
     SGraphVertexDescriptor prevV = skel->get_simplified_skeleton()[startV].nParent;
 
     // get coordinates of the two nodes
@@ -156,8 +156,6 @@ void Lsystem::moveToNext(SGraphVertexDescriptor startV, SGraphVertexDescriptor n
     // compute the previous z-axis
     vec3 to_origin = (coords_start - coords_prev);
 
-    // todo: catch nan values when to_target or to_origin are [0 0 1]
-
     vec3 xaxis = {1, 0, 0};
     vec3 yaxis = {0, 1, 0};
     vec3 zaxis = {0, 0, 1};
@@ -170,54 +168,67 @@ void Lsystem::moveToNext(SGraphVertexDescriptor startV, SGraphVertexDescriptor n
     // find angle between planar vectors & x-axis
     // radians
     // todo: will this work in all quadrants or just the ++ one?
-    // todo: could be more neat if this can be replaced by atan2()
-    double angle_z_orig = acos(dot(to_origin_xy, xaxis) / (length(to_origin_xy) * length(xaxis)));
-    double angle_z_target = acos(dot(to_target_xy, xaxis) / (length(to_target_xy) * length(xaxis)));
+    double angle_z_orig = (2*M_PI) - acos(dot(to_origin_xy, xaxis) / (length(to_origin_xy) * length(xaxis)));
+    double angle_z_target = (2*M_PI) - acos(dot(to_target_xy, xaxis) / (length(to_target_xy) * length(xaxis)));
+
+    if (isnan(angle_z_orig)){
+        angle_z_orig = 0;
+    }
+    if (isnan(angle_z_target)){
+        angle_z_target = 0;
+    }
 
     /// get rotation around Y
     // rotate vectors to XZ plane
-    vec3 to_origin_xz = easy3d::mat3::rotation(zaxis, -angle_z_orig) * to_origin;
-    vec3 to_target_xz = easy3d::mat3::rotation(zaxis, -angle_z_target) * to_target;
+    vec3 to_origin_xz = easy3d::mat3::rotation(zaxis, angle_z_orig) * to_origin;
+    vec3 to_target_xz = easy3d::mat3::rotation(zaxis, angle_z_target) * to_target;
 
-    // find angle between planar vectors & y-axis (acos = xaxis, y-axis = + 3/2 PI)
-    double angle_y_orig = (0.5*M_PI) - acos(dot(to_origin_xz, xaxis) / (length(to_origin_xz) * length(xaxis)));
-    double angle_y_target = (0.5*M_PI) - acos(dot(to_target_xz, xaxis) / (length(to_target_xz) * length(xaxis)));
+    // find angle between planar vectors & y-axis (acos = xaxis, y-axis = - 0.5 PI)
+    double angle_y_orig = acos(dot(to_origin_xz, xaxis) / (length(to_origin_xz) * length(xaxis)));
+    double angle_y_target = acos(dot(to_target_xz, xaxis) / (length(to_target_xz) * length(xaxis)));
+
+    if (isnan(angle_y_orig)){
+        angle_y_orig = 0;
+    }
+    if (isnan(angle_y_target)){
+        angle_y_target = 0;
+    }
 
     /// combine rotations
-    // respective rotations to rotate the original zaxis onto to_origin and to_target
-    mat3 R_origin = easy3d::mat3::rotation(0, (angle_y_orig), (angle_z_orig), 123);
-    mat3 R_target = easy3d::mat3::rotation(0, (angle_y_target), (angle_z_target), 123);
+    double angle_diff_z = angle_z_orig - angle_z_target;
+    double angle_diff_y = angle_y_orig - angle_y_target;
 
-    double angle_diff_z = angle_z_target - angle_z_orig;
-    double angle_diff_y = angle_y_target - angle_y_orig;
+    mat3 R = easy3d::mat3::rotation(0, angle_diff_y, angle_diff_z, 123);
 
-    mat3 R = easy3d::mat3::rotation(0, ((-1/2)*M_PI + angle_diff_y), angle_diff_z, 123);
+    bool debug_print = true;
 
-    std::cout << "\n---------- computing translation ----------" << std::endl;
-    std::cout << "start node: (" << startV << ") " << coords_start
-              << " --> next: (" << nextV << ") " << coords_next
-              << " | previous: (" << prevV << ") " << coords_prev << std::endl;
+    if(debug_print) {
+        std::cout << "\n---------- computing translation ----------" << std::endl;
+        std::cout << "start node: (" << startV << ") " << coords_start
+                  << " --> next: (" << nextV << ") " << coords_next
+                  << " | previous: (" << prevV << ") " << coords_prev << std::endl;
 
-    std::cout << "\nto origin proj XZ (y): " << to_origin_xz << std::endl;
-    std::cout << "to target proj XZ (y): " << to_target_xz << std::endl;
+        std::cout << "\nto origin proj XZ (y): " << to_origin_xz << std::endl;
+        std::cout << "to target proj XZ (y): " << to_target_xz << std::endl;
 
-    std::cout << "to_origin: " << to_origin << " , length: " << length(to_origin) << std::endl;
-    std::cout << "to_target: " << to_target << " , length: " << length(to_target) << std::endl;
+        std::cout << "to_origin: " << to_origin << " , length: " << length(to_origin) << std::endl;
+        std::cout << "to_target: " << to_target << " , length: " << length(to_target) << std::endl;
 
-    std::cout << "\norigin angle z: " << angle_z_orig / (M_PI/180) << std::endl;
-    std::cout << "origin angle y: " << angle_y_orig / (M_PI/180) << std::endl;
-    std::cout << "target angle z: " << angle_z_target / (M_PI/180) << std::endl;
-    std::cout << "target angle y: " << angle_y_target / (M_PI/180) << std::endl;
-    std::cout << "diff. angle z: " << (angle_z_target - angle_z_orig) / (M_PI/180) << std::endl;
-    std::cout << "diff. angle y: " << (angle_y_target - angle_y_orig) / (M_PI/180) << std::endl;
+        std::cout << "\norigin angle z: " << angle_z_orig / (M_PI / 180) << std::endl;
+        std::cout << "origin angle y: " << angle_y_orig / (M_PI / 180) << std::endl;
+        std::cout << "target angle z: " << angle_z_target / (M_PI / 180) << std::endl;
+        std::cout << "target angle y: " << angle_y_target / (M_PI / 180) << std::endl;
+        std::cout << "diff. angle z: " << angle_diff_z / (M_PI / 180) << std::endl;
+        std::cout << "diff. angle y: " << angle_diff_y / (M_PI / 180) << std::endl;
 
-    std::cout << "\nzaxis check to_origin: " << R_origin * zaxis << std::endl;
-//    std::cout << "zaxis check to_origin V2: " << easy3d::mat3::rotation(zaxis, -angle_z_orig)
-//    * easy3d::mat3::rotation(yaxis, (-1/2)*M_PI + angle_y_orig) * zaxis << std::endl;
-    std::cout << "zaxis check to_target: " << R_target * zaxis << std::endl;
+        std::cout << "\norigin angle y * xaxis: " << easy3d::mat3::rotation(0, angle_y_orig, 0) * xaxis << std::endl;
+        std::cout << "origin angle y * origin_xz(y): " << easy3d::mat3::rotation(0, angle_y_orig, 0) * to_origin_xz
+                  << std::endl;
+        std::cout << "origin angle z * origin_xy(z): " << easy3d::mat3::rotation(0, 0, angle_z_orig) * to_origin_xy
+                  << std::endl;
 
-    std::cout << "\nR-orig:\n" << R_origin << std::endl;
-    std::cout << "R-target:\n" << R_target << std::endl;
-
-
+        std::cout << "\nR * to_origin: " << easy3d::mat3::rotation(0, angle_diff_y, -angle_z_orig + angle_diff_z, 123)
+                                            * easy3d::mat3::rotation(0, 0, angle_z_orig)
+                                            * to_origin << std::endl;
+    }
 }
