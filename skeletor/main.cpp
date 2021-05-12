@@ -44,7 +44,7 @@ int read_object(const char* file_in, std::map<int, Point >& Vertices,
         //std::cout << "here: " << cursor << '\n';
         IDBranch = std::stoi(cursor);
 
-        linestream >> cursor;
+        linestream >> cursor; // read the second column to cursor
         //std::cout << "here: " << cursor << '\n';
         ID1 = std::stoi(cursor);
 
@@ -118,16 +118,18 @@ int writeJSON(std::map<int, Point>& Vertices, std::map<int, std::vector<int>>& B
     }
     std::cout << "create boundaries done" << std::endl;
 
+
     //create semantic classes
     json semantics;
     json types;
     for (int i = 1; i < 11; i++) {
-        float radius = (maxradius * i) / 11;
+        float radius = (maxradius * i) / 11; //TODO: cannot understand...
         json classtemp{ { "class",i, "radius",radius} };
         types.emplace_back(classtemp);
     }
-    json typestemp{ {"class", 11}, {"radius", maxradius / 12 } };
+    json typestemp{ {"class", 11}, {"radius", maxradius / 12 } };//TODO: cannot understand...
     types.emplace_back(typestemp); // cleass for ends of branches
+
     std::cout << "create semantic classes down" << std::endl;
 
 
