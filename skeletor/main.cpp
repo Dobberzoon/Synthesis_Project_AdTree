@@ -108,11 +108,16 @@ void writeJSON( std::map<int, Point> &Vertices, std::map<int, std::vector<int>> 
 
 
     //creating object with all vertices
-    json vertices;
+   json vertices= json::array();
+    
     for (int i=1; i < Vertices.size(); i++){
-        vertices.emplace_back(Vertices[i].x, Vertices[i].y, Vertices[i].z);
+        std::vector<float> array1{Vertices[i].x, Vertices[i].y, Vertices[i].z};
+        json subvertices= json::array();
+        for (int j = 0; j < array1.size(); j++){
+               subvertices.emplace_back(array1[j]);
     }
-
+    vertices.emplace_back(subvertices);
+    }
 
     //creating boundaries
     json boundaries;
