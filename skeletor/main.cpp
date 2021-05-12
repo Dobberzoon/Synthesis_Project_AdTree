@@ -41,43 +41,47 @@ int read_object(std::string  input, std::map<int, Point > &Vertices,
     }
     std::string cursor;
     std::string line = "";
+
     std::getline(infile, line);
+    std::getline(infile, line);
+
     while (line != "")
     {
-        if(cursor == "ID"){
-            std::getline(infile, line);
-        }
-
+        
         std::istringstream linestream(line);
 
         linestream >> cursor;
 
         float x1,y1,z1, r, x2, y2, z2;
         int IDB, ID1, ID2, e;
-        IDB = std::stof(cursor);
+        IDB = std::stoi(cursor);
         linestream >> cursor;
-        ID1 = std::stof(cursor);
+
+        ID1 = std::stoi(cursor);
         linestream >> cursor;
-        ID2 = std::stof(cursor);
+
+        ID2 = std::stoi(cursor);
         linestream >> cursor;
+
         x1 = std::stof(cursor);
         linestream >> cursor;
+
         y1 = std::stof(cursor);
         linestream >> cursor;
         z1 = std::stof(cursor);
         linestream >> cursor;
+
         x2 = std::stof(cursor);
         linestream >> cursor;
         y2 = std::stof(cursor);
         linestream >> cursor;
-        z2 = std::stof(cursor);
-        linestream >> cursor;
+
+
         z2 = std::stof(cursor);
         linestream >> cursor;
         r = std::stof(cursor);
         linestream >> cursor;
         e = std::stof(cursor);
-
 
         auto p1 = Point(x1,y1,z1);
         auto p2 = Point(x2,y2,z2);
@@ -88,15 +92,15 @@ int read_object(std::string  input, std::map<int, Point > &Vertices,
         BranchRadii[IDB] = r;
         EndBranch[IDB] = e;
 
-        if(cursor == "root_radius:"){
-            linestream >> cursor;
-            maxradius = std::stof(cursor);
+        if (r > maxradius){
+            maxradius = r;
         }
-        std::cout<<" maxradius: "<< maxradius <<std::endl;
         std::getline(infile, line);
 
 
     }
+    std::cout<<" reader done " <<std::endl;
+
     return 0;
 }
 
