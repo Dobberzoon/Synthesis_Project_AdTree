@@ -73,8 +73,8 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
     std::vector<SGraphVertexDescriptor> slower_children;
 
     // skip if node is leaf
-    if (!(out_degree(startV, skel->get_simplified_skeleton()) == 1)
-        && (startV != skel->get_simplified_skeleton()[startV].nParent)) {
+    if (!((out_degree(startV, skel->get_simplified_skeleton()) == 1)
+        && (startV != skel->get_simplified_skeleton()[startV].nParent))) {
 
         /// find children of start node
         double maxR = -1;
