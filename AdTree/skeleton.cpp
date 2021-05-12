@@ -320,7 +320,6 @@ bool Skeleton::smooth_skeleton()
 void Skeleton::write_to_file()
 {
     // define a file
-
     std::ofstream outfile;
     outfile.open("data.txt", std::ios::out | std::ios::trunc);
     if ( !outfile )
@@ -328,10 +327,9 @@ void Skeleton::write_to_file()
         std::cerr << "Error: file could not be opened" << std::endl;
         exit(1);
     }
-
+    //find the total number of endVertex
     const std::vector<SGraphVertexDescriptor> &endVertices_total = find_end_vertices();
-    std::cout << "endVertices_total size " << endVertices_total.size() << std::endl;
-
+//    std::cout << "endVertices_total size " << endVertices_total.size() << std::endl;
 
     //bool end_vertex = 0;
     outfile<<"ID  "<<" source_index"<<" target_index"<<"  pSource.x "<<"  pSource.y  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<" endvertex "<<'\n';
@@ -377,7 +375,7 @@ void Skeleton::write_to_file()
             end_vertex = 1;
         }
 
-        //extract the indices for both vertices of currentE(dge)
+        //extract the indices for both vertices of currentEdge
         //std::cout << "current E: " << currentE << std::endl;
         int source_index = source(currentE, simplified_skeleton_);
         //std::cout << "index source: " << source_index << std::endl;
@@ -393,9 +391,6 @@ void Skeleton::write_to_file()
 
     outfile<<"root_radius: "<<rootRadius;
     //outfile.close();
-
-
-
     return;
 }
 //============================================================================================================
