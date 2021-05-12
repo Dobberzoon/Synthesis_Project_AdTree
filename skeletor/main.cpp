@@ -17,58 +17,57 @@
 using json = nlohmann::json;
 using namespace std;
 
-int read_object(std::string input, std::map<int, Point >& Vertices,
+int read_object(const char* file_in, std::map<int, Point >& Vertices,
                 std::map<int, std::vector<int>>& Branches, std::map<int, float>& BranchRadii,
-                std::map<int, int>& EndBranch, float maxradius)
-{
-    std::cout << "start Reading file: " << input << std::endl;
-    std::ifstream infile(input, std::ifstream::in);
+                std::map<int, int>& EndBranch, float maxradius){
+
+    std::cout << "start Reading file: " << file_in << std::endl;
+
+    std::ifstream infile(file_in, std::ifstream::in);
     if (!infile)
     {
         std::cerr << "Input file not found.\n";
         return false;
     }
+
     std::string cursor;
-    std::string line = "";
 
-    std::getline(infile, line);
-    std::getline(infile, line);
-
-    while (line != "")
-    {
-
-        std::istringstream linestream(line);
-
-        linestream >> cursor;
+    while (std::getline(infile, cursor)){
+        //jump the first and last line
+        if (cursor[0] == 'I' || cursor[0] == 'r') continue;
 
         float x1, y1, z1, r, x2, y2, z2;
-        int IDB, ID1, ID2, e;
-        IDB = std::stoi(cursor);
-        linestream >> cursor;
+        int IDBranch, ID1, ID2, e;
+        //
+        std::istringstream linestream(cursor);
+        linestream >> cursor; // read the first column to cursor
+        //std::cout << "here: " << cursor << '\n';
+        IDBranch = std::stoi(cursor);
 
+        linestream >> cursor;
+        //std::cout << "here: " << cursor << '\n';
         ID1 = std::stoi(cursor);
-        linestream >> cursor;
 
+        linestream >> cursor;
         ID2 = std::stoi(cursor);
-        linestream >> cursor;
 
+        linestream >> cursor;
         x1 = std::stof(cursor);
         linestream >> cursor;
-
         y1 = std::stof(cursor);
         linestream >> cursor;
         z1 = std::stof(cursor);
-        linestream >> cursor;
 
+        linestream >> cursor;
         x2 = std::stof(cursor);
         linestream >> cursor;
         y2 = std::stof(cursor);
         linestream >> cursor;
-
-
         z2 = std::stof(cursor);
+
         linestream >> cursor;
         r = std::stof(cursor);
+
         linestream >> cursor;
         e = std::stof(cursor);
 
@@ -77,18 +76,14 @@ int read_object(std::string input, std::map<int, Point >& Vertices,
         Vertices[ID1] = p1;
         Vertices[ID2] = p2;
         std::vector vectorBranch{ ID1, ID2 };
-        Branches[IDB] = vectorBranch;
-        BranchRadii[IDB] = r;
-        EndBranch[IDB] = e;
+        Branches[IDBranch] = vectorBranch;
+        BranchRadii[IDBranch] = r;
+        EndBranch[IDBranch] = e;
 
         if (r > maxradius) {
             maxradius = r;
         }
-        std::getline(infile, line);
-
-
     }
-
     return 0;
 }
 
@@ -99,10 +94,9 @@ int writeJSON(std::map<int, Point>& Vertices, std::map<int, std::vector<int>>& B
     final["type"] = "CityJSON";
     final["version"] = "1.0";
 
-    //creating object with all vertices
-    std::cout << "creating object with all vertices " << std::endl;
-    json vertices = json::array();
 
+    //creating object with all vertices
+    json vertices = json::array();
     for (int i = 0; i < Vertices.size(); i++) {
         std::vector<float> array1{ Vertices[i].x, Vertices[i].y, Vertices[i].z };
         json subvertices = json::array();
@@ -111,10 +105,10 @@ int writeJSON(std::map<int, Point>& Vertices, std::map<int, std::vector<int>>& B
         }
         vertices.emplace_back(subvertices);
     }
+    std::cout << "create object with all vertices done" << std::endl;
+
 
     //creating boundaries
-    std::cout << "creating boundaries" << std::endl;
-
     json boundaries = json::array();
     for (int i = 0; i < Branches.size(); i++) {
         json branch = json::array();
@@ -122,10 +116,9 @@ int writeJSON(std::map<int, Point>& Vertices, std::map<int, std::vector<int>>& B
         branch.emplace_back(Branches[i][1]);
         boundaries.emplace_back(branch);
     }
-
+    std::cout << "create boundaries done" << std::endl;
 
     //create semantic classes
-    std::cout << "create semantic classes" << std::endl;
     json semantics;
     json types;
     for (int i = 1; i < 11; i++) {
@@ -135,9 +128,10 @@ int writeJSON(std::map<int, Point>& Vertices, std::map<int, std::vector<int>>& B
     }
     json typestemp{ {"class", 11}, {"radius", maxradius / 12 } };
     types.emplace_back(typestemp); // cleass for ends of branches
+    std::cout << "create semantic classes down" << std::endl;
+
 
     //assigning branches to classes and putting them into values array
-    std::cout << "assigning branches to classes and putting them into values array" << std::endl;
     json values;
     for (int i = 0; i < BranchRadii.size(); i++) {
         for (int j = 1; j <= 11; j++) {
@@ -149,33 +143,33 @@ int writeJSON(std::map<int, Point>& Vertices, std::map<int, std::vector<int>>& B
             // }
         }
     }
+    std::cout << "assigning branches to classes and putting them into values array done" << std::endl;
+
 
     //assign ends of branches
-    std::cout << "assign ends of branches" << std::endl;
-
     for (int i = 1; i < EndBranch.size(); i++) {
         if (EndBranch[i] == 1) {
             values[i] = 11;
         }
     }
+    std::cout << "assign ends of branches done" << std::endl;
+
 
     //write semantics
-    std::cout << "write semantics" << std::endl;
-
     semantics["types"] = types;
     semantics["values"] = values;
+    std::cout << "write semantics done" << std::endl;
+
 
     //creating full geometry
-    std::cout << "creating full geometry" << std::endl;
     json geometry{ {"type", "MultilineString"}, {"lod", 2},
                    {"boundaries", boundaries}, {"semantics", semantics} };
     final["geometry"] = geometry;
-
-
+    std::cout << "creating full geometry done" << std::endl;
 
     std::cout << "Writing vertices.." << std::endl;
     final["vertices"] = vertices;
-    std::cout << "vertices written" << std::endl;
+    std::cout << "vertices written done" << std::endl;
 
     std::ofstream MyFile(output_file);
     std::cout << "dumping file..." << std::endl;
@@ -192,20 +186,20 @@ int main()
     std::map<int, std::vector<int>> Branches;
     std::map<int, float> BranchRadii;
     std::map<int, int> EndBranch;
-    float maxradius = 0.01;
+    float maxradius = 0.0000001;
 
     const char* file_in = "D:\\Workplace\\CLion\\tree_json\\data.txt";
-    std::string  input = file_in;
+    //std::string  input = file_in;
     //input = "../" + input;
 
     const char* file_out = "Treesfile.txt";
     std::string  output = file_out;
     output = "../" + output;
 
-    read_object(input, Vertices, Branches, BranchRadii, EndBranch, maxradius);
+    read_object(file_in, Vertices, Branches, BranchRadii, EndBranch, maxradius);
     std::cout << " reader done " << std::endl;
 
-    //writeJSON(Vertices, Branches, BranchRadii, EndBranch, output, maxradius);
-    //std::cout << "return" << std::endl;
+    writeJSON(Vertices, Branches, BranchRadii, EndBranch, output, maxradius);
+    std::cout << "return" << std::endl;
     return 0;
 }
