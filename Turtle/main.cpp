@@ -11,6 +11,25 @@
 
 #include "3rd_party/nlohmann/json.hpp"
 
+struct SGraphVertexProp
+{
+    easy3d::Vec<3, double>  cVert;
+    std::size_t nParent;
+    double lengthOfSubtree;
+
+    double radius; // used only by the smoothed skeleton
+    bool   visited;
+};
+
+struct SGraphEdgeProp
+{
+    double nWeight;
+    double nRadius;
+    std::vector<int> vecPoints;
+};
+
+typedef boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS, SGraphVertexProp, SGraphEdgeProp > Graph;
+
 class Turtle {
 public:
     /// default constructor ///
@@ -58,8 +77,8 @@ public:
     }
 
     /// return the points that were internalized ///
-    std::vector<easy3d::Vec<3, double>> getStoredPoints(){
-        return storedPoints;
+    auto getStoredPoints(){
+        return graph.m_vertices;
     }
 
     /// return the stored edges that were internalized ///
@@ -72,8 +91,9 @@ public:
         std::ofstream storageFile;
         storageFile.open(fileName);
         storageFile << "x y z\n";
-        for (easy3d::Vec<3, double> p: storedPoints){
-            storageFile << p << std::endl;
+
+        for (auto & m_vertice : graph.m_vertices) {
+            storageFile << m_vertice.m_property.cVert << std::endl;
         }
         storageFile.close();
     }
@@ -86,7 +106,7 @@ public:
         // write header
         storageFile << "ply" << std::endl;
         storageFile << "format ascii 1.0" << std::endl;
-        storageFile << "element vertex " << storedPoints.size() << std::endl;
+        storageFile << "element vertex " << graph.m_vertices.size() << std::endl;
         storageFile << "property float x" << std::endl;
         storageFile << "property float y" << std::endl;
         storageFile << "property float z" << std::endl;
@@ -96,8 +116,8 @@ public:
         storageFile << "end_header" << std::endl << std::endl;
 
         // store points
-        for (easy3d::Vec<3, double> p: storedPoints){
-            storageFile << p << std::endl;
+        for (auto & m_vertice : graph.m_vertices) {
+            storageFile << m_vertice.m_property.cVert << std::endl;
         }
 
         // store edges
@@ -118,6 +138,7 @@ public:
         setDefaultValues(j["dimensions"]);
         std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
         line = cleanLine(line);
+        std::cout << line << std::endl;
         readLine(line);
     }
 
@@ -128,11 +149,11 @@ private:
     // plane is a 2d plane in a 3d space
     easy3d::Mat<3,3, double> plane;
 
-    // collection of stored points
-    std::vector<easy3d::Vec<3, double>> storedPoints;
-
     // collection of stored edges
     std::vector<std::vector<unsigned int>> storedEdges;
+
+    // graph
+    Graph graph;
 
     // default variables
     double fValue = 5;
@@ -185,8 +206,13 @@ private:
     }
 
     /// internalize current location ///
-    void storeLoc(){
-        storedPoints.emplace_back(loc);
+    void storeLoc(unsigned int parent = -1){
+        SGraphVertexProp p1;
+        p1.cVert = loc;
+        if (parent >= 0){p1.nParent = parent;}
+        else {p1.nParent = NULL;}
+
+        graph.m_vertices.emplace_back(p1);
     }
 
     void setDefaultValues(nlohmann::json d){
@@ -246,6 +272,8 @@ private:
 
         // TODO allow for multichar rules
         // TODO allow for override rules
+        // TODO improve [[]] cases
+
         for (int j = 0; j < r; ++j) {
             unsigned int offsetter = 0;
             for(int i = 0; i < line.size(); ++i) {
@@ -270,6 +298,9 @@ private:
 
     /// translate the "simple" line to 3d points ///
     void readLine(std::string line){
+        SGraphVertexProp p;
+        SGraphEdgeProp e;
+
         // store starting point
         storeLoc();
 
@@ -313,28 +344,28 @@ private:
                         turtle.readLine(line.substr(i + 1, k - i - 1));
 
                         // store the points recursion
-                        unsigned int offset = storedPoints.size() - 1;
-                        for (int l = 1; l < turtle.getStoredPoints().size() ; ++l) {
-                            storedPoints.emplace_back(turtle.getStoredPoints()[l]);
+                        unsigned int offset = graph.m_vertices.size() - 1;
+                        turtle.graph.m_vertices[1].m_property.nParent = trunk;
+                        graph.m_vertices.emplace_back(turtle.graph.m_vertices[1]);
+
+                        for (int l = 2; l < turtle.graph.m_vertices.size(); ++l) {
+                            turtle.graph.m_vertices[l].m_property.nParent += offset;
+                            graph.m_vertices.emplace_back(turtle.graph.m_vertices[l]);
                         }
 
+                        //TODO remove
+
                         // store edges of recursion temporary
-                        std::vector<std::vector<unsigned int>> tEdgeList;
+                        std::vector<unsigned int> connector = {trunk, offset + 1};
+                        storedEdges.emplace_back(connector);
 
                         for (int l = 1; l < turtle.getStoredEdges().size(); ++l) {
                             std::vector<unsigned int> edge = turtle.getStoredEdges()[l];
                             std::vector<unsigned int> nEdge = {edge[0] + offset, edge[1] + offset};
-                            tEdgeList.emplace_back(nEdge);
+                            storedEdges.emplace_back(nEdge);
                         }
 
-                        // connect first point of recursion to last point of the trunk
-                        std::vector<unsigned int> connector = {trunk, offset + 1};
-                        storedEdges.emplace_back(connector);
-
-                        // store temporary edges
-                        for (const auto& l: tEdgeList){
-                            storedEdges.emplace_back(l);
-                        }
+                        // TODO remove till here
 
                         // set return to true to allow later growth from the trunk
                         returnEdge = true;
@@ -356,27 +387,38 @@ private:
                 // take a step
                 if (override == 0){stepForward(fValue);}
                 else {stepForward(override);}
-                storeLoc();
-                trunk = storedPoints.size() - 1;
+
+                // if this is not the final step of a straight line piece no point nor edge is created
+                if (line[i+1] == 'F'){continue;}
+
+                trunk = graph.m_vertices.size();
 
                 if (debug){printLocation();}
 
+                unsigned int n_parent = 0;
+
+                // TODO remove storedEdges
+
                 if (returnEdge){
                     // if the point lies after a nesting a correct link has to be set
-                    unsigned int p2 = getStoredPoints().size();
-                    std::vector<unsigned int> edge = {pCount - 1 , p2 - 1};
+                    unsigned int p2 = graph.m_vertices.size() + 1;
+                    n_parent = pCount - 1;
+                    std::vector<unsigned int> edge = {n_parent , p2 - 1};
                     storedEdges.emplace_back(edge);
 
                     returnEdge = false;
-                } else if (getStoredPoints().size() == 1){
+                } else if (graph.m_vertices.empty()){
                     // if the first point in a branch no edges are created
                     continue;
                 } else {
-                    unsigned int p2 = getStoredPoints().size();
-                    std::vector<unsigned int> edge = {p2 - 2, p2 - 1};
+                    unsigned int p2 = graph.m_vertices.size() + 1;
+                    n_parent = p2 - 2;
+                    std::vector<unsigned int> edge = {n_parent, p2 - 1};
                     storedEdges.emplace_back(edge);
                 }
-                pCount = getStoredPoints().size();
+
+                storeLoc(n_parent);
+                pCount = graph.m_vertices.size();
 
             } else if (line[i] == '+') {
                 if (override == 0){
@@ -414,6 +456,11 @@ private:
             i += j;
         }
     }
+
+    void populateGraph(){
+
+    }
+
 };
 
 
@@ -426,6 +473,11 @@ int main() {
     turtle.setDebug(false);
     turtle.readFile(inputPath);
 
+    for (int l = 0; l < turtle.getStoredPoints().size(); ++l) {
+        std::cout << turtle.getStoredPoints()[l].m_property.nParent << std::endl;
+    }
+
+    //turtle.getGraph();
     turtle.writeToXYZ(outputPath);
     turtle.writeToPly(outputPath2);
 }
