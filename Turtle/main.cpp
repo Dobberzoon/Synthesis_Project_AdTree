@@ -110,7 +110,7 @@ public:
         storageFile << "property float x" << std::endl;
         storageFile << "property float y" << std::endl;
         storageFile << "property float z" << std::endl;
-        storageFile << "element edge " << storedEdges.size() << std::endl;
+        storageFile << "element edge " << graph.m_edges.size() << std::endl;
         storageFile << "property int vertex1" << std::endl;
         storageFile << "property int vertex2" << std::endl;
         storageFile << "end_header" << std::endl << std::endl;
@@ -120,11 +120,10 @@ public:
             storageFile << m_vertice.m_property.cVert << std::endl;
         }
 
-        // store edges
-        storageFile << std::endl;
-        for (std::vector<unsigned int> i: storedEdges){
-            storageFile << i[0] << " " << i[1] << std::endl;
+        for (auto edge: graph.m_edges){
+            storageFile << edge.m_source << " " << edge.m_target << std::endl;
         }
+
         storageFile.close();
     }
 
@@ -138,7 +137,6 @@ public:
         setDefaultValues(j["dimensions"]);
         std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
         line = cleanLine(line);
-        std::cout << line << std::endl;
         readLine(line);
     }
 
@@ -353,19 +351,10 @@ private:
                             graph.m_vertices.emplace_back(turtle.graph.m_vertices[l]);
                         }
 
-                        //TODO remove
-
-                        // store edges of recursion temporary
-                        std::vector<unsigned int> connector = {trunk, offset + 1};
-                        storedEdges.emplace_back(connector);
-
-                        for (int l = 1; l < turtle.getStoredEdges().size(); ++l) {
-                            std::vector<unsigned int> edge = turtle.getStoredEdges()[l];
-                            std::vector<unsigned int> nEdge = {edge[0] + offset, edge[1] + offset};
-                            storedEdges.emplace_back(nEdge);
+                        //boost::add_edge(trunk + 1, offset + 2, graph);
+                        for (auto e: turtle.graph.m_edges) {
+                            boost::add_edge(e.m_source + offset, e.m_target + offset, graph);
                         }
-
-                        // TODO remove till here
 
                         // set return to true to allow later growth from the trunk
                         returnEdge = true;
@@ -395,16 +384,12 @@ private:
 
                 if (debug){printLocation();}
 
-                unsigned int n_parent = 0;
-
-                // TODO remove storedEdges
-
                 if (returnEdge){
                     // if the point lies after a nesting a correct link has to be set
                     unsigned int p2 = graph.m_vertices.size() + 1;
-                    n_parent = pCount - 1;
-                    std::vector<unsigned int> edge = {n_parent , p2 - 1};
-                    storedEdges.emplace_back(edge);
+                    unsigned int n_parent = pCount - 1;
+                    storeLoc(n_parent);
+                    boost::add_edge(n_parent, p2 - 1, graph);
 
                     returnEdge = false;
                 } else if (graph.m_vertices.empty()){
@@ -412,12 +397,11 @@ private:
                     continue;
                 } else {
                     unsigned int p2 = graph.m_vertices.size() + 1;
-                    n_parent = p2 - 2;
-                    std::vector<unsigned int> edge = {n_parent, p2 - 1};
-                    storedEdges.emplace_back(edge);
+                    unsigned int n_parent = p2 - 2;
+                    storeLoc(n_parent);
+                    boost::add_edge(n_parent, p2 - 1, graph);
                 }
 
-                storeLoc(n_parent);
                 pCount = graph.m_vertices.size();
 
             } else if (line[i] == '+') {
@@ -457,9 +441,6 @@ private:
         }
     }
 
-    void populateGraph(){
-
-    }
 
 };
 
@@ -472,12 +453,6 @@ int main() {
     Turtle turtle;
     turtle.setDebug(false);
     turtle.readFile(inputPath);
-
-    for (int l = 0; l < turtle.getStoredPoints().size(); ++l) {
-        std::cout << turtle.getStoredPoints()[l].m_property.nParent << std::endl;
-    }
-
-    //turtle.getGraph();
     turtle.writeToXYZ(outputPath);
     turtle.writeToPly(outputPath2);
 }
