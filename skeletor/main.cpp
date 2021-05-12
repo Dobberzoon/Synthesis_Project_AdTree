@@ -22,7 +22,11 @@
 //#include <boost/uuid/uuid_generators.hpp>
 //#include <boost/uuid/uuid_io.hpp>
 using json = nlohmann::json;
+
+
 using namespace std;
+
+
 
 int read_object(std::string  input, std::map<int, Point > &Vertices,
                 std::map<int, std::vector<int>> &Branches, std::map<int, float> &BranchRadii,
@@ -101,14 +105,14 @@ int read_object(std::string  input, std::map<int, Point > &Vertices,
 
 
 void writeJSON( std::map<int, Point> &Vertices, std::map<int, std::vector<int>> &Branches,
-                std::map<int, float> &BranchRadii, std::map<int, int> &EndBranch, std::string output_file){
+                std::map<int, float> &BranchRadii, std::map<int, int> &EndBranch, std::string output_file, float maxradius){
     json final;
     final["type"] = "CityJSON";
     final["version"] = "1.0";
 
 
     //creating object with all vertices
-   json vertices= json::array();
+    json vertices= json::array();
     
     for (int i=1; i < Vertices.size(); i++){
         std::vector<float> array1{Vertices[i].x, Vertices[i].y, Vertices[i].z};
@@ -117,7 +121,7 @@ void writeJSON( std::map<int, Point> &Vertices, std::map<int, std::vector<int>> 
                subvertices.emplace_back(array1[j]);
     }
     vertices.emplace_back(subvertices);
-    }
+}
 
     //creating boundaries
     json boundaries;
@@ -126,7 +130,6 @@ void writeJSON( std::map<int, Point> &Vertices, std::map<int, std::vector<int>> 
     }
 
     //create semantic classes
-    float maxradius = 11.0;
     json semantics;
     json types;
     for (int i=1; i < 11; i++){
@@ -163,6 +166,9 @@ void writeJSON( std::map<int, Point> &Vertices, std::map<int, std::vector<int>> 
                    {"boundaries", boundaries}, {"semantics", semantics} };
 
 
+
+
+
     final["vertices"] = vertices;
 
     std:: ofstream MyFile(output_file);
@@ -186,5 +192,6 @@ int main()
     std:: string  output =  file_out;
     output = "../" + output;
     read_object(input, Vertices, Branches, BranchRadii, EndBranch, maxradius);
-    writeJSON(Vertices, Branches, BranchRadii, EndBranch, output);
+    writeJSON(Vertices, Branches, BranchRadii, EndBranch, output, maxradius);
+
 }
