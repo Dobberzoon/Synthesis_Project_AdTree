@@ -86,6 +86,10 @@ public:
         return storedEdges;
     }
 
+    auto getStoredEdgesC(){
+        return graph.m_edges;
+    }
+
     /// store internalized points to file ///
     void writeToXYZ(const std::string& fileName){
         std::ofstream storageFile;
@@ -122,8 +126,13 @@ public:
 
         // store edges
         storageFile << std::endl;
-        for (std::vector<unsigned int> i: storedEdges){
-            storageFile << i[0] << " " << i[1] << std::endl;
+        /* for (const auto& e: graph.m_edges){
+             storageFile << e.m_source - 1 << " " << e.m_target - 1 << std::endl;
+        }*/
+
+
+        for (const auto p: storedEdges){
+            storageFile << p[0] << " " << p[1] << std::endl;
         }
         storageFile.close();
     }
@@ -138,8 +147,9 @@ public:
         setDefaultValues(j["dimensions"]);
         std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
         line = cleanLine(line);
-        std::cout << line << std::endl;
         readLine(line);
+        constructEdges();
+
     }
 
 private:
@@ -206,13 +216,11 @@ private:
     }
 
     /// internalize current location ///
-    void storeLoc(unsigned int parent = -1){
+    void storeLoc(unsigned int parent){
         SGraphVertexProp p1;
         p1.cVert = loc;
-        if (parent >= 0){p1.nParent = parent;}
-        else {p1.nParent = NULL;}
-
-        graph.m_vertices.emplace_back(p1);
+        p1.nParent = parent;
+        boost::add_vertex(p1, graph);
     }
 
     void setDefaultValues(nlohmann::json d){
@@ -298,11 +306,8 @@ private:
 
     /// translate the "simple" line to 3d points ///
     void readLine(std::string line){
-        SGraphVertexProp p;
-        SGraphEdgeProp e;
-
         // store starting point
-        storeLoc();
+        storeLoc(0);
 
         // set trunk location to grow from
         unsigned int trunk = 0;
@@ -396,15 +401,19 @@ private:
                 if (debug){printLocation();}
 
                 unsigned int n_parent = 0;
+                unsigned int n_child = 0;
 
                 // TODO remove storedEdges
+                SGraphEdgeProp e;
 
                 if (returnEdge){
                     // if the point lies after a nesting a correct link has to be set
                     unsigned int p2 = graph.m_vertices.size() + 1;
                     n_parent = pCount - 1;
-                    std::vector<unsigned int> edge = {n_parent , p2 - 1};
+                    n_child = p2 - 1;
+                    std::vector<unsigned int> edge = {n_parent, n_child};
                     storedEdges.emplace_back(edge);
+                    boost::add_edge(n_parent + 1, n_child + 1, graph);
 
                     returnEdge = false;
                 } else if (graph.m_vertices.empty()){
@@ -413,11 +422,21 @@ private:
                 } else {
                     unsigned int p2 = graph.m_vertices.size() + 1;
                     n_parent = p2 - 2;
-                    std::vector<unsigned int> edge = {n_parent, p2 - 1};
+                    n_child = p2 - 1;
+                    std::vector<unsigned int> edge = {n_parent, n_child};
                     storedEdges.emplace_back(edge);
+                    boost::add_edge(n_parent + 1, n_child + 1, graph);
                 }
 
+                e.vecPoints.emplace_back(n_child);
+                e.nWeight = 0;
+                e.nRadius = 0;
+                graph.m_vertices[0].m_out_edges.emplace(n_child);
+
+                //graph.m_edges.emplace_back(e);
+
                 storeLoc(n_parent);
+
                 pCount = graph.m_vertices.size();
 
             } else if (line[i] == '+') {
@@ -457,10 +476,11 @@ private:
         }
     }
 
-    void populateGraph(){
-
+    void constructEdges(){
+        //for (auto e: storedEdges){
+        //    boost::add_edge(e[0]+1, e[1]+1, graph);
+        //}
     }
-
 };
 
 
@@ -472,10 +492,6 @@ int main() {
     Turtle turtle;
     turtle.setDebug(false);
     turtle.readFile(inputPath);
-
-    for (int l = 0; l < turtle.getStoredPoints().size(); ++l) {
-        std::cout << turtle.getStoredPoints()[l].m_property.nParent << std::endl;
-    }
 
     //turtle.getGraph();
     turtle.writeToXYZ(outputPath);
