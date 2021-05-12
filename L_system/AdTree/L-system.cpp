@@ -59,14 +59,12 @@ void Lsystem::readSkeleton(Skeleton *skel) {
 void Lsystem::traverse(SGraphVertexDescriptor prevV,
                        SGraphVertexDescriptor startV,
                        Skeleton *skel){
-    // check if node is not root
-    // if not write the relative movement towards this node (startV)
-    if (prevV != skel->get_simplified_skeleton()[prevV].nParent) {
-        writeMovement(prevV, startV, skel);
-    }
-    // todo: does not write movement from root to first node, don't know why...
+    // write movement from prevV to nextV to Lstring
+    // will not write when prevV is a leaf or the root (preventing doubles and the root writing to itself)
+    writeMovement(prevV, startV, skel);
+
     // also writes index of node to the string, for debug only
-    Lstring_ += "{" + std::to_string(startV) + "}";
+//    Lstring_ += "{" + std::to_string(startV) + "}";
 
     vec3 start_coords = skel->get_simplified_skeleton()[startV].cVert;
     SGraphVertexDescriptor nextV;
@@ -133,7 +131,7 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
     SGraphVertexDescriptor prevV = skel->get_simplified_skeleton()[startV].nParent;
 
     // prevent it going wrong when start is [0 0 0] (is it's own parent, so vector between them is 0)
-    if (startV != skel->get_simplified_skeleton()[startV].nParent) {
+    if (nextV != skel->get_simplified_skeleton()[nextV].nParent) {
         // get coordinates of the two nodes
         vec3 coords_start = skel->get_simplified_skeleton()[startV].cVert;
         vec3 coords_next = skel->get_simplified_skeleton()[nextV].cVert;
@@ -244,6 +242,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
                             Skeleton *skel){
     // get relative movement between startV and nextV
     std::tuple<double, double, double> movement = moveToNext(startV, nextV, skel);
+    // angles are rounded to int
     int angle_y_deg = int(round(std::get<0>(movement) / (M_PI / 180)));
     int angle_z_deg = int(round(std::get<1>(movement) / (M_PI / 180)));
     double distance = std::get<2>(movement);
@@ -277,6 +276,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     }
     /// write forward
     if (distance > 0) {
+        // round distance to 2 decimals
         std::stringstream ss;
         ss << std::fixed << std::setprecision(2) << distance;
         std::string dist_string = ss.str();
