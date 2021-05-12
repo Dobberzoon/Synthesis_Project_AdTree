@@ -243,8 +243,8 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     // get relative movement between startV and nextV
     std::tuple<double, double, double> movement = moveToNext(startV, nextV, skel);
     // angles are rounded to int
-    int angle_y_deg = int(round(std::get<0>(movement) / (M_PI / 180)));
-    int angle_z_deg = int(round(std::get<1>(movement) / (M_PI / 180)));
+    double angle_y_deg = std::get<0>(movement) / (M_PI / 180);
+    double angle_z_deg = std::get<1>(movement) / (M_PI / 180);
     double distance = std::get<2>(movement);
 
     /*std::cout << "\n---------- computing translation ----------" << std::endl;
@@ -256,23 +256,33 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     std::cout << "angle: Z: " << angle_z_deg << std::endl;
     std::cout << "disance:  " << distance << std::endl;*/
 
-    // todo: do angles in a more neat way than just positive/negative... Can they be bigger than 360 deg?
-
     // todo: round angles and distance in a neater way (generalization?)
 
     /// write roll
     if (angle_y_deg > 0){
-        Lstring_ += "+(" + std::to_string(angle_y_deg) + ")";
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << angle_y_deg;
+        std::string angle_y_string = ss.str();
+        Lstring_ += "+(" + angle_y_string + ")";
     }
     if (angle_y_deg < 0){
-        Lstring_ += "-(" + std::to_string(abs(angle_y_deg)) + ")";
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << abs(angle_y_deg);
+        std::string angle_y_string = ss.str();
+        Lstring_ += "-(" + angle_y_string + ")";
     }
     /// write rotation
     if (angle_z_deg > 0){
-        Lstring_ += ">(" + std::to_string(angle_z_deg) + ")";
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << angle_z_deg;
+        std::string angle_z_string = ss.str();
+        Lstring_ += ">(" + angle_z_string + ")";
     }
     if (angle_z_deg < 0){
-        Lstring_ += "<(" + std::to_string(abs(angle_z_deg)) + ")";
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(2) << abs(angle_z_deg);
+        std::string angle_z_string = ss.str();
+        Lstring_ += "<(" + angle_z_string + ")";
     }
     /// write forward
     if (distance > 0) {
