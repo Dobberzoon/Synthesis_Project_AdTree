@@ -329,11 +329,12 @@ void Skeleton::write_to_file()
     }
     //find the total number of endVertex
     const std::vector<SGraphVertexDescriptor> &endVertices_total = find_end_vertices();
-//    std::cout << "endVertices_total size " << endVertices_total.size() << std::endl;
+    std::cout << "endVertices_total size " << endVertices_total.size() << std::endl;
 
     //bool end_vertex = 0;
     outfile<<"ID  "<<" source_index"<<" target_index"<<"  pSource.x "<<"  pSource.y  "<<"  pSource.z  "<<" pTarget.x "<<"  pTarget.y  "<<"  pTarget.z  "<<" currentR "<<" endvertex "<<'\n';
     int ID=0;
+    int end_vertex_count = 0;
     //initial a rootRadius
     double rootRadius = 0;
     //for each edge, find its corresponding points
@@ -342,7 +343,7 @@ void Skeleton::write_to_file()
 
     for (SGraphEdgeIterator eIter = ep.first; eIter != ep.second; ++eIter)
     {
-        bool end_vertex = 0; //initialize boolean end vertex attribute for each edge
+        bool end_vertex = 0; //initialize boolean end-vertex attribute for each edge
         //extract two end vertices of the current edge
         currentE = *eIter;
         simplified_skeleton_[currentE].vecPoints.clear();
@@ -366,13 +367,14 @@ void Skeleton::write_to_file()
             rootRadius=currentR;
         }
 
-        // determine for each edge if its the end vertex
+        // determine for each edge if its the end-vertex
         double lengthOfSubtree = simplified_skeleton_[targetV].lengthOfSubtree;
         //std::cout << "length of subtree: " << lengthOfSubtree << std::endl;
 
         if (lengthOfSubtree == 0)
         {
             end_vertex = 1;
+            end_vertex_count += 1;
         }
 
         //extract the indices for both vertices of currentEdge
@@ -391,6 +393,7 @@ void Skeleton::write_to_file()
 
     outfile<<"root_radius: "<<rootRadius;
     //outfile.close();
+    std::cout << "End vertex count: " << end_vertex_count << std::endl;
     return;
 }
 //============================================================================================================
