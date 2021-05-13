@@ -104,11 +104,15 @@ public:
     const Graph& get_simplified_skeleton() const { return simplified_skeleton_; }
     const Graph& get_smoothed_skeleton() const { return smoothed_skeleton_; }
 
+    const SGraphVertexDescriptor& get_root() const {return RootV_; }
+
     struct Branch {
         std::vector<easy3d::vec3> points;
         std::vector<double>       radii;
     };
     std::vector<Branch> get_branches_parameters() const;
+
+
 
 private:
 
