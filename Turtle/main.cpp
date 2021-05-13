@@ -48,14 +48,10 @@ public:
         plane.set_row(2, easy3d::Vec<3, double>{0,0,1});
     }
 
-    /// construct a turtle based on another turtle ///
+    /// construct a memoryless turtle based on another turtle ///
     Turtle (Turtle const &other){
-        loc = other.loc;
-        plane = other.plane;
-        debug = other.debug;
-        fValue = other.fValue;
-        rollValue = other.rollValue;
-        rotateValue = other.rotateValue;
+        *this = other;
+        graph.clear();
     }
 
     /// output the current location of the turtle ///
@@ -103,24 +99,28 @@ public:
         std::ofstream storageFile;
         storageFile.open(fileName);
 
+        auto verts = graph.m_vertices;
+        auto edges = graph.m_edges;
+
         // write header
         storageFile << "ply" << std::endl;
         storageFile << "format ascii 1.0" << std::endl;
-        storageFile << "element vertex " << graph.m_vertices.size() << std::endl;
+        storageFile << "element vertex " << verts.size() << std::endl;
         storageFile << "property float x" << std::endl;
         storageFile << "property float y" << std::endl;
         storageFile << "property float z" << std::endl;
-        storageFile << "element edge " << graph.m_edges.size() << std::endl;
+        storageFile << "element edge " << edges.size() << std::endl;
         storageFile << "property int vertex1" << std::endl;
         storageFile << "property int vertex2" << std::endl;
         storageFile << "end_header" << std::endl << std::endl;
 
         // store points
-        for (auto & m_vertice : graph.m_vertices) {
-            storageFile << m_vertice.m_property.cVert << std::endl;
+        for (auto & vertex : verts) {
+            storageFile << vertex.m_property.cVert << std::endl;
         }
 
-        for (auto edge: graph.m_edges){
+        storageFile << std::endl;
+        for (auto edge: edges){
             storageFile << edge.m_source << " " << edge.m_target << std::endl;
         }
 
@@ -161,7 +161,7 @@ private:
     // prints location at every step
     bool debug = false;
 
-    // commnicate with user
+    // communicate with user
     bool com = true;
 
     /// step forward ///
@@ -296,8 +296,7 @@ private:
 
     /// translate the "simple" line to 3d points ///
     void readLine(std::string line){
-        SGraphVertexProp p;
-        SGraphEdgeProp e;
+        std::cout << line << std::endl;
 
         // store starting point
         storeLoc();
@@ -351,10 +350,11 @@ private:
                             graph.m_vertices.emplace_back(turtle.graph.m_vertices[l]);
                         }
 
-                        //boost::add_edge(trunk + 1, offset + 2, graph);
                         for (auto e: turtle.graph.m_edges) {
                             boost::add_edge(e.m_source + offset, e.m_target + offset, graph);
+                            std::cout << e.m_source + offset << " " <<  e.m_target + offset << std::endl;
                         }
+
 
                         // set return to true to allow later growth from the trunk
                         returnEdge = true;
