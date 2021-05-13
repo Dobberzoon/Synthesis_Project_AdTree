@@ -190,7 +190,7 @@ int main()
     std::map<int, int> EndBranch;
     float maxradius = 0.0000001;
 
-    const char* file_in = "D:\\Workplace\\CLion\\tree_json\\data.txt";
+    const char* file_in = "../data.txt";
     //std::string  input = file_in;
     //input = "../" + input;
 
