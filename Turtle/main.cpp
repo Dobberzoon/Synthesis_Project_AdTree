@@ -166,41 +166,51 @@ private:
 
     /// step forward ///
     void stepForward(double distance){
-        loc += distance * plane.row(2);
+        loc = loc + (plane * easy3d::Vec<3, double>(1, 0, 0) * distance);
     }
 
     /// rotate ///
     void rotatePlane(double angle){
         angle = angle * M_PI/180;
 
-        easy3d::Vec<3, double> uAxis = plane.row(0);
-        easy3d::Vec<3, double> vAxis = plane.row(2);
+        /// 1: roll to XZ plane
+        // project current z-axis onto XY plane;
+        easy3d::Vec<3, double> xAxis = plane * easy3d::Vec<3, double>(1, 0, 0);
+        easy3d::Vec<3, double> xAxis_proj = {xAxis.x, xAxis.y, 0.0};
 
-        easy3d::Vec<3, double> uAxisT = uAxis*cos(angle) - vAxis*sin(angle);
-        easy3d::Vec<3, double> vAxisT = uAxis*sin(angle) + vAxis*cos(angle);
+        // angle of projected x-axis to original x-axis
+        double angle_z = (2 * M_PI) - acos(dot(xAxis_proj, easy3d::Vec<3, double>(1,0,0))
+                                           / (length(xAxis_proj) * length(easy3d::Vec<3, double>(1,0,0))));
+        if (isnan(angle_z)){
+            angle_z = 0;
+        }
 
-        uAxisT.normalize();
-        vAxisT.normalize();
+        rollPlane(angle_z);
 
-        plane.set_row(0, uAxisT);
-        plane.set_row(2, vAxisT);
+        /// 2: rotation around Y axis
+        easy3d::Mat3<double> ry(1);
+        ry(0, 0) = std::cos(angle);
+        ry(0, 2) = std::sin(angle);
+        ry(2, 0) = -std::sin(angle);
+        ry(2, 2) = std::cos(angle);
+
+        plane = ry * plane;
+
+        /// 3: roll back from XZ plane
+        rollPlane(-angle_z);
     }
 
     /// roll ///
     void rollPlane(double rollAngle){
         rollAngle = rollAngle * M_PI/180;
 
-        easy3d::Vec<3, double> uAxis = plane.row(0);
-        easy3d::Vec<3, double> wAxis = plane.row(1);
+        easy3d::Mat3<double> rz(1);
+        rz(0, 0) = std::cos(rollAngle);
+        rz(0, 1) = -std::sin(rollAngle);
+        rz(1, 0) = std::sin(rollAngle);
+        rz(1, 1) = std::cos(rollAngle);
 
-        easy3d::Vec<3, double> uAxisT = uAxis*cos(rollAngle) - wAxis*sin(rollAngle);
-        easy3d::Vec<3, double> wAxisT = uAxis*sin(rollAngle) + wAxis*cos(rollAngle);
-
-        uAxisT.normalize();
-        wAxisT.normalize();
-
-        plane.set_row(0, uAxisT);
-        plane.set_row(1, wAxisT);
+        plane = rz * plane;
     }
 
     /// internalize current location ///
