@@ -29,17 +29,22 @@ public:
     std::tuple<double, double, double> moveToNext(SGraphVertexDescriptor startV,
                                                   SGraphVertexDescriptor nextV,
                                                   Skeleton *skeleton);
-    void Lsystem::writeMovement(SGraphVertexDescriptor startV,
+    void writeMovement(SGraphVertexDescriptor startV,
                                 SGraphVertexDescriptor nextV,
                                 Skeleton *skel);
+
+    void stepForward(double distance);
+    void rotatePlane(double angle);
+    void rollPlane(double rollAngle);
 
 private:
     Graph graph_;
     std::string Lstring_;
     std::string axiom_;
     easy3d::vec3 zaxis_;
+    easy3d::mat3 plane_;
 
-    easy3d::Vec<3, double> loc_;
+    easy3d::vec3 loc_;
 
     // todo: remove attributes we will never use
 

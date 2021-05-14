@@ -130,7 +130,7 @@ bool TreeViewer::key_press_event(int key, int modifiers)
 		//shift the visibility of the graph drawable
         LinesDrawable* graph_drawable = cloud()->lines_drawable("graph");
         if (!graph_drawable)
-            create_skeleton_drawable(ST_SMOOTHED);
+            create_skeleton_drawable(ST_SIMPLIFIED);
         if (graph_drawable)
             graph_drawable->set_visible(!graph_drawable->is_visible());
 		return true;

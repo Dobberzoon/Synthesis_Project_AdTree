@@ -26,6 +26,7 @@ Lsystem::Lsystem()
         Lstring_ = "";
         axiom_ = "";
         zaxis_ = {0, 0, 1};
+        plane_ = mat3(1);
     }
 
 // todo: zaxis_ not used, is this permanent?
@@ -190,7 +191,7 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
         double angle_diff_y = angle_y_orig - angle_y_target;
 
         // may still need these later, switched off for now.
-        bool debug_print = false;
+        bool debug_print = true;
 
         if (debug_print) {
             std::cout << "\n---------- computing translation ----------" << std::endl;
@@ -198,11 +199,16 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
                       << " --> next: (" << nextV << ") " << coords_next
                       << " | previous: (" << prevV << ") " << coords_prev << std::endl;
 
-            std::cout << "\nto origin proj XZ (y): " << to_origin_xz << std::endl;
-            std::cout << "to target proj XZ (y): " << to_target_xz << std::endl;
+//            std::cout << "\nto origin proj XZ (y): " << to_origin_xz << std::endl;
+//            std::cout << "to target proj XZ (y): " << to_target_xz << std::endl;
 
             std::cout << "to_origin: " << to_origin << " , length: " << length(to_origin) << std::endl;
             std::cout << "to_target: " << to_target << " , length: " << length(to_target) << std::endl;
+            vec3 next_vec = easy3d::mat3::rotation(0, angle_diff_y, -angle_z_orig + angle_diff_z, 123)
+                            * easy3d::mat3::rotation(0, 0, angle_z_orig)
+                            * to_origin.normalize() * length(to_target);
+            std::cout << "R * to_origin normalized * length target: " <<  next_vec << std::endl;
+            std::cout << "next node calculated: " << coords_start + next_vec << std::endl;
 
             std::cout << "\norigin angle z: " << angle_z_orig / (M_PI / 180) << std::endl;
             std::cout << "origin angle y: " << angle_y_orig / (M_PI / 180) << std::endl;
@@ -211,17 +217,19 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
             std::cout << "diff. angle z: " << angle_diff_z / (M_PI / 180) << std::endl;
             std::cout << "diff. angle y: " << angle_diff_y / (M_PI / 180) << std::endl;
 
-            std::cout << "\norigin angle y * xaxis: " << easy3d::mat3::rotation(0, angle_y_orig, 0) * xaxis
-                      << std::endl;
-            std::cout << "origin angle y * origin_xz(y): " << easy3d::mat3::rotation(0, angle_y_orig, 0) * to_origin_xz
-                      << std::endl;
-            std::cout << "origin angle z * origin_xy(z): " << easy3d::mat3::rotation(0, 0, angle_z_orig) * to_origin_xy
-                      << std::endl;
+//            std::cout << "\n---------- turtle test ----------" << std::endl;
+//            std::cout << "previous loc: " << loc_ << std::endl;
+//            std::cout << "previous plane: " << plane_ << std::endl;
+//
+//            rotatePlane(angle_diff_y);
+//            std::cout << "rotate plane: " << plane_ <<  std::endl;
+//
+//            rollPlane(angle_diff_z);
+//            std::cout << "roll plane: " << plane_ <<  std::endl;
+//
+//            stepForward(branch_length);
+//            std::cout << "next loc: " << loc_ << std::endl;
 
-            std::cout << "\nR * to_origin: "
-                      << easy3d::mat3::rotation(0, angle_diff_y, -angle_z_orig + angle_diff_z, 123)
-                         * easy3d::mat3::rotation(0, 0, angle_z_orig)
-                         * to_origin << std::endl;
         }
 
         // makes sure angles close to 0 or 360 degrees get outputted as 0
@@ -292,4 +300,53 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         std::string dist_string = ss.str();
         Lstring_ += "F(" + dist_string + ")";
     }
+}
+
+/// step forward ///
+void Lsystem::stepForward(double distance){
+    loc_ = loc_ + (plane_ * vec3(1, 0, 0) * distance);
+}
+
+/// rotate ///
+void Lsystem::rotatePlane(double angle){
+    angle = angle * M_PI/180;
+
+    /// 1: roll to XZ plane
+    // project current z-axis onto XY plane;
+    vec3 xAxis = plane_ * vec3(1, 0, 0);
+    vec3 xAxis_proj = {xAxis.x, xAxis.y, 0.0};
+
+    // angle of projected x-axis to original x-axis
+    double angle_z = (2 * M_PI) - acos(dot(xAxis_proj, vec3(1,0,0))
+                                       / (length(xAxis_proj) * length(vec3(1,0,0))));
+    if (isnan(angle_z)){
+        angle_z = 0;
+    }
+
+    rollPlane(angle_z);
+
+    /// 2: rotation around Y axis
+    mat3 ry(1);
+    ry(0, 0) = std::cos(angle);
+    ry(0, 2) = std::sin(angle);
+    ry(2, 0) = -std::sin(angle);
+    ry(2, 2) = std::cos(angle);
+
+    plane_ = ry * plane_;
+
+    /// 3: roll back from XZ plane
+    rollPlane(-angle_z);
+}
+
+/// roll ///
+void Lsystem::rollPlane(double rollAngle){
+    rollAngle = rollAngle * M_PI/180;
+
+    mat3 rz(1);
+    rz(0, 0) = std::cos(rollAngle);
+    rz(0, 1) = -std::sin(rollAngle);
+    rz(1, 0) = std::sin(rollAngle);
+    rz(1, 1) = std::cos(rollAngle);
+
+    plane_ = rz * plane_;
 }
