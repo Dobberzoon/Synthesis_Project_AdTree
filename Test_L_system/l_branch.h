@@ -129,36 +129,19 @@ void Lbranch::print_detail() {
 }
 
 void Lbranch::build_branches() {
-////    Graph& graph = *(const_cast<Graph*>(&skl->get_simplified_skeleton()));
-////    std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
-////    std::vector<size_t> vs;
-////    std::vector<BranchNode> nodes;
-////    std::map<size_t, BranchNode> pool;
-////    for (auto vit = vi.first; vit != vi.second; ++vit){
-////        if (boost::degree(*vit, graph)!=0) {
-////            vs.push_back(*vit);
-//////            BranchNode temp(*vit, skl);
-//////            nodes.push_back(temp);
-//////            pool.insert(std::make_pair(*vit, temp));
-////        }
-////    }
+
     std::vector<size_t> wait_list;
     wait_list.push_back(root);
-//    L+="R";
     while (!wait_list.empty()){
 //        std::cout << "here" << std::endl;
         size_t root_ = wait_list[0];
         std::string B;
+        std::vector<size_t> branch;
         if (root_ == root) {
             B += "R --> ";
         }
-//
-//        else if (pool[root_].degree-2-pool[root_].visit_time>0) {
-//            B += "N"+std::to_string(root_)+"_"+std::to_string(pool[root_].degree-1-pool[root_].visit_time);
-//        }
-
         else B+= "N"+std::to_string(root_)+"_"+std::to_string(pool[root_].degree-1-pool[root_].visit_time)+" --> ";
-
+        branch.push_back(root_);
 
 //        std::cout << B << std::endl;
 
@@ -180,7 +163,7 @@ void Lbranch::build_branches() {
                 B+=") --> ";
             }
             else B+= "N"+std::to_string(next_)+" --> ";
-
+            branch.push_back(next_);
             if (pool[next_].degree-2 > pool[next_].visit_time) {
                 wait_list.push_back(next_);
             }
@@ -198,60 +181,10 @@ void Lbranch::build_branches() {
 //            std::cout << next_ << std::endl;
         }
         B += ("L" + std::to_string(next_));
+        branch.push_back(next_);
         pool[next_].visit_time += 1;
 //        std::cout << B << std::endl;
         Ls.push_back(B);
+        branches.push_back(branch);
     }
-//    return std::vector<std::vector<size_t>>();
-//    for (auto vi:vs){
-//
-//        size_t cur_vd = vi;
-//
-//        if (pool[cur_vd].visited){
-//            continue;
-//        }
-//        std::vector<size_t> branch;
-//        pool[cur_vd].visited = true;
-//        if (graph[cur_vd].nParent != cur_vd){
-//            branch.push_back(graph[cur_vd].nParent);
-//        }
-//        branch.push_back(cur_vd);
-//        std::cout << cur_vd << " ";
-//        bool reached_end = false;
-//        do {
-//            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adj_v_iter = boost::adjacent_vertices(cur_vd, graph);
-//            for (SGraphAdjacencyIterator ait = adj_v_iter.first; ait != adj_v_iter.second; ++ait) {
-////                SGraphVertexDescriptor next_vd = *ait;
-//                size_t next_vd = *ait;
-////                SGraphVertexProp& next_vp = graph[next_vd];
-//                if (!pool[next_vd].visited){
-//                    branch.push_back(next_vd);
-//                    pool[next_vd].visited = true;
-//                    std::cout << next_vd << " ";
-//                    cur_vd = next_vd;
-//
-////                    std::cout << cur_vd << std::endl;
-//
-//                    if (!notleaf(cur_vd)){
-//                        reached_end = true;
-//                        break;
-//                    }
-//                }
-//            }
-//        } while (!reached_end);
-//
-//        branches.push_back(branch);
-//        std::cout << "| a branch" << std::endl;
-//    }
-
-//    std::vector<size_t> wait_list;
-//    wait_list.push_back(root);
-//    pool[root].visited +=1;
-//    while(!wait_list.empty()){
-//        std::vector<size_t> branch;
-//        size_t root_ = wait_list[0];
-//        branch.push_back(root_);
-//        if ()
-//    }
-
 }
