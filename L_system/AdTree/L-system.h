@@ -43,6 +43,7 @@ private:
     std::string axiom_;
     easy3d::vec3 zaxis_;
     easy3d::mat3 plane_;
+    bool degrees_;
 
     easy3d::vec3 loc_;
 

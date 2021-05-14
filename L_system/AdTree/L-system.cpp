@@ -27,6 +27,7 @@ Lsystem::Lsystem()
         axiom_ = "";
         zaxis_ = {0, 0, 1};
         plane_ = mat3(1);
+        degrees_ = false;
     }
 
 // todo: zaxis_ not used, is this permanent?
@@ -46,6 +47,7 @@ void Lsystem::readSkeleton(Skeleton *skel) {
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
     loc_ = {coords_root.x, coords_root.y, coords_root.z};
+    degrees_ = false;
     traverse(root, root, skel);
 
     std::cout << "writing L-system: done" << std::endl;
@@ -232,11 +234,11 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
 
         }
 
-        // makes sure angles close to 0 or 360 degrees get outputted as 0
-        if (abs(2 * M_PI - angle_diff_y) > 0.001 && (abs(0 - angle_diff_y) > 0.001)) {
+        // make sure angles very close to 0 or 360 degrees get outputted as 0
+        if (abs(2 * M_PI - angle_diff_y) > 0.0001 && (abs(0 - angle_diff_y) > 0.0001)) {
             std::get<0>(movement) = angle_diff_y;
         }
-        if (abs(2 * M_PI - angle_diff_z) > 0.001 && (abs(0 - angle_diff_z) > 0.001)) {
+        if (abs(2 * M_PI - angle_diff_z) > 0.0001 && (abs(0 - angle_diff_z) > 0.0001)) {
             std::get<1>(movement) = angle_diff_z;
         }
         std::get<2>(movement) = branch_length;
@@ -251,8 +253,13 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     // get relative movement between startV and nextV
     std::tuple<double, double, double> movement = moveToNext(startV, nextV, skel);
     // angles are rounded to int
-    double angle_y_deg = std::get<0>(movement) / (M_PI / 180);
-    double angle_z_deg = std::get<1>(movement) / (M_PI / 180);
+    double angle_y = std::get<0>(movement);
+    double angle_z = std::get<1>(movement);
+    // option to output as degrees instead of radians
+    if (degrees_){
+        angle_y = std::get<0>(movement) / (M_PI / 180);
+        angle_z = std::get<1>(movement) / (M_PI / 180);
+    }
     double distance = std::get<2>(movement);
 
     /*std::cout << "\n---------- computing translation ----------" << std::endl;
@@ -267,28 +274,28 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     // todo: round angles and distance in a neater way (generalization?)
 
     /// write roll
-    if (angle_y_deg > 0){
+    if (angle_y > 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(2) << angle_y_deg;
+        ss << std::fixed << std::setprecision(3) << angle_y;
         std::string angle_y_string = ss.str();
         Lstring_ += "+(" + angle_y_string + ")";
     }
-    if (angle_y_deg < 0){
+    if (angle_y < 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(2) << abs(angle_y_deg);
+        ss << std::fixed << std::setprecision(3) << abs(angle_y);
         std::string angle_y_string = ss.str();
         Lstring_ += "-(" + angle_y_string + ")";
     }
     /// write rotation
-    if (angle_z_deg > 0){
+    if (angle_z > 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(2) << angle_z_deg;
+        ss << std::fixed << std::setprecision(3) << angle_z;
         std::string angle_z_string = ss.str();
         Lstring_ += ">(" + angle_z_string + ")";
     }
-    if (angle_z_deg < 0){
+    if (angle_z < 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(2) << abs(angle_z_deg);
+        ss << std::fixed << std::setprecision(3) << abs(angle_z);
         std::string angle_z_string = ss.str();
         Lstring_ += "<(" + angle_z_string + ")";
     }
@@ -296,7 +303,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     if (distance > 0) {
         // round distance to 2 decimals
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(2) << distance;
+        ss << std::fixed << std::setprecision(3) << distance;
         std::string dist_string = ss.str();
         Lstring_ += "F(" + dist_string + ")";
     }
