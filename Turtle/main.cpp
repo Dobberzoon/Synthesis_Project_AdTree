@@ -192,7 +192,7 @@ private:
             angle_z = 0;
         }
 
-        rollPlane(angle_z);
+        rollPlane(angle_z / (M_PI / 180));
 
         /// 2: rotation around Y axis
         easy3d::Mat3<double> ry(1);
@@ -204,7 +204,7 @@ private:
         plane = ry * plane;
 
         /// 3: roll back from XZ plane
-        rollPlane(-angle_z);
+        rollPlane(-angle_z / (M_PI / 180));
     }
 
     /// roll ///

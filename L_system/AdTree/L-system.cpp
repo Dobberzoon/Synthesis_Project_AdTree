@@ -47,7 +47,7 @@ void Lsystem::readSkeleton(Skeleton *skel) {
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
     loc_ = {coords_root.x, coords_root.y, coords_root.z};
-    degrees_ = false;
+    degrees_ = true;
     traverse(root, root, skel);
 
     std::cout << "writing L-system: done" << std::endl;
@@ -206,6 +206,9 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
 
             std::cout << "to_origin: " << to_origin << " , length: " << length(to_origin) << std::endl;
             std::cout << "to_target: " << to_target << " , length: " << length(to_target) << std::endl;
+            if (length(to_origin) == 0){
+                to_origin = {1, 0, 0};
+            }
             vec3 next_vec = easy3d::mat3::rotation(0, angle_diff_y, -angle_z_orig + angle_diff_z, 123)
                             * easy3d::mat3::rotation(0, 0, angle_z_orig)
                             * to_origin.normalize() * length(to_target);
@@ -273,7 +276,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
 
     // todo: round angles and distance in a neater way (generalization?)
 
-    /// write roll
+    /// write rotation
     if (angle_y > 0){
         std::stringstream ss;
         ss << std::fixed << std::setprecision(3) << angle_y;
@@ -286,7 +289,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         std::string angle_y_string = ss.str();
         Lstring_ += "-(" + angle_y_string + ")";
     }
-    /// write rotation
+    /// write roll
     if (angle_z > 0){
         std::stringstream ss;
         ss << std::fixed << std::setprecision(3) << angle_z;
@@ -316,7 +319,7 @@ void Lsystem::stepForward(double distance){
 
 /// rotate ///
 void Lsystem::rotatePlane(double angle){
-    angle = angle * M_PI/180;
+//    angle = angle * M_PI/180;
 
     /// 1: roll to XZ plane
     // project current z-axis onto XY plane;
@@ -347,7 +350,7 @@ void Lsystem::rotatePlane(double angle){
 
 /// roll ///
 void Lsystem::rollPlane(double rollAngle){
-    rollAngle = rollAngle * M_PI/180;
+//    rollAngle = rollAngle * M_PI/180;
 
     mat3 rz(1);
     rz(0, 0) = std::cos(rollAngle);
