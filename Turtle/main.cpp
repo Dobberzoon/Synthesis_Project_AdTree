@@ -280,7 +280,6 @@ private:
 
         // TODO allow for multichar rules
         // TODO allow for override rules
-        // TODO improve [[]] cases
 
         for (int j = 0; j < r; ++j) {
             unsigned int offsetter = 0;
@@ -306,8 +305,6 @@ private:
 
     /// translate the "simple" line to 3d points ///
     void readLine(std::string line){
-        std::cout << line << std::endl;
-
         // store starting point
         storeLoc(0);
 
@@ -359,11 +356,12 @@ private:
                             graph.m_vertices.emplace_back(cVertexList[l]);
                         }
 
-                        auto cEdgeList = turtle.graph.m_edges;
+                        // using a copy for the edges bypasses potentially rejected edges
+                        auto pGraph = graph;
 
                         // store edges recursion
                         int o = 0;
-                        for (const auto& e: cEdgeList){
+                        for (const auto& e: turtle.graph.m_edges){
                             unsigned int s;
 
                             // first edge connects to the trunk
@@ -371,9 +369,11 @@ private:
                             else {s = e.m_source + offset;}
 
                             unsigned int t = e.m_target + offset;
-                            boost::add_edge(s,t, graph);
+
+                            boost::add_edge(s,t, pGraph);
                             o++;
                         }
+                        graph = pGraph;
 
                         // set return to true to allow later growth from the trunk
                         returnEdge = true;
@@ -447,13 +447,11 @@ private:
                 }
             } else if (line[i] == ']'){
                 //terminate execution if end of nesting is found
-                std::cout << "term" << std::endl;
                 break;
             }
             i += j;
         }
     }
-
 
 };
 
