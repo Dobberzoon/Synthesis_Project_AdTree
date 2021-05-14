@@ -299,13 +299,10 @@ private:
         std::cout << line << std::endl;
 
         // store starting point
-        storeLoc();
+        storeLoc(0);
 
         // set trunk location to grow from
         unsigned int trunk = 0;
-
-        // set point counter
-        unsigned int pCount = 0;
 
         // allow to connect recursion to the trunk
         bool returnEdge = false;
@@ -330,6 +327,7 @@ private:
                 int oNested = 1;
                 int cNested = 0;
                 int jump = 0;
+
                 for (int k = i; k < line.size(); ++k) {
                     if (line[k] == ']' && oNested == cNested){
                         // recurse turtle
@@ -339,22 +337,33 @@ private:
                         turtle.setDebug(debug);
 
                         turtle.readLine(line.substr(i + 1, k - i - 1));
+                        auto cVertexList = turtle.graph.m_vertices;
 
                         // store the points recursion
                         unsigned int offset = graph.m_vertices.size() - 1;
-                        turtle.graph.m_vertices[1].m_property.nParent = trunk;
-                        graph.m_vertices.emplace_back(turtle.graph.m_vertices[1]);
 
-                        for (int l = 2; l < turtle.graph.m_vertices.size(); ++l) {
-                            turtle.graph.m_vertices[l].m_property.nParent += offset;
-                            graph.m_vertices.emplace_back(turtle.graph.m_vertices[l]);
+                        // ignore point 0 (is the same point as branch point)
+                        for (int l = 1; l < turtle.graph.m_vertices.size(); ++l) {
+                            if (l == 1){cVertexList[1].m_property.nParent = trunk;}
+                            else {cVertexList[l].m_property.nParent += offset;}
+                            graph.m_vertices.emplace_back(cVertexList[l]);
                         }
 
-                        for (auto e: turtle.graph.m_edges) {
-                            boost::add_edge(e.m_source + offset, e.m_target + offset, graph);
-                            std::cout << e.m_source + offset << " " <<  e.m_target + offset << std::endl;
-                        }
+                        auto cEdgeList = turtle.graph.m_edges;
 
+                        // store edges recursion
+                        int o = 0;
+                        for (const auto& e: cEdgeList){
+                            unsigned int s;
+
+                            // first edge connects to the trunk
+                            if (o == 0){s = trunk;}
+                            else {s = e.m_source + offset;}
+
+                            unsigned int t = e.m_target + offset;
+                            boost::add_edge(s,t, graph);
+                            o++;
+                        }
 
                         // set return to true to allow later growth from the trunk
                         returnEdge = true;
@@ -380,29 +389,23 @@ private:
                 // if this is not the final step of a straight line piece no point nor edge is created
                 if (line[i+1] == 'F'){continue;}
 
-                trunk = graph.m_vertices.size();
+                auto vertList = graph.m_vertices;
+                int n_self = vertList.size();
 
-                if (debug){printLocation();}
+                if (!returnEdge){ // if not the start of a branch
+                    // the parent is always the index number of the one in front
+                    int n_parent = n_self - 1;
 
-                if (returnEdge){
-                    // if the point lies after a nesting a correct link has to be set
-                    unsigned int p2 = graph.m_vertices.size() + 1;
-                    unsigned int n_parent = pCount - 1;
                     storeLoc(n_parent);
-                    boost::add_edge(n_parent, p2 - 1, graph);
-
+                    boost::add_edge(n_parent, n_self, graph);
+                } else { // if start of a branch
+                    // the parent is always the trunk point
                     returnEdge = false;
-                } else if (graph.m_vertices.empty()){
-                    // if the first point in a branch no edges are created
-                    continue;
-                } else {
-                    unsigned int p2 = graph.m_vertices.size() + 1;
-                    unsigned int n_parent = p2 - 2;
-                    storeLoc(n_parent);
-                    boost::add_edge(n_parent, p2 - 1, graph);
-                }
 
-                pCount = graph.m_vertices.size();
+                    storeLoc(trunk);
+                    boost::add_edge(trunk, n_self, graph);
+                }
+                trunk = graph.m_vertices.size() - 1;
 
             } else if (line[i] == '+') {
                 if (override == 0){
