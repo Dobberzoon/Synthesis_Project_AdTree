@@ -41,6 +41,7 @@
 
 #include "skeleton.h"
 #include "tree_viewer.h"
+#include "L-system.h"
 
 using namespace easy3d;
 
@@ -90,10 +91,11 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
         const std::string &branch_filename = file_system::base_name(cloud->name()) + "_branches.obj";
         mesh->set_name(branch_filename);
 
+        /// skeleton part
         Skeleton *skeleton = new Skeleton();
         bool status = skeleton->reconstruct_skeleton(cloud, mesh);
         if (!status) {
-            std::cerr << "failed in reconstructing branches" << std::endl;
+            std::cerr << "failed in reconstructing skeleton" << std::endl;
             delete cloud;
             delete mesh;
             delete skeleton;
@@ -102,7 +104,7 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
         
         status = skeleton->reconstruct_mesh(cloud, mesh);
         if (!status) {
-            std::cerr << "failed in reconstructing branches" << std::endl;
+            std::cerr << "failed in reconstructing meshes" << std::endl;
             delete cloud;
             delete mesh;
             delete skeleton;

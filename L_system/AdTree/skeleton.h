@@ -114,6 +114,9 @@ public:
 
     bool reconstruct_mesh(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
 
+    // get root
+    const SGraphVertexDescriptor& get_root() const { return RootV_; }
+
 private:
 
 	/*-------------------------------------------------------------*/

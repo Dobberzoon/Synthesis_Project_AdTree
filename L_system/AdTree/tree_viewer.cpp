@@ -30,6 +30,8 @@
 #include "tree_viewer.h"
 #include "skeleton.h"
 
+#include "L-system.h"
+
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include <easy3d/viewer/drawable.h>
@@ -428,7 +430,7 @@ bool TreeViewer::reconstruct_skeleton() {
         return false;
     }
 
-    {   // offer users the option to remove duplicated points
+    /*{   // offer users the option to remove duplicated points
         int answer = message_box("Robustness hint!",
                                  "The point cloud may has duplicated points. Remove duplication "
                                  "can improve robustness. Would like to do so?",
@@ -444,7 +446,7 @@ bool TreeViewer::reconstruct_skeleton() {
             cloud()->points_drawable("vertices")->update_vertex_buffer(cloud()->points());
             std::cout << cloud()->vertices_size() << " points remained" << std::endl;
         }
-    }
+    }*/
 
     if (skeleton_)
         delete skeleton_;
@@ -457,7 +459,15 @@ bool TreeViewer::reconstruct_skeleton() {
         mesh = new SurfaceMesh;
         mesh->set_name(file_system::base_name(cloud()->name()) + "_branches.obj");
     }
-    bool status = skeleton_->reconstruct_branches(cloud(), mesh);
+//    bool status = skeleton_->reconstruct_branches(cloud(), mesh);
+    bool status0 = skeleton_->reconstruct_skeleton(cloud(), mesh);
+    bool status = skeleton_->reconstruct_mesh(cloud(), mesh);
+
+    /// new: L-system part
+    Lsystem *lsys = new Lsystem();
+    std::cout << "L system init" << std::endl;
+    lsys->readSkeleton(skeleton_);
+
     if (status) {
         auto offset = cloud()->get_model_property<dvec3>("translation");
         if (offset) {
