@@ -161,8 +161,12 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
         // find angle between planar vectors & x-axis
         // radians
         // todo: will this work in all quadrants or just the ++ one?
-        double angle_z_orig = (2 * M_PI) - acos(dot(to_origin_xy, xaxis) / (length(to_origin_xy) * length(xaxis)));
-        double angle_z_target = (2 * M_PI) - acos(dot(to_target_xy, xaxis) / (length(to_target_xy) * length(xaxis)));
+        double angle_z_orig = getZAngle(to_origin_xy);
+        double angle_z_target = getZAngle(to_target_xy);
+
+        // todo: make 360 --> 0
+
+        // todo: 360+ or -360-?
 
         // todo: ugly fix...
         if (isnan(angle_z_orig)) {
@@ -174,12 +178,12 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
 
         /// get rotation around Y
         // rotate vectors to XZ plane
-        vec3 to_origin_xz = easy3d::mat3::rotation(zaxis, angle_z_orig) * to_origin;
-        vec3 to_target_xz = easy3d::mat3::rotation(zaxis, angle_z_target) * to_target;
+        vec3 to_origin_xz = easy3d::mat3::rotation(zaxis, -angle_z_orig) * to_origin;
+        vec3 to_target_xz = easy3d::mat3::rotation(zaxis, -angle_z_target) * to_target;
 
         // find angle between planar vectors & y-axis (acos = xaxis, y-axis = - 0.5 PI)
-        double angle_y_orig = acos(dot(to_origin_xz, xaxis) / (length(to_origin_xz) * length(xaxis)));
-        double angle_y_target = acos(dot(to_target_xz, xaxis) / (length(to_target_xz) * length(xaxis)));
+        double angle_y_orig = getYAngle(to_origin_xz);
+        double angle_y_target = getYAngle(to_target_xz);
 
         if (isnan(angle_y_orig)) {
             angle_y_orig = 0;
@@ -189,13 +193,14 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
         }
 
         /// combine rotations
-        double angle_diff_z = angle_z_orig - angle_z_target;
-        double angle_diff_y = angle_y_orig - angle_y_target;
+        double angle_diff_z = angle_z_target - angle_z_orig;
+        double angle_diff_y = angle_y_target - angle_y_orig;
 
         // may still need these later, switched off for now.
         bool debug_print = true;
 
         if (debug_print) {
+
             std::cout << "\n---------- computing translation ----------" << std::endl;
             std::cout << "start node: (" << startV << ") " << coords_start
                       << " --> next: (" << nextV << ") " << coords_next
@@ -206,13 +211,13 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
 
             std::cout << "to_origin: " << to_origin << " , length: " << length(to_origin) << std::endl;
             std::cout << "to_target: " << to_target << " , length: " << length(to_target) << std::endl;
-            if (length(to_origin) == 0){
+            if (length(to_origin) == 0) {
                 to_origin = {1, 0, 0};
             }
-            vec3 next_vec = easy3d::mat3::rotation(0, angle_diff_y, -angle_z_orig + angle_diff_z, 123)
-                            * easy3d::mat3::rotation(0, 0, angle_z_orig)
+            vec3 next_vec = easy3d::mat3::rotation(0, angle_diff_y, angle_z_orig + angle_diff_z, 123)
+                            * easy3d::mat3::rotation(0, 0, -angle_z_orig)
                             * to_origin.normalize() * length(to_target);
-            std::cout << "R * to_origin normalized * length target: " <<  next_vec << std::endl;
+            std::cout << "R * to_origin normalized * length target: " << next_vec << std::endl;
             std::cout << "next node calculated: " << coords_start + next_vec << std::endl;
 
             std::cout << "\norigin angle z: " << angle_z_orig / (M_PI / 180) << std::endl;
@@ -222,19 +227,18 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
             std::cout << "diff. angle z: " << angle_diff_z / (M_PI / 180) << std::endl;
             std::cout << "diff. angle y: " << angle_diff_y / (M_PI / 180) << std::endl;
 
-//            std::cout << "\n---------- turtle test ----------" << std::endl;
-//            std::cout << "previous loc: " << loc_ << std::endl;
-//            std::cout << "previous plane: " << plane_ << std::endl;
-//
-//            rotatePlane(angle_diff_y);
-//            std::cout << "rotate plane: " << plane_ <<  std::endl;
-//
-//            rollPlane(angle_diff_z);
-//            std::cout << "roll plane: " << plane_ <<  std::endl;
-//
-//            stepForward(branch_length);
-//            std::cout << "next loc: " << loc_ << std::endl;
+            /*std::cout << "\n---------- turtle test ----------" << std::endl;
+            std::cout << "previous loc: " << loc_ << std::endl;
+            std::cout << "previous plane: " << plane_ << std::endl;
 
+            rotatePlane(angle_diff_y);
+            std::cout << "rotate plane: " << plane_ <<  std::endl;
+
+            rollPlane(angle_diff_z);
+            std::cout << "roll plane: " << plane_ <<  std::endl;
+
+            stepForward(branch_length);
+            std::cout << "next loc: " << loc_ << std::endl;*/
         }
 
         // make sure angles very close to 0 or 360 degrees get outputted as 0
@@ -310,6 +314,37 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         std::string dist_string = ss.str();
         Lstring_ += "F(" + dist_string + ")";
     }
+}
+
+
+double Lsystem::getZAngle(vec3 vec){
+    vec3 xaxis = {1, 0, 0};
+    double angle_z = 0;
+
+    // angle is dependent on what side of the x-axis (XY plane) the vector is
+    if (vec.y < 0){
+        angle_z = - acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+    else{
+        angle_z = acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+
+    return angle_z;
+}
+
+double Lsystem::getYAngle(vec3 vec){
+    vec3 xaxis = {1, 0, 0};
+    double angle_y = 0;
+
+    // angle is dependent on what side of the x-axis (XZ plane) the vector is
+    if (vec.z < 0) {
+        angle_y = acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+    else{
+        angle_y = (2 * M_PI) - acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+
+    return angle_y;
 }
 
 /// step forward ///

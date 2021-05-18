@@ -33,6 +33,9 @@ public:
                                 SGraphVertexDescriptor nextV,
                                 Skeleton *skel);
 
+    double getZAngle(easy3d::vec3 vec);
+    double getYAngle(easy3d::vec3 vec);
+
     void stepForward(double distance);
     void rotatePlane(double angle);
     void rollPlane(double rollAngle);
