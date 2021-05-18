@@ -72,6 +72,10 @@ public:
         debug = b;
     }
 
+    void set2Degrees(){
+        deg = true;
+    }
+
     /// return the points that were internalized ///
     auto getStoredPoints(){
         return graph.m_vertices;
@@ -164,6 +168,9 @@ private:
     // communicate with user
     bool com = true;
 
+    // set turtle to degrees
+    bool deg = false;
+
     /// step forward ///
     void stepForward(double distance){
         loc = loc + (plane * easy3d::Vec<3, double>(1, 0, 0) * distance);
@@ -171,7 +178,7 @@ private:
 
     /// rotate ///
     void rotatePlane(double angle){
-        angle = angle * M_PI/180;
+        if (deg){angle = angle * M_PI/180;}
 
         /// 1: roll to XZ plane
         // project current z-axis onto XY plane;
@@ -202,7 +209,7 @@ private:
 
     /// roll ///
     void rollPlane(double rollAngle){
-        rollAngle = rollAngle * M_PI/180;
+        if (deg){rollAngle = rollAngle * M_PI/180;}
 
         easy3d::Mat3<double> rz(1);
         rz(0, 0) = std::cos(rollAngle);
@@ -463,6 +470,7 @@ int main() {
 
     Turtle turtle;
     turtle.setDebug(false);
+    turtle.set2Degrees();
     turtle.readFile(inputPath);
     turtle.writeToXYZ(outputPath);
     turtle.writeToPly(outputPath2);
