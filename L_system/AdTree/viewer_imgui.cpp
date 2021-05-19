@@ -230,23 +230,25 @@ namespace easy3d {
     void ViewerImGui::draw_menu_file() {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("Open", "Ctrl+O"))
+            if (ImGui::MenuItem("Open cloud", "Ctrl+O"))
                 open();
+            if (ImGui::MenuItem("Open L-system"))
+                open_lsystem();
+            ImGui::Separator();
+            if (ImGui::MenuItem("Export to L-system ..."))
+                export_lsystem();
             if (ImGui::MenuItem("Save branches ...", "Ctrl+S"))
                 save();
             if (ImGui::MenuItem("Save skeleton ..."))
                 export_skeleton();
             if (ImGui::MenuItem("Save leaves ..."))
                 export_leaves();
-
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
                 glfwSetWindowShouldClose(window_, GLFW_TRUE);
-
             ImGui::EndMenu();
         }
     }
-
 
     void ViewerImGui::draw_menu_view() {
         if (ImGui::BeginMenu("View"))
