@@ -14,6 +14,7 @@
 #include <3rd_party/tetgen/tetgen.h>
 
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 
 
@@ -29,6 +30,7 @@ Lsystem::Lsystem()
     }
 
     // todo: add rules
+    // todo: add radii
 
 
 void Lsystem::printLsystem() {
@@ -39,21 +41,53 @@ void Lsystem::printLsystem() {
 }
 
 
+void Lsystem::lsysToJson(const std::string &filename,
+                         double rec,
+                         double def_f,
+                         double def_rot,
+                         double def_roll) {
+    std::cout << "L-system: writing to file..." << std::endl;
+
+    std::string output_dir = "../../data/output/";
+    nlohmann::json j;
+
+    j["recursions"] = rec;
+    j["axiom"] = Lstring_;  // todo: this will at some point be axiom_
+    j["rules"] = {};        // empty for now
+    j["dimensions"] = { {"forward", def_f}, {"rotation", def_rot}, {"roll", def_roll} };
+
+//    std::cout << std::setw(4) << j << std::endl;
+//    std::cout << "dir: " << output_dir + filename << std::endl;
+
+    std::ofstream storageFile(output_dir + filename);
+    storageFile << std::setw(4) << j << std::endl;
+    storageFile.close();
+
+    std::cout << "writing to file: done" << std::endl;
+}
+
+
+void Lsystem::lsysToText(){};
+
+
 void Lsystem::readSkeleton(Skeleton *skel) {
     std::cout << "\n---------- initializing L-system ----------" << std::endl;
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
 
+    /// set parameters
+    degrees_ = true;
+    outputFormat format = OUT_JSON_CUSTOM;
+
+    /// convert skeleton to Lsystem
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
-    degrees_ = true;
     traverse(root, root, skel);
 
-    std::cout << "writing L-system: done" << std::endl;
-    printLsystem();
+    std::cout << "converting to L-system: done" << std::endl;
 
-    // todo: write to json/other format
+    outputLsys(format);
 
-    // todo: add starting position of root to json (direction not necessary)
+    // todo: add more parameters to the L-system (branch diameters, subtrees, ...)
 }
 
 
@@ -317,4 +351,34 @@ double Lsystem::getYAngle(vec3 vec){
     }
 
     return angle_y;
+}
+
+
+void Lsystem::outputLsys(outputFormat out_type){
+    /// set parameters
+    std::string file_out = "lsys_out1.json";
+    double recursions = 1;
+    // in meters
+    double default_forward = 1;      // F()
+    // always in degrees!
+    double default_rotation = 90;    // +-()
+    double default_roll = 45;        // ><()
+
+    if (!degrees_){
+        default_rotation *= M_PI / 180;
+        default_roll *= M_PI / 180;
+    }
+
+    /// output the right format
+    switch (out_type) {
+        case OUT_COMMANDLINE:
+            printLsystem();
+            break;
+        case OUT_JSON_CUSTOM:
+            lsysToJson(file_out, recursions, default_forward, default_rotation, default_roll);
+            break;
+        case OUT_TEXTFILE:
+            lsysToText();
+            break;
+    }
 }
