@@ -116,22 +116,32 @@ void Turtle::stepForward(double distance) {
     loc = loc + (plane * easy3d::Vec<3, double>(1, 0, 0) * distance);
 }
 
-void Turtle::rotatePlane(double angle) {
-    if (deg) { angle = angle * M_PI / 180; }
+/// rotate ///
+void rotatePlane(double angle){
+    if (deg){angle = angle * M_PI/180;}
 
     /// 1: roll to XZ plane
     // project current z-axis onto XY plane;
-    easy3d::Vec<3, double> xAxis = plane * easy3d::Vec<3, double>(1, 0, 0);
+    easy3d::Vec<3, double> xAxis_orig = {1, 0, 0};
+    easy3d::Vec<3, double> xAxis = plane * xAxis_orig;
     easy3d::Vec<3, double> xAxis_proj = {xAxis.x, xAxis.y, 0.0};
 
     // angle of projected x-axis to original x-axis
-    double angle_z = (2 * M_PI) - acos(dot(xAxis_proj, easy3d::Vec<3, double>(1, 0, 0))
-                                       / (length(xAxis_proj) * length(easy3d::Vec<3, double>(1, 0, 0))));
-    if (isnan(angle_z)) {
+    double angle_z;
+
+    if (xAxis_proj.y < 0){
+        angle_z = - acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
+    }
+    else{
+        angle_z = acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
+    }
+
+    if (isnan(angle_z)){
         angle_z = 0;
     }
 
-    rollPlane(angle_z);
+    if (deg){angle_z = angle_z / (M_PI / 180);}
+    rollPlane(-angle_z);
 
     /// 2: rotation around Y axis
     easy3d::Mat3<double> ry(1);
@@ -143,7 +153,7 @@ void Turtle::rotatePlane(double angle) {
     plane = ry * plane;
 
     /// 3: roll back from XZ plane
-    rollPlane(-angle_z);
+    rollPlane(angle_z);
 }
 
 void Turtle::rollPlane(double rollAngle) {
