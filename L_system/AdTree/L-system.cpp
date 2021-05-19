@@ -48,7 +48,6 @@ void Lsystem::lsysToJson(const std::string &filename,
                          double def_roll) {
     std::cout << "L-system: writing to file..." << std::endl;
 
-    std::string output_dir = "../../data/output/";
     nlohmann::json j;
 
     j["recursions"] = rec;
@@ -59,7 +58,7 @@ void Lsystem::lsysToJson(const std::string &filename,
 //    std::cout << std::setw(4) << j << std::endl;
 //    std::cout << "dir: " << output_dir + filename << std::endl;
 
-    std::ofstream storageFile(output_dir + filename);
+    std::ofstream storageFile(filename);
     storageFile << std::setw(4) << j << std::endl;
     storageFile.close();
 
@@ -70,7 +69,7 @@ void Lsystem::lsysToJson(const std::string &filename,
 void Lsystem::lsysToText(){};
 
 
-void Lsystem::readSkeleton(Skeleton *skel) {
+void Lsystem::readSkeleton(Skeleton *skel, const std::string& path) {
     std::cout << "\n---------- initializing L-system ----------" << std::endl;
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
 
@@ -85,7 +84,7 @@ void Lsystem::readSkeleton(Skeleton *skel) {
 
     std::cout << "converting to L-system: done" << std::endl;
 
-    outputLsys(format);
+    outputLsys(format, path);
 
     // todo: add more parameters to the L-system (branch diameters, subtrees, ...)
 }
@@ -354,9 +353,9 @@ double Lsystem::getYAngle(vec3 vec){
 }
 
 
-void Lsystem::outputLsys(outputFormat out_type){
+void Lsystem::outputLsys(outputFormat out_type, const std::string& path){
     /// set parameters
-    std::string file_out = "lsys_out1.json";
+    std::string file_out = path;
     double recursions = 1;
     // in meters
     double default_forward = 1;      // F()

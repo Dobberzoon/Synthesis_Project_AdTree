@@ -299,6 +299,18 @@ void TreeViewer::export_leaves() const {
 
 void TreeViewer::export_lsystem() const{
     //TODO make work
+
+    if (!branches() || !skeleton_) {
+        std::cerr << "model of skeleton does not exist" << std::endl;
+        return;
+    }
+
+    const std::vector<std::string> filetypes = {"*.json"};
+    const std::string& initial_name = file_system::base_name(cloud()->name()) + "_lsystem.json";
+    const std::string& file_name = FileDialog::save(filetypes, initial_name);
+
+    Lsystem().readSkeleton(skeleton_, file_name);
+
     return;
 }
 
@@ -487,8 +499,8 @@ bool TreeViewer::reconstruct_skeleton() {
     bool status = skeleton_->reconstruct_mesh(cloud(), mesh);
 
     /// new: L-system part
-    Lsystem *lsys = new Lsystem();
-    lsys->readSkeleton(skeleton_);
+    //Lsystem *lsys = new Lsystem();
+    //lsys->readSkeleton(skeleton_);
 
     if (status) {
         auto offset = cloud()->get_model_property<dvec3>("translation");
