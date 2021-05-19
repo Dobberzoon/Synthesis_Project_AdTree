@@ -38,17 +38,9 @@ public:
     double getYAngle(easy3d::vec3 vec);
 
 private:
-    Graph graph_;
     std::string Lstring_;
     std::string axiom_;
-    easy3d::vec3 zaxis_;
-    easy3d::mat3 plane_;
     bool degrees_;
-
-    easy3d::vec3 loc_;
-
-    // todo: remove attributes we will never use
-
 };
 
 #endif //L_SYSTEM_L_SYSTEM_H

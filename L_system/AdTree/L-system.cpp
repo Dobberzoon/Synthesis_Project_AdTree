@@ -25,12 +25,10 @@ Lsystem::Lsystem()
     {
         Lstring_ = "";
         axiom_ = "";
-        zaxis_ = {0, 0, 1};
-        plane_ = mat3(1);
         degrees_ = false;
     }
 
-// todo: zaxis_ not used, is this permanent?
+    // todo: add rules
 
 
 void Lsystem::printLsystem() {
@@ -47,14 +45,13 @@ void Lsystem::readSkeleton(Skeleton *skel) {
 
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
-    loc_ = {coords_root.x, coords_root.y, coords_root.z};
     degrees_ = true;
     traverse(root, root, skel);
 
     std::cout << "writing L-system: done" << std::endl;
     printLsystem();
 
-    // todo: write to json
+    // todo: write to json/other format
 
     // todo: add starting position of root to json (direction not necessary)
 }
@@ -300,6 +297,7 @@ double Lsystem::getZAngle(vec3 vec){
 
     return angle_z;
 }
+
 
 double Lsystem::getYAngle(vec3 vec){
     vec3 xaxis = {1, 0, 0};
