@@ -26,6 +26,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#include "turtle/Turtle.h"
 
 #include "tree_viewer.h"
 #include "skeleton.h"
@@ -184,6 +185,23 @@ bool TreeViewer::open()
     return false;
 }
 
+void TreeViewer::open_lsystem()
+{
+    // get file
+    const std::vector<std::string> filetypes = {"*.json"};
+    const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, "");
+
+    for (auto file_name: file_names){
+        //Turtle turtle;
+        //turtle.readFile(file_name);
+    }
+
+
+
+    //TODO make work
+    return;
+}
+
 
 bool TreeViewer::save() const {
     SurfaceMesh* mesh = branches();
@@ -277,6 +295,11 @@ void TreeViewer::export_leaves() const {
         std::cout << "successfully saved the model of leaves to file" << std::endl;
     else
         std::cerr << "failed saving the model of leaves" << std::endl;
+}
+
+void TreeViewer::export_lsystem() const{
+    //TODO make work
+    return;
 }
 
 
