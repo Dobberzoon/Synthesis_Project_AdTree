@@ -488,7 +488,6 @@ bool TreeViewer::reconstruct_skeleton() {
 
     /// new: L-system part
     Lsystem *lsys = new Lsystem();
-    std::cout << "L system init" << std::endl;
     lsys->readSkeleton(skeleton_);
 
     if (status) {

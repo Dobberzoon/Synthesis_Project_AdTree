@@ -3,7 +3,7 @@
 #include <string>
 
 int main() {
-    std::string inputPath = "../test_inputs/in_1.json";
+    std::string inputPath = "../../L_system/data/output/lsys_out1.json";
     std::string outputPath = "../export.xyz";
     std::string outputPath2 = "../export.ply";
 
