@@ -117,7 +117,7 @@ void Turtle::stepForward(double distance) {
 }
 
 /// rotate ///
-void rotatePlane(double angle){
+void Turtle::rotatePlane(double angle){
     if (deg){angle = angle * M_PI/180;}
 
     /// 1: roll to XZ plane
