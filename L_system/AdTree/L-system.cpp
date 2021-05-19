@@ -37,12 +37,13 @@ void Lsystem::printLsystem() {
     std::cout << "printing L-system..." << std::endl;
     std::cout << "string: " << Lstring_ << std::endl;
     std::cout << "axiom:  " << axiom_ << std::endl;
+    std::cout << "printing L-system: done" << std::endl;
 }
 
 
 void Lsystem::readSkeleton(Skeleton *skel) {
+    std::cout << "\n---------- initializing L-system ----------" << std::endl;
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
-    printLsystem();
 
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
@@ -64,7 +65,7 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
                        Skeleton *skel){
     // write movement from prevV to nextV to Lstring
     // will not write when prevV is a leaf or the root (preventing doubles and the root writing to itself)
-    writeMovement(prevV, startV, skel);
+    writeMovement(prevV, startV, skel, 3);
 
     // also writes index of node to the string, for debug only
 //    Lstring_ += "{" + std::to_string(startV) + "}";
@@ -83,7 +84,7 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
         std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies =
                 adjacent_vertices(startV, skel->get_simplified_skeleton());
 
-        // shortest path search, copied from AdTree's method for making simplified_skeleton_
+        // depth-first shortest path search, copied from AdTree's method for making simplified_skeleton_
         for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter) {
             // exclude parent
             if (*cIter != skel->get_simplified_skeleton()[startV].nParent) {
@@ -101,6 +102,7 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
                 }
             }
         }
+        // todo: only the first child is fastest, other children are just in rotation order (not sure if it matters)
 
         /// start node has one child: straight segment
         if (out_degree(startV, skel->get_simplified_skeleton()) == 1) {
@@ -133,7 +135,9 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
     // get previous node (parent of start)
     SGraphVertexDescriptor prevV = skel->get_simplified_skeleton()[startV].nParent;
 
-    // prevent it going wrong when start is [0 0 0] (is it's own parent, so vector between them is 0)
+    /// get relative movement from start to next node
+    // exclude parent as second node (next)
+    // because is it's own parent, so vector between start & next would be 0
     if (nextV != skel->get_simplified_skeleton()[nextV].nParent) {
         // get coordinates of the two nodes
         vec3 coords_start = skel->get_simplified_skeleton()[startV].cVert;
@@ -143,10 +147,10 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
         // get distance between the two nodes
         float branch_length = easy3d::distance(coords_start, coords_next);
 
-        /// compute vectors in coordinate system of startV
-        // compute the vector (difference) between the two nodes
+        /// compute vectors previous <--> start and start <--> next
+        // compute the vector (difference) between the two nodes (start & next)
         vec3 to_target = (coords_next - coords_start);
-        // compute the previous z-axis
+        // compute the vector of the previous edge
         vec3 to_origin = (coords_start - coords_prev);
 
         vec3 xaxis = {1, 0, 0};
@@ -158,47 +162,28 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
         vec3 to_origin_xy = {to_origin.x, to_origin.y, 0};
         vec3 to_target_xy = {to_target.x, to_target.y, 0};
 
-        // find angle between planar vectors & x-axis
-        // radians
-        // todo: will this work in all quadrants or just the ++ one?
+        // find angle between planar vectors & x-axis, around the z-axis (radians)
         double angle_z_orig = getZAngle(to_origin_xy);
         double angle_z_target = getZAngle(to_target_xy);
 
-        // todo: make 360 --> 0
-
+        // todo: make 360 --> 0?
         // todo: 360+ or -360-?
-
-        // todo: ugly fix...
-        if (isnan(angle_z_orig)) {
-            angle_z_orig = 0;
-        }
-        if (isnan(angle_z_target)) {
-            angle_z_target = 0;
-        }
 
         /// get rotation around Y
         // rotate vectors to XZ plane
         vec3 to_origin_xz = easy3d::mat3::rotation(zaxis, -angle_z_orig) * to_origin;
         vec3 to_target_xz = easy3d::mat3::rotation(zaxis, -angle_z_target) * to_target;
 
-        // find angle between planar vectors & y-axis (acos = xaxis, y-axis = - 0.5 PI)
+        // find angle between planar vectors & x-axis, around the y-axis
         double angle_y_orig = getYAngle(to_origin_xz);
         double angle_y_target = getYAngle(to_target_xz);
 
-        if (isnan(angle_y_orig)) {
-            angle_y_orig = 0;
-        }
-        if (isnan(angle_y_target)) {
-            angle_y_target = 0;
-        }
-
-        /// combine rotations
+        /// get relative rotations
         double angle_diff_z = angle_z_target - angle_z_orig;
         double angle_diff_y = angle_y_target - angle_y_orig;
 
-        // may still need these later, switched off for now.
-        bool debug_print = true;
-
+        // may still need these later, switched off for now
+        bool debug_print = false;
         if (debug_print) {
 
             std::cout << "\n---------- computing translation ----------" << std::endl;
@@ -206,8 +191,8 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
                       << " --> next: (" << nextV << ") " << coords_next
                       << " | previous: (" << prevV << ") " << coords_prev << std::endl;
 
-//            std::cout << "\nto origin proj XZ (y): " << to_origin_xz << std::endl;
-//            std::cout << "to target proj XZ (y): " << to_target_xz << std::endl;
+            std::cout << "\nto origin proj XZ (y): " << to_origin_xz << std::endl;
+            std::cout << "to target proj XZ (y): " << to_target_xz << std::endl;
 
             std::cout << "to_origin: " << to_origin << " , length: " << length(to_origin) << std::endl;
             std::cout << "to_target: " << to_target << " , length: " << length(to_target) << std::endl;
@@ -226,19 +211,6 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
             std::cout << "target angle y: " << angle_y_target / (M_PI / 180) << std::endl;
             std::cout << "diff. angle z: " << angle_diff_z / (M_PI / 180) << std::endl;
             std::cout << "diff. angle y: " << angle_diff_y / (M_PI / 180) << std::endl;
-
-            /*std::cout << "\n---------- turtle test ----------" << std::endl;
-            std::cout << "previous loc: " << loc_ << std::endl;
-            std::cout << "previous plane: " << plane_ << std::endl;
-
-            rotatePlane(angle_diff_y);
-            std::cout << "rotate plane: " << plane_ <<  std::endl;
-
-            rollPlane(angle_diff_z);
-            std::cout << "roll plane: " << plane_ <<  std::endl;
-
-            stepForward(branch_length);
-            std::cout << "next loc: " << loc_ << std::endl;*/
         }
 
         // make sure angles very close to 0 or 360 degrees get outputted as 0
@@ -256,7 +228,8 @@ std::tuple<double, double, double> Lsystem::moveToNext(SGraphVertexDescriptor st
 
 void Lsystem::writeMovement(SGraphVertexDescriptor startV,
                             SGraphVertexDescriptor nextV,
-                            Skeleton *skel){
+                            Skeleton *skel,
+                            int accuracy){
     // get relative movement between startV and nextV
     std::tuple<double, double, double> movement = moveToNext(startV, nextV, skel);
     // angles are rounded to int
@@ -269,48 +242,39 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     }
     double distance = std::get<2>(movement);
 
-    /*std::cout << "\n---------- computing translation ----------" << std::endl;
-    std::cout << "start node: (" << startV << ") " << skel->get_simplified_skeleton()[startV].cVert
-              << " --> next: (" << nextV << ") " << skel->get_simplified_skeleton()[nextV].cVert
-              << std::endl;
-
-    std::cout << "angle: Y: " << angle_y_deg << std::endl;
-    std::cout << "angle: Z: " << angle_z_deg << std::endl;
-    std::cout << "disance:  " << distance << std::endl;*/
-
-    // todo: round angles and distance in a neater way (generalization?)
+    // todo: generalisation
 
     /// write rotation
+    // rounded to [accuracy] decimals
     if (angle_y > 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(3) << angle_y;
+        ss << std::fixed << std::setprecision(accuracy) << angle_y;
         std::string angle_y_string = ss.str();
         Lstring_ += "+(" + angle_y_string + ")";
     }
     if (angle_y < 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(3) << abs(angle_y);
+        ss << std::fixed << std::setprecision(accuracy) << abs(angle_y);
         std::string angle_y_string = ss.str();
         Lstring_ += "-(" + angle_y_string + ")";
     }
     /// write roll
     if (angle_z > 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(3) << angle_z;
+        ss << std::fixed << std::setprecision(accuracy) << angle_z;
         std::string angle_z_string = ss.str();
         Lstring_ += ">(" + angle_z_string + ")";
     }
     if (angle_z < 0){
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(3) << abs(angle_z);
+        ss << std::fixed << std::setprecision(accuracy) << abs(angle_z);
         std::string angle_z_string = ss.str();
         Lstring_ += "<(" + angle_z_string + ")";
     }
     /// write forward
     if (distance > 0) {
-        // round distance to 2 decimals
         std::stringstream ss;
-        ss << std::fixed << std::setprecision(3) << distance;
+        ss << std::fixed << std::setprecision(accuracy) << distance;
         std::string dist_string = ss.str();
         Lstring_ += "F(" + dist_string + ")";
     }
@@ -319,7 +283,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
 
 double Lsystem::getZAngle(vec3 vec){
     vec3 xaxis = {1, 0, 0};
-    double angle_z = 0;
+    double angle_z;
 
     // angle is dependent on what side of the x-axis (XY plane) the vector is
     if (vec.y < 0){
@@ -329,12 +293,17 @@ double Lsystem::getZAngle(vec3 vec){
         angle_z = acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
     }
 
+    // zero angle returns nan, should be 0
+    if (isnan(angle_z)) {
+        angle_z = 0;
+    }
+
     return angle_z;
 }
 
 double Lsystem::getYAngle(vec3 vec){
     vec3 xaxis = {1, 0, 0};
-    double angle_y = 0;
+    double angle_y;
 
     // angle is dependent on what side of the x-axis (XZ plane) the vector is
     if (vec.z < 0) {
@@ -344,54 +313,10 @@ double Lsystem::getYAngle(vec3 vec){
         angle_y = (2 * M_PI) - acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
     }
 
-    return angle_y;
-}
-
-/// step forward ///
-void Lsystem::stepForward(double distance){
-    loc_ = loc_ + (plane_ * vec3(1, 0, 0) * distance);
-}
-
-/// rotate ///
-void Lsystem::rotatePlane(double angle){
-//    angle = angle * M_PI/180;
-
-    /// 1: roll to XZ plane
-    // project current z-axis onto XY plane;
-    vec3 xAxis = plane_ * vec3(1, 0, 0);
-    vec3 xAxis_proj = {xAxis.x, xAxis.y, 0.0};
-
-    // angle of projected x-axis to original x-axis
-    double angle_z = (2 * M_PI) - acos(dot(xAxis_proj, vec3(1,0,0))
-                                       / (length(xAxis_proj) * length(vec3(1,0,0))));
-    if (isnan(angle_z)){
-        angle_z = 0;
+    // zero angle returns nan, should be 0
+    if (isnan(angle_y)) {
+        angle_y = 0;
     }
 
-    rollPlane(angle_z);
-
-    /// 2: rotation around Y axis
-    mat3 ry(1);
-    ry(0, 0) = std::cos(angle);
-    ry(0, 2) = std::sin(angle);
-    ry(2, 0) = -std::sin(angle);
-    ry(2, 2) = std::cos(angle);
-
-    plane_ = ry * plane_;
-
-    /// 3: roll back from XZ plane
-    rollPlane(-angle_z);
-}
-
-/// roll ///
-void Lsystem::rollPlane(double rollAngle){
-//    rollAngle = rollAngle * M_PI/180;
-
-    mat3 rz(1);
-    rz(0, 0) = std::cos(rollAngle);
-    rz(0, 1) = -std::sin(rollAngle);
-    rz(1, 0) = std::sin(rollAngle);
-    rz(1, 1) = std::cos(rollAngle);
-
-    plane_ = rz * plane_;
+    return angle_y;
 }

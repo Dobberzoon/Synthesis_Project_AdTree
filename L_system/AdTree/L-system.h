@@ -31,14 +31,11 @@ public:
                                                   Skeleton *skeleton);
     void writeMovement(SGraphVertexDescriptor startV,
                                 SGraphVertexDescriptor nextV,
-                                Skeleton *skel);
+                                Skeleton *skel,
+                                int accuracy);
 
     double getZAngle(easy3d::vec3 vec);
     double getYAngle(easy3d::vec3 vec);
-
-    void stepForward(double distance);
-    void rotatePlane(double angle);
-    void rollPlane(double rollAngle);
 
 private:
     Graph graph_;
