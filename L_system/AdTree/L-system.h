@@ -29,20 +29,18 @@ public:
     std::tuple<double, double, double> moveToNext(SGraphVertexDescriptor startV,
                                                   SGraphVertexDescriptor nextV,
                                                   Skeleton *skeleton);
-    void Lsystem::writeMovement(SGraphVertexDescriptor startV,
+    void writeMovement(SGraphVertexDescriptor startV,
                                 SGraphVertexDescriptor nextV,
-                                Skeleton *skel);
+                                Skeleton *skel,
+                                int accuracy);
+
+    double getZAngle(easy3d::vec3 vec);
+    double getYAngle(easy3d::vec3 vec);
 
 private:
-    Graph graph_;
     std::string Lstring_;
     std::string axiom_;
-    easy3d::vec3 zaxis_;
-
-    easy3d::Vec<3, double> loc_;
-
-    // todo: remove attributes we will never use
-
+    bool degrees_;
 };
 
 #endif //L_SYSTEM_L_SYSTEM_H
