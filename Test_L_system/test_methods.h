@@ -311,7 +311,10 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
 //            delete skeleton;
 //            continue;
 //            get_detail_branches(skeleton, output_folder);
-            Lbranch lbranch(skeleton);
+            float th_d = 0.1;
+            float th_x = 0.00005;
+            float th_y = 0.5;
+            Lbranch lbranch(skeleton, th_d, th_x, th_y);
 //            std::cout << "here" << std::endl;
             lbranch.build_branches();
             print_detail(lbranch, output_folder);
