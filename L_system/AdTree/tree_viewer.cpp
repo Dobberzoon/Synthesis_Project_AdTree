@@ -33,7 +33,7 @@
 
 #include "L-system.h"
 
-#include "Turtle.h" // Include turtle after definitions of adtree
+#include "turtle/Turtle.h" // Include turtle after definitions of adtree
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include <easy3d/viewer/drawable.h>
