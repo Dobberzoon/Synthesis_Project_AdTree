@@ -305,13 +305,14 @@ void TreeViewer::export_lsystem() const{
         return;
     }
 
-    const std::vector<std::string> filetypes = {"*.json"};
+    const std::vector<std::string> filetypes = {"*.json", "*.txt"};
     const std::string& initial_name = file_system::base_name(cloud()->name()) + "_lsystem.json";
     const std::string& file_name = FileDialog::save(filetypes, initial_name);
 
-    Lsystem().readSkeleton(skeleton_, file_name);
+    Lsystem l_system;
 
-    return;
+    l_system.readSkeleton(skeleton_);
+    l_system.outputLsys(file_system::extension(file_name), file_name);
 }
 
 

@@ -66,10 +66,14 @@ void Lsystem::lsysToJson(const std::string &filename,
 }
 
 
-void Lsystem::lsysToText(){};
+void Lsystem::lsysToText(const std::string &filename,
+                         double rec,
+                         double def_f,
+                         double def_rot,
+                         double def_roll){};
 
 
-void Lsystem::readSkeleton(Skeleton *skel, const std::string& path) {
+void Lsystem::readSkeleton(Skeleton *skel) {
     std::cout << "\n---------- initializing L-system ----------" << std::endl;
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
 
@@ -83,8 +87,6 @@ void Lsystem::readSkeleton(Skeleton *skel, const std::string& path) {
     traverse(root, root, skel);
 
     std::cout << "converting to L-system: done" << std::endl;
-
-    outputLsys(format, path);
 
     // todo: add more parameters to the L-system (branch diameters, subtrees, ...)
 }
@@ -353,9 +355,8 @@ double Lsystem::getYAngle(vec3 vec){
 }
 
 
-void Lsystem::outputLsys(outputFormat out_type, const std::string& path){
+void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
     /// set parameters
-    std::string file_out = path;
     double recursions = 1;
     // in meters
     double default_forward = 1;      // F()
@@ -368,16 +369,10 @@ void Lsystem::outputLsys(outputFormat out_type, const std::string& path){
         default_roll *= M_PI / 180;
     }
 
-    /// output the right format
-    switch (out_type) {
-        case OUT_COMMANDLINE:
-            printLsystem();
-            break;
-        case OUT_JSON_CUSTOM:
-            lsysToJson(file_out, recursions, default_forward, default_rotation, default_roll);
-            break;
-        case OUT_TEXTFILE:
-            lsysToText();
-            break;
+    if(out_type == "json"){
+        lsysToJson(path, recursions, default_forward, default_rotation, default_roll);
+    } else if (out_type == "txt"){
+        lsysToText(path, recursions, default_forward, default_rotation, default_roll);
     }
+
 }
