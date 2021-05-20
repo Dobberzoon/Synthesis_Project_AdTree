@@ -26,13 +26,14 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#include "turtle/Turtle.h"
+
 
 #include "tree_viewer.h"
 #include "skeleton.h"
 
 #include "L-system.h"
 
+#include "Turtle.h" // Include turtle after definitions of adtree
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include <easy3d/viewer/drawable.h>
@@ -191,14 +192,13 @@ void TreeViewer::open_lsystem()
     const std::vector<std::string> filetypes = {"*.json"};
     const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, "");
 
-    for (auto file_name: file_names){
-        //Turtle turtle;
-        //turtle.readFile(file_name);
+    turtle::Turtle turtle;
+
+    for (const auto& file_name: file_names){
+        turtle.readFile(file_name);
     }
 
-
-
-    //TODO make work
+    //TODO internalize the turtle geo
     return;
 }
 
