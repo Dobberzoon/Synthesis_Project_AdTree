@@ -1,6 +1,8 @@
 //
 // Created by jasper van der vaart on 18/05/2021.
 //
+#ifndef TURTLE_TURTLE_H
+#define TURTLE_TURTLE_H
 
 #define _USE_MATH_DEFINES
 
@@ -13,36 +15,14 @@
 #include <easy3d/core/mat.h>
 #include <boost/graph/adjacency_list.hpp>
 
+#include "skeleton.h"
+
 #include "nlohmann/json.hpp"
-#include "easy3d/core/types.h"
-
-#ifndef TURTLE_TURTLE_H
-#define TURTLE_TURTLE_H
-
-
-struct SGraphVertexProp
-{
-    easy3d::vec3  cVert;
-    std::size_t nParent{};
-    double lengthOfSubtree{};
-
-    double radius{}; // used only by the smoothed skeleton
-    bool   visited{};
-};
-
-struct SGraphEdgeProp
-{
-    double nWeight;
-    double nRadius;
-    std::vector<int> vecPoints;
-};
-
-typedef boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS, SGraphVertexProp, SGraphEdgeProp > Graph;
 
 class Turtle {
 public:
     /// default constructor ///
-    explicit Turtle (float x = 0, float y = 0, float z = 0);
+    explicit Turtle(float x = 0, float y = 0, float z = 0);
 
     /// construct turtle based on another turtle location ///
     explicit Turtle(easy3d::vec3 p);
@@ -71,20 +51,20 @@ public:
     Graph getGraph();
 
     /// store internalized points to file ///
-    void writeToXYZ(const std::string& fileName);
+    void writeToXYZ(const std::string &fileName);
 
     /// store internalized points and edges to file ///
-    void writeToPly(const std::string& fileName);
+    void writeToPly(const std::string &fileName);
 
     /// read json file ///
-    void readFile(const std::string& path);
+    void readFile(const std::string &path);
 
 private:
     // location is a 3d coordinate
     easy3d::Vec<3, float> loc;
 
     // plane is a 2d plane in a 3d space
-    easy3d::Mat<3,3, float> plane;
+    easy3d::Mat<3, 3, float> plane;
 
     // collection of stored edges
     std::vector<std::vector<unsigned int>> storedEdges;
@@ -119,13 +99,13 @@ private:
     void storeLoc(unsigned int parent = -1);
 
     /// bind the provided default values ///
-    void setDefaultValues(const nlohmann::json& d);
+    void setDefaultValues(const nlohmann::json &d);
 
     /// remove data that is not written from read string ///
     static std::string cleanLine(std::string line);
 
     /// translate the complex axiom to a "simple" line ///
-    static std::string translateLine(const nlohmann::json& axiom, const nlohmann::json& rules, nlohmann::json r);
+    static std::string translateLine(const nlohmann::json &axiom, const nlohmann::json &rules, nlohmann::json r);
 
     /// translate the "simple" line to 3d points ///
     void readLine(std::string line);
@@ -134,3 +114,4 @@ private:
 
 
 #endif //TURTLE_TURTLE_H
+

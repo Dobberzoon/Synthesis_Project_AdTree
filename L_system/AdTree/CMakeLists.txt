@@ -16,8 +16,8 @@ set(${PROJECT_NAME}_SOURCES
         viewer_imgui.cpp
         L-system.h
         L-system.cpp
-        ../3rd_party/turtle/Turtle.cpp
-        ../3rd_party/turtle/Turtle.h
+        Turtle.cpp
+        Turtle.h
         )
 
 if (APPLE)

@@ -33,7 +33,7 @@
 
 #include "L-system.h"
 
-#include "turtle/Turtle.h" // Include turtle after definitions of adtree
+#include "Turtle.h" // Include turtle after definitions of adtree
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include <easy3d/viewer/drawable.h>
@@ -192,14 +192,18 @@ void TreeViewer::open_lsystem()
     const std::vector<std::string> filetypes = {"*.json"};
     const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, "");
 
-    turtle::Turtle turtle;
+    Turtle turtle;
+    turtle.readFile(file_names[0]);
 
-    for (const auto& file_name: file_names){
+    Skeleton *skeleton;
+    //skeleton->set_mst(turtle.getGraph());
+
+    /*for (const auto& file_name: file_names){
         turtle.readFile(file_name);
-    }
+    }*/
 
     //TODO internalize the turtle geo
-    return;
+    //return;
 }
 
 

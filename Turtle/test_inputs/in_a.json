@@ -1,10 +1,9 @@
 {
-    "recursions": 9,
-    "axiom": "X",
+    "recursions": 5,
+    "axiom": "F",
     "rules":
     {
-        "X": "F-[[X]+X]+F[+FX]-X",
-        "F": "FF"
+        "F": "F[+F]F[-F]F"
     },
     "dimensions":
     {

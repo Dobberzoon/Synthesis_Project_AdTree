@@ -45,11 +45,11 @@ namespace easy3d {
 struct SGraphVertexProp
 {
 	easy3d::vec3  cVert;
-	std::size_t nParent;
-	double lengthOfSubtree;
+	std::size_t nParent{};
+	double lengthOfSubtree{};
 
-    double radius; // used only by the smoothed skeleton
-    bool   visited;
+    double radius{}; // used only by the smoothed skeleton
+    bool   visited{};
 };
 
 struct SGraphEdgeProp
@@ -103,6 +103,8 @@ public:
     const Graph& get_mst() const { return MST_; }
     const Graph& get_simplified_skeleton() const { return simplified_skeleton_; }
     const Graph& get_smoothed_skeleton() const { return smoothed_skeleton_; }
+
+    Graph& set_mst(const Graph& other) { return MST_ = other; }
 
     struct Branch {
         std::vector<easy3d::vec3> points;
