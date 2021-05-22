@@ -44,12 +44,14 @@ void Turtle::set2Degrees() {
     deg = true;
 }
 
-auto Turtle::getStoredPoints() {
-    return graph.m_vertices;
+std::vector<easy3d::vec3> Turtle::getStoredPoints() {
+    std::vector<easy3d::vec3> pointList;
+    for (const auto& p: graph.m_vertices){pointList.emplace_back(p.m_property.cVert);}
+    return pointList;
 }
 
-std::vector<std::vector<unsigned int>> Turtle::getStoredEdges() {
-    return storedEdges;
+auto Turtle::getStoredEdges() {
+    return graph.m_edges;
 }
 
 Graph Turtle::getGraph() {

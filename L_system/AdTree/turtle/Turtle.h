@@ -15,7 +15,7 @@
 #include <easy3d/core/mat.h>
 #include <boost/graph/adjacency_list.hpp>
 
-#include "skeleton.h"
+#include "AdTree/skeleton.h"
 
 #include "nlohmann/json.hpp"
 
@@ -43,7 +43,7 @@ public:
     void set2Degrees();
 
     /// return the points that were internalized ///
-    auto getStoredPoints();
+    std::vector<easy3d::vec3> getStoredPoints();
 
     /// return the stored edges that were internalized ///
     std::vector<std::vector<unsigned int>> getStoredEdges();

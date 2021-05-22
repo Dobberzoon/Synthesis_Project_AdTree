@@ -63,10 +63,10 @@ public:
     void set2Degrees();
 
     /// return the points that were internalized ///
-    auto getStoredPoints();
+    std::vector<easy3d::vec3> getStoredPoints();
 
     /// return the stored edges that were internalized ///
-    std::vector<std::vector<unsigned int>> getStoredEdges();
+    auto getStoredEdges();
 
     Graph getGraph();
 
@@ -85,9 +85,6 @@ private:
 
     // plane is a 2d plane in a 3d space
     easy3d::Mat<3,3, float> plane;
-
-    // collection of stored edges
-    std::vector<std::vector<unsigned int>> storedEdges;
 
     // graph
     Graph graph;

@@ -80,7 +80,7 @@ namespace easy3d {
         void draw_menu_view();
         void draw_menu_reconstruction();
 
-        virtual void open_lsystem() = 0;
+        virtual bool open_lsystem() = 0;
         virtual void export_skeleton() const = 0;
         virtual void export_leaves() const = 0;
         virtual void export_lsystem() const = 0;

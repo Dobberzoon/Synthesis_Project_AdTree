@@ -33,7 +33,7 @@
 
 #include "L-system.h"
 
-#include "Turtle.h" // Include turtle after definitions of adtree
+#include "AdTree/turtle/Turtle.h" // Include turtle after definitions of adtree
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include <easy3d/viewer/drawable.h>
@@ -186,21 +186,62 @@ bool TreeViewer::open()
     return false;
 }
 
-void TreeViewer::open_lsystem()
+bool TreeViewer::open_lsystem()
 {
+    for (auto m : models_)
+        delete m;
+    models_.clear();
+
     // get file
     const std::vector<std::string> filetypes = {"*.json"};
     const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, "");
 
+    // if no path is chosen exit function
+    if (file_names[0].empty()){return false;}
+
+    std::ifstream input(file_names[0].c_str());
+    if (input.fail()) {
+        std::cerr << "could not open file \'" << file_names[0] << "\'" << std::endl;
+        return false;
+    }
+
+    // read l-system
     Turtle turtle;
     turtle.readFile(file_names[0]);
 
-    Skeleton *skeleton;
-    //skeleton->set_mst(turtle.getGraph());
+    // make and populate cloud
+    PointCloud* cloud = new PointCloud;
+    cloud->set_name(file_names[0]);
 
-    /*for (const auto& file_name: file_names){
-        turtle.readFile(file_name);
-    }*/
+    auto pointList = turtle.getStoredPoints();
+
+    // TODO pick anchor from json file
+    double x0, y0, z0;  // the first point
+    x0 = pointList[0].x;
+    y0 = pointList[0].y;
+    z0 = pointList[0].z;
+
+    for (auto p: pointList){
+        cloud->add_vertex(p);
+    }
+
+    if (cloud->n_vertices() == 0){
+        std::cerr << "could not create cloud" << std::endl;
+    }
+
+    easy3d::PointCloud::ModelProperty<easy3d::dvec3> prop = cloud->add_model_property<dvec3>("translation");
+    prop[0] = dvec3(x0, y0, z0);
+    std::cout << "input point cloud translated by [" << -prop[0] << "]" << std::endl;
+
+    set_title("AdTree - " + file_system::simple_name(file_names[0]));
+
+    create_drawables(cloud);
+    add_model(cloud);
+    fit_screen();
+    std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
+
+    return true;
+
 
     //TODO internalize the turtle geo
     //return;

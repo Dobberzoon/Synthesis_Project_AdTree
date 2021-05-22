@@ -11,5 +11,6 @@
         "forward" : 5,
         "rotation" : 22.5,
         "roll" : 20
-    }
+    },
+    "anchor" : [0,0,0]
 }
