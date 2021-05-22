@@ -137,8 +137,14 @@ void Turtle::rotatePlane(float angle){
     else{
         angle_z = acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
     }
-
+    // angle_z is close to 0
+    // problem: nan
     if (isnan(angle_z)){
+        angle_z = 0;
+    }
+    // vector points (almost) straight up/down
+    // problem: incorrect angle_z between very small x and y coords
+    if (abs(xAxis.z) - 1 < 0.00001){
         angle_z = 0;
     }
 
