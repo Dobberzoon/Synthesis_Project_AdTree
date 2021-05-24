@@ -3,7 +3,7 @@
 #include <string>
 
 int main() {
-    std::string inputPath = "D:/Documents/Uni/GEO1101_Synthesis_Project/materials/test_1_alphen/tree_zoom_lsystem.json";
+    std::string inputPath = "../test_inputs/in_f.json";
     std::string outputPath = "../export.xyz";
     std::string outputPath2 = "../export.ply";
 

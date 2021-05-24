@@ -54,8 +54,16 @@ std::vector<std::vector<unsigned int>> Turtle::getStoredEdges() {
     return storedEdges;
 }
 
-Graph Turtle::getGraph() {
+Graph Turtle::getGraph() const {
     return graph;
+}
+
+easy3d::vec3 Turtle::getAnchor() const{
+    return anchor;
+}
+
+easy3d::vec3 Turtle::setAnchor() {
+    return anchor;
 }
 
 void Turtle::writeToXYZ(const std::string &fileName) {
@@ -137,8 +145,14 @@ void Turtle::rotatePlane(float angle){
     else{
         angle_z = acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
     }
-
+    // angle_z is close to 0
+    // problem: nan
     if (isnan(angle_z)){
+        angle_z = 0;
+    }
+    // vector points (almost) straight up/down
+    // problem: incorrect angle_z between very small x and y coords
+    if (abs(xAxis.z) - 1 < 0.00001){
         angle_z = 0;
     }
 
@@ -271,7 +285,7 @@ void Turtle::readLine(std::string line) {
     bool returnEdge = false;
 
     for (int i = 0; i < line.size(); ++i) {
-        double override = 0;
+        float override = 0;
         int j = 0;
 
         // find override values;
@@ -404,6 +418,5 @@ void Turtle::readLine(std::string line) {
         i += j;
     }
 }
-
 
 

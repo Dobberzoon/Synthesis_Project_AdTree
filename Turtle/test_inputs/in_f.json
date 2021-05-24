@@ -1,5 +1,5 @@
 {
-    "recursions": 6,
+    "recursions": 8,
     "axiom": "X",
     "rules":
     {
@@ -12,5 +12,5 @@
         "rotation" : 22.5,
         "roll" : 20
     },
-    "anchor" : [0,0,0]
+    "degrees": true
 }

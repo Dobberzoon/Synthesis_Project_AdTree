@@ -50,13 +50,18 @@ std::vector<easy3d::vec3> Turtle::getStoredPoints() {
     return pointList;
 }
 
-auto Turtle::getStoredEdges() {
-    return graph.m_edges;
+std::vector<std::vector<unsigned int>> Turtle::getStoredEdges() {
+    return storedEdges;
 }
 
 Graph Turtle::getGraph() {
     return graph;
 }
+
+easy3d::vec3 Turtle::getAnchor() {
+    return anchor;
+}
+
 
 void Turtle::writeToXYZ(const std::string &fileName) {
     std::ofstream storageFile;
@@ -277,7 +282,7 @@ void Turtle::readLine(std::string line) {
     bool returnEdge = false;
 
     for (int i = 0; i < line.size(); ++i) {
-        double override = 0;
+        float override = 0;
         int j = 0;
 
         // find override values;
@@ -410,6 +415,5 @@ void Turtle::readLine(std::string line) {
         i += j;
     }
 }
-
 
 

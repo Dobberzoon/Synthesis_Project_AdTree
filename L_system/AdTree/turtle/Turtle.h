@@ -48,7 +48,14 @@ public:
     /// return the stored edges that were internalized ///
     std::vector<std::vector<unsigned int>> getStoredEdges();
 
-    Graph getGraph();
+    /// return the graph ///
+    Graph getGraph() const;
+
+    /// return the anchor point ///
+    easy3d::vec3 getAnchor() const;
+
+    /// set the anchor point ///
+    easy3d::vec3 setAnchor();
 
     /// store internalized points to file ///
     void writeToXYZ(const std::string &fileName);
@@ -61,7 +68,10 @@ public:
 
 private:
     // location is a 3d coordinate
-    easy3d::Vec<3, float> loc;
+    easy3d::vec3 loc;
+
+    // anchor point
+    easy3d::vec3 anchor;
 
     // plane is a 2d plane in a 3d space
     easy3d::Mat<3, 3, float> plane;
@@ -73,9 +83,9 @@ private:
     Graph graph;
 
     // default variables
-    double fValue = 5;
-    double rotateValue = 10;
-    double rollValue = 10;
+    float fValue = 5;
+    float rotateValue = 10;
+    float rollValue = 10;
 
     // prints location at every step
     bool debug = false;

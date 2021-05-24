@@ -191,13 +191,13 @@ bool TreeViewer::open_lsystem()
     for (auto m : models_)
         delete m;
     models_.clear();
-
+    
     // get file
     const std::vector<std::string> filetypes = {"*.json"};
     const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, "");
 
     // if no path is chosen exit function
-    if (file_names[0].empty()){return false;}
+    if (file_names.empty()){return false;}
 
     std::ifstream input(file_names[0].c_str());
     if (input.fail()) {
@@ -207,6 +207,8 @@ bool TreeViewer::open_lsystem()
 
     // read l-system
     Turtle turtle;
+    //TODO make degrees read
+    turtle.set2Degrees();
     turtle.readFile(file_names[0]);
 
     // make and populate cloud
@@ -215,35 +217,36 @@ bool TreeViewer::open_lsystem()
 
     auto pointList = turtle.getStoredPoints();
 
-    // TODO pick anchor from json file
-    double x0, y0, z0;  // the first point
-    x0 = pointList[0].x;
-    y0 = pointList[0].y;
-    z0 = pointList[0].z;
-
     for (auto p: pointList){
         cloud->add_vertex(p);
     }
 
     if (cloud->n_vertices() == 0){
         std::cerr << "could not create cloud" << std::endl;
+        return false;
     }
 
     easy3d::PointCloud::ModelProperty<easy3d::dvec3> prop = cloud->add_model_property<dvec3>("translation");
-    prop[0] = dvec3(x0, y0, z0);
+    prop[0] = static_cast<dvec3> (turtle.getAnchor()); // TODO set anchor
     std::cout << "input point cloud translated by [" << -prop[0] << "]" << std::endl;
 
     set_title("AdTree - " + file_system::simple_name(file_names[0]));
 
     create_drawables(cloud);
-    add_model(cloud);
-    fit_screen();
+    Model* model = cloud;
+
+    model->set_name(file_names[0]);
+    add_model(model);
+    fit_screen(model);
+
     std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
 
+    skeleton_ = new Skeleton;
+    skeleton_->set_mst(turtle.getGraph());
+    create_skeleton_drawable(ST_MST);
+
     return true;
-
-
-    //TODO internalize the turtle geo
+    //TODO draw skeleton
     //return;
 }
 
