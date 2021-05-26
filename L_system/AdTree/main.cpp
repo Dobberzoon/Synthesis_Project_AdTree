@@ -142,7 +142,7 @@ int main(int argc, const char *argv[]) {
 //    argv[1] = "/Users/lnan/Projects/adtree/data";
 //    argv[2] = "/Users/lnan/Projects/adtree/data-results";
 
-    argv[1] = "../../data/input/tree7.xyz";
+    argv[1] = "../../data/input/lsys_tiny3.xyz";
     argv[2] = "../../data/output";
 
     if (argc == 1) {

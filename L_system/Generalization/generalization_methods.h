@@ -87,174 +87,6 @@ void print_detail(Lbranch lbranch, const std::string &output_folder){
 }
 
 
-//std::vector<Skeleton::Branch> get_branches(Skeleton *skl) {
-//    std::vector<Skeleton::Branch> branches;
-//
-//    Graph& graph = *(const_cast<Graph*>(&skl->get_simplified_skeleton()));
-//
-//    if (boost::num_edges(graph) == 0)
-//        return branches;
-//
-//    //-----------------------------------------------------------------------
-//    //  traverse all the vertices of a graph
-//    //-----------------------------------------------------------------------
-//    std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
-//    for (SGraphVertexIterator vit = vi.first; vit != vi.second; ++vit) {
-//        SGraphVertexDescriptor cur_vd = *vit;
-//        SGraphVertexProp& vp = graph[cur_vd];
-//        vp.visited = false;
-//    }
-//
-//    for (SGraphVertexIterator vit = vi.first; vit != vi.second; ++vit) {
-//        SGraphVertexDescriptor cur_vd = *vit;
-//        SGraphVertexProp& vp = graph[cur_vd];
-//        auto deg = boost::degree(cur_vd, graph);
-//        if (vp.visited)
-//            continue;
-//        if (deg != 1)
-//            continue;
-//
-//        Skeleton::Branch branch;
-//        vp.visited = true;
-//
-//        if (branch.points.empty() || easy3d::distance(branch.points.back(), vp.cVert) >= easy3d::epsilon<float>()) {
-//            branch.points.push_back(vp.cVert);
-//            branch.radii.push_back(vp.radius);
-//        }
-//
-//        bool reached_end = false;
-//        do {
-//            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adj_v_iter = boost::adjacent_vertices(cur_vd, graph);
-//            for (SGraphAdjacencyIterator ait = adj_v_iter.first; ait != adj_v_iter.second; ++ait) {
-//                SGraphVertexDescriptor next_vd = *ait;
-//
-//                SGraphVertexProp& next_vp = graph[next_vd];
-//                if (!next_vp.visited) {
-//
-//                    if (branch.points.empty() || easy3d::distance(branch.points.back(), next_vp.cVert) >= easy3d::epsilon<float>()) {
-////                        branch.ids.push_back(cur_vd);
-//                        branch.points.push_back(next_vp.cVert);
-//                        branch.radii.push_back(next_vp.radius);
-//                    }
-//
-//                    cur_vd = next_vd;
-//                    next_vp.visited = true;
-//
-//                    if (boost::degree(cur_vd, graph) == 1) {
-//                        reached_end = true;
-//                        break;
-//                    }
-//                }
-//            }
-//        } while (!reached_end);
-//
-//        branches.push_back(branch);
-//    }
-//
-//    return branches;
-//}
-
-
-//int skeleton_test(std::vector<std::string>& point_cloud_files, const std::string& output_folder) {
-//
-//    int count(0);
-//    for (std::size_t i = 0; i < point_cloud_files.size(); ++i) {
-//        const std::string &xyz_file = point_cloud_files[i];
-//        std::cout << "------------- " << i + 1 << "/" << point_cloud_files.size() << " -------------" << std::endl;
-//        std::cout << "processing xyz_file: " << xyz_file << std::endl;
-//
-//        if (!easy3d::file_system::is_directory(output_folder)) {
-//            if (easy3d::file_system::create_directory(output_folder))
-//                std::cout << "created output directory '" << output_folder << "'" << std::endl;
-//            else {
-//                std::cerr << "failed creating output directory" << std::endl;
-//                return 0;
-//            }
-//        }
-//
-//        // load point_cloud
-//        easy3d::PointCloud *cloud = easy3d::PointCloudIO::load(xyz_file);
-//        if (cloud) {
-//            std::cout << "cloud loaded. num points: " << cloud->n_vertices() << std::endl;
-//
-//            // compute bbox
-//            easy3d::Box3 box;
-//            auto points = cloud->get_vertex_property<easy3d::vec3>("v:point");
-//            for (auto v : cloud->vertices())
-//                box.add_point(points[v]);
-//
-//            // remove duplicated points
-//            const float threshold = box.diagonal() * 0.001f;
-//            const auto &points_to_remove = easy3d::RemoveDuplication::apply(cloud, threshold);
-//            for (auto v : points_to_remove)
-//                cloud->delete_vertex(v);
-//            cloud->garbage_collection();
-//            std::cout << "removed too-close points. num points: " << cloud->n_vertices() << std::endl;
-//        } else {
-//            std::cerr << "failed to load point cloud from '" << xyz_file << "'" << std::endl;
-//            continue;
-//        }
-//
-//        easy3d::SurfaceMesh *mesh = new easy3d::SurfaceMesh;
-////        SurfaceMesh *mesh = new SurfaceMesh;
-//        const std::string &branch_filename = easy3d::file_system::base_name(cloud->name()) + "_branches.obj";
-//        mesh->set_name(branch_filename);
-//
-//        Skeleton *skeleton = new Skeleton();
-//        bool status = skeleton->reconstruct_branches(cloud, mesh);
-//
-//        if (status) {
-////            std::cerr << "failed in reconstructing branches" << std::endl;
-////            delete cloud;
-////            delete mesh;
-////            delete skeleton;
-////            continue;
-//            std::vector<Skeleton::Branch> branches = get_branches(skeleton);
-////            int count_branch = 0;
-//            std::string my_file_location = output_folder+"/tiny.json";
-//            std::ofstream my_file(my_file_location);
-//            my_file << "{" << std::endl;
-//            my_file << "  \"Branches\": {" << std::endl;
-//            int branches_num = branches.size();
-//            for (int b = 0; b < branches_num; ++b){
-////                const std::vector<size_t> &ids = branches[b].ids;
-//                const std::vector<easy3d::vec3> &points = branches[b].points;
-//                my_file << "    \"branch_" << std::to_string(b) << "\"" << ": " << "{" << std::endl;
-//                my_file << "      \"points\": [" << std::endl;
-//                int points_num = points.size();
-//                for (int p=0; p<points_num; ++p){
-//                    my_file << "      [" << points[p].x << ", " << points[p].y << ", " << points[p].z << "]";
-//                    if (p!=points_num-1){
-//                        my_file << "," << std::endl;
-//                    }
-//                    else my_file << std::endl;
-//                }
-//                my_file << "      ]," << std::endl;
-//                my_file << "      \"id\": [" << std::endl;
-//                int id_num = ids.size();
-//                for (int r=0; r<id_num; ++r){
-//                    my_file << "      " << ids[r];
-//                    if (r!=id_num-1){
-//                        my_file << "," << std::endl;
-//                    }
-//                    else my_file << std::endl;
-//                }
-//                my_file << "      ]" << std::endl;
-//                if (b!=branches_num-1) {
-//                    my_file << "    }, "<< std::endl;
-//                }
-//                else my_file << "    }"<< std::endl;
-//            }
-//            my_file << "  }" << std::endl;
-//            my_file << "}" << std::endl;
-//
-//            std::cout << branches_num << " branches has written into JSON." << std::endl;
-//        }
-//    }
-//    return 1;
-//}
-
-
 
 int l_test(std::vector<std::string>& point_cloud_files, const std::string& output_folder) {
 
@@ -297,12 +129,18 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
         }
 
         easy3d::SurfaceMesh *mesh = new easy3d::SurfaceMesh;
-//        SurfaceMesh *mesh = new SurfaceMesh;
         const std::string &branch_filename = easy3d::file_system::base_name(cloud->name()) + "_branches.obj";
         mesh->set_name(branch_filename);
 
         Skeleton *skeleton = new Skeleton();
         bool status = skeleton->reconstruct_branches(cloud, mesh);
+
+        // todo: this is where the l-system normally goes
+        Lsystem *lsys = new Lsystem();
+        lsys->readSkeleton(skeleton);
+        // //l_sys->outputLsys(file_system::extension(file_name), file_name);
+
+        lsys->printLsystem();
 
         if (status) {
 //            std::cerr << "failed in reconstructing branches" << std::endl;
