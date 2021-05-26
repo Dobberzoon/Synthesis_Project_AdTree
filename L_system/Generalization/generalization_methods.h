@@ -29,7 +29,6 @@ void get_detail_branches(Skeleton *skl, const std::string &output_folder) {
     std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
     std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ei = boost::edges(graph);
 
-//    std::string my_file_location = output_folder+"/tiny.json";
     std::ofstream my_file(output_folder+"/tiny_details.txt");
 
     my_file << "Root: " << *(&skl->get_root()) <<std::endl;
@@ -38,10 +37,9 @@ void get_detail_branches(Skeleton *skl, const std::string &output_folder) {
         SGraphVertexDescriptor cur_vd = *vit;
         SGraphVertexProp& vp = graph[cur_vd];
 //        vp.visited = false;
-//        std::cout << "id: " << cur_vd << ", (" << vp.cVert  << "), parent:" << vp.nParent << std::endl;
         my_file << "V id: " << cur_vd << ", degree: " << boost::degree(cur_vd, graph)<< ", parent: " << vp.nParent;
         my_file << "  {" <<std::endl;
-//        Graph::out_edge_iterator eit, eend;
+
         std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei = boost::out_edges(cur_vd, graph);
         for (auto eit = outei.first; eit!=outei.second; ++eit){
             my_file << "-->" << boost::target(*eit, graph) << std::endl;
@@ -55,17 +53,13 @@ void get_detail_branches(Skeleton *skl, const std::string &output_folder) {
         SGraphEdgeDescriptor cur_e = *eit;
         SGraphEdgeProp& e = graph[cur_e];
         my_file << "E id: " << cur_e;
-//        for (auto i:e.vecPoints){
-//            my_file << i << " ";
-//        }
         my_file << std::endl;
     }
-
     my_file.close();
-
 }
 
-void print_detail(Lbranch lbranch, const std::string &output_folder){
+
+void print_branches(Lbranch lbranch, const std::string &output_folder){
     std::ofstream my_file(output_folder+"/tiny_details.txt");
 
     for (auto const & mit : lbranch.return_pool()){
@@ -87,9 +81,9 @@ void print_detail(Lbranch lbranch, const std::string &output_folder){
 }
 
 
-
 int l_test(std::vector<std::string>& point_cloud_files, const std::string& output_folder) {
 
+    // - copied from main/batch_reconstruct()
     int count(0);
     for (std::size_t i = 0; i < point_cloud_files.size(); ++i) {
         const std::string &xyz_file = point_cloud_files[i];
@@ -128,60 +122,64 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             continue;
         }
 
-        easy3d::SurfaceMesh *mesh = new easy3d::SurfaceMesh;
+        auto *mesh = new easy3d::SurfaceMesh;
         const std::string &branch_filename = easy3d::file_system::base_name(cloud->name()) + "_branches.obj";
         mesh->set_name(branch_filename);
 
-        Skeleton *skeleton = new Skeleton();
+        auto *skeleton = new Skeleton();
         bool status = skeleton->reconstruct_branches(cloud, mesh);
 
-        // todo: this is where the l-system normally goes
-        Lsystem *lsys = new Lsystem();
+    // - copied from main/batch_reconstruct()
+
+        /// L-system initialization
+        auto *lsys = new Lsystem();
         lsys->readSkeleton(skeleton);
         // //l_sys->outputLsys(file_system::extension(file_name), file_name);
 
         lsys->printLsystem();
 
         if (status) {
-//            std::cerr << "failed in reconstructing branches" << std::endl;
-//            delete cloud;
-//            delete mesh;
-//            delete skeleton;
-//            continue;
 //            get_detail_branches(skeleton, output_folder);
             float th_d = 0.1;
             float th_x = 0.00005;
             float th_y = 0.5;
             Lbranch lbranch(skeleton, th_d, th_x, th_y);
-//            std::cout << "here" << std::endl;
+
             lbranch.build_branches();
-            print_detail(lbranch, output_folder);
+            print_branches(lbranch, output_folder);
             lbranch.print_detail();
-//            lbranch.Build_Branches();
-//            for (std::string l:lbranch.Return_Ls()){
-//                std::cout << l << std::endl;
-//            }
-//            std::vector<Skeleton::Branch> branches = skeleton->get_branches_parameters();
-//            int count_branch = 0;
-//            Graph graph = skeleton->get_simplified_skeleton();
-//            SGraphVertexDescriptor rootv = skeleton->get_root();
-//            SGraphVertexProp& vr = graph[rootv];
-//            std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
-//            std::pair<SGraphEdgeIterator, SGraphEdgeIterator> es = boost::edges(graph);
-//            std::copy(es.first, es.second, std::ostream_iterator<SGraphEdgeDescriptor> {std::cout, "\n"});
-//            std::cout<< "vertices number: " << boost::num_vertices(graph) << ", edges number: " << boost::num_edges(graph) << ", root: " << vr.cVert << std::endl;
-//            SGraphVertexProp& vstart = graph[*(vi.first+1)];
-//            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies = boost::adjacent_vertices(rootv, graph);
-//            std::
-//            for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter){
-//                std::cout << *cIter << std::endl;
-//            }
 
-//            std::cout << "start of vertices: " << typeid(*(vi.first+1)).name() << std::endl;
+            /*lbranch.Build_Branches();
+            for (std::string l:lbranch.Return_Ls()){
+                std::cout << l << std::endl;
+            }
+            std::vector<Skeleton::Branch> branches = skeleton->get_branches_parameters();
+            int count_branch = 0;
+            Graph graph = skeleton->get_simplified_skeleton();
+            SGraphVertexDescriptor rootv = skeleton->get_root();
+            SGraphVertexProp& vr = graph[rootv];
+            std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
+            std::pair<SGraphEdgeIterator, SGraphEdgeIterator> es = boost::edges(graph);
+            std::copy(es.first, es.second, std::ostream_iterator<SGraphEdgeDescriptor> {std::cout, "\n"});
+            std::cout<< "vertices number: " << boost::num_vertices(graph) << ", edges number: " << boost::num_edges(graph) << ", root: " << vr.cVert << std::endl;
+            SGraphVertexProp& vstart = graph[*(vi.first+1)];
+            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies = boost::adjacent_vertices(rootv, graph);
+            std::
+            for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter){
+                std::cout << *cIter << std::endl;
+            }
 
+            std::cout << "start of vertices: " << typeid(*(vi.first+1)).name() << std::endl;*/
+
+        } else {
+            std::cerr << "failed in reconstructing branches" << std::endl;
+            delete cloud;
+            delete mesh;
+            delete skeleton;
+            continue;
         }
     }
-    return 1;
+    return 1;   // originally count
 }
 
 #endif //SYNTHESIS_PROJECT_ADTREE_TEST_METHODS_H

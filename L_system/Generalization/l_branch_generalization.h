@@ -26,13 +26,9 @@
 
 class Lbranch {
 public:
-//    Lbranch();
     Lbranch(Skeleton* skl, float th_d, float th_x, float th_y);
-//    ~Lbranch();
 
     struct BranchNode {
-//        BranchNode();
-//        ~BranchNode();
         // Attributes
         unsigned degree;
 //        unsigned visit_time=0;
@@ -48,17 +44,6 @@ public:
 
     std::vector<std::string> return_Ls() {return Ls; }
     std::map<size_t, BranchNode> return_pool() {return pool; }
-
-    //TODO:
-
-    std::vector<float> compute_nodes(easy3d::vec3 parent,easy3d::vec3 child) ;
-    std::string make_nstr(std::vector<float> results) ;
-
-    std::string make_lstr(std::vector<size_t> branch);
-
-    //TODO:
-
-    std::vector<std::vector<size_t>> grow(std::vector<std::vector<size_t>> branches);
 
 
 
@@ -100,10 +85,12 @@ Lbranch::Lbranch(Skeleton *skeleton, float th_d, float th_x, float th_y) {
     }
 }
 
+
 bool Lbranch::notleaf(size_t vid) {
     if (graph[vid].nParent != vid && boost::degree(vid, graph)==1) return false;
     return true;
 }
+
 
 std::vector<size_t> Lbranch::find_next(size_t vid) {
     std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei = boost::out_edges(vid, graph);
@@ -114,17 +101,8 @@ std::vector<size_t> Lbranch::find_next(size_t vid) {
     return nexts_;
 }
 
-void Lbranch::print_detail() {
-//    Graph& graph = *(const_cast<Graph*>(&skl->get_simplified_skeleton()));
 
-//    for (auto const & mit : pool){
-//        std::cout << "node: " << mit.first << " (degree: ";
-//        std::cout << mit.second.degree << "): -->";
-//        for (auto next:mit.second.nexts){
-//            std::cout << next << " ";
-//        }
-//        std::cout <<std::endl;
-//    }
+void Lbranch::print_detail() {
     for (auto B:Ls){
         std::cout << B << std::endl;
     }
@@ -133,12 +111,11 @@ void Lbranch::print_detail() {
             std::cout << n << " ";
         }
         std::cout << std::endl;
-//        std::cout << make_lstr(b) << std::endl;
     }
 }
 
-void Lbranch::build_branches() {
 
+void Lbranch::build_branches() {
     std::vector<size_t> wait_list;
     wait_list.push_back(root);
     while (!wait_list.empty()){
@@ -182,73 +159,5 @@ void Lbranch::build_branches() {
     }
 }
 
-
-
-// TODO:
-//std::string Lbranch::make_rule(){
-//    std::string rule;
-//    return rule;
-//}
-
-std::vector<float> Lbranch::compute_nodes(easy3d::vec3 parent,easy3d::vec3 child) {
-
-    // TODO: rotation and roll?
-    // tan
-    std::vector<float> results;
-    float dis = easy3d::distance(parent, child);
-    results.push_back(dis);
-    float x_d = (child.x-parent.x)/dis;
-    float y_d = (child.y-parent.y)/dis;
-    results.push_back(x_d);
-    results.push_back(y_d);
-//    std::cout << results[0] << ", " << results[1] << ", " << results[2] << std::endl;
-    return results;
-}
-
-std::string Lbranch::make_nstr (std::vector<float> results){
-    float dis = results[0];
-    float x_d = results[1];
-    float y_d = results[2];
-    std::string nstr;
-    if (std::abs(y_d)>th_y) {
-        int n = (int) (y_d / th_y);
-        if (n > 0) {
-            std::stringstream ss;
-            for (int i = 0; i < n; ++i) {
-                ss << '>';
-            }
-            nstr += ss.str();
-        } else {
-
-            std::stringstream ss;
-            for (int i = 0; i < n; ++i) {
-                ss << '<';
-            }
-            nstr += ss.str();
-        }
-    }
-
-    if (std::abs(x_d)>th_x){
-        if (x_d>0) nstr+="-";
-        else nstr += "+";
-    }
-    int nf = std::ceil(dis/th_d);
-    std::stringstream ss;
-    for (int i=0; i<nf; ++i){
-        ss << 'F';
-    }
-    nstr+=ss.str();
-    return nstr;
-}
-
-std::string Lbranch::make_lstr(std::vector<size_t> branch) {
-    std::string lstr;
-    int n = branch.size();
-    // TODO: add markers
-    for (int i=0; i<n-1; ++i){
-        lstr += make_nstr(compute_nodes(pool[branch[i]].cVert, pool[branch[i+1]].cVert));
-    }
-    return lstr;
-}
 
 #endif //SYNTHESIS_PROJECT_ADTREE_L_BRANCH_H
