@@ -26,13 +26,14 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#include "turtle/Turtle.h"
+
 
 #include "tree_viewer.h"
 #include "skeleton.h"
 
 #include "L-system.h"
 
+#include "AdTree/turtle/Turtle.h" // Include turtle after definitions of adtree
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include <easy3d/viewer/drawable.h>
@@ -185,21 +186,76 @@ bool TreeViewer::open()
     return false;
 }
 
-void TreeViewer::open_lsystem()
+
+bool TreeViewer::open_lsystem()
 {
     // get file
     const std::vector<std::string> filetypes = {"*.json"};
     const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, "");
 
-    for (auto file_name: file_names){
-        //Turtle turtle;
-        //turtle.readFile(file_name);
+    // if no path is chosen exit function
+    if (file_names.empty()){return false;}
+
+    std::ifstream input(file_names[0].c_str());
+    if (input.fail()) {
+        std::cerr << "could not open file \'" << file_names[0] << "\'" << std::endl;
+        return false;
     }
 
+    // clear loaded models
+    for (auto m : models_)
+        delete m;
+    models_.clear();
+
+    // read l-system
+    Turtle turtle;
+    //TODO make degrees read
+    turtle.set2Degrees();
+    turtle.readFile(file_names[0]);
+
+    // make and populate cloud
+    PointCloud* cloud = new PointCloud;
+    cloud->set_name(file_names[0]);
+
+    auto pointList = turtle.getStoredPoints();
+
+    for (auto p: pointList){
+        cloud->add_vertex(p);
+    }
+
+    if (cloud->n_vertices() == 0){
+        std::cerr << "could not create cloud" << std::endl;
+        return false;
+    }
+
+    easy3d::PointCloud::ModelProperty<easy3d::dvec3> prop = cloud->add_model_property<dvec3>("translation");
+    prop[0] = static_cast<dvec3> (turtle.getAnchor());
+    std::cout << "input point cloud translated by [" << -prop[0] << "]" << std::endl;
+
+    set_title("AdTree - " + file_system::simple_name(file_names[0]));
+
+    create_drawables(cloud);
+    Model* model = cloud;
+
+    model->set_name(file_names[0]);
+    add_model(model);
+    fit_screen(model);
+
+    std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
+
+    skeleton_ = new Skeleton;
+    SurfaceMesh *mesh = new SurfaceMesh;
+    mesh->set_name(file_names[0]);
+
+    if (!skeleton_->clone_skeleton(turtle.getGraph())) {return false;}
+    create_skeleton_drawable(ST_SIMPLIFIED);
+
+    //TODO make geometry
 
 
-    //TODO make work
-    return;
+    //skeleton_->reconstruct_mesh(cloud, mesh);
+
+    return true;
 }
 
 
@@ -298,8 +354,20 @@ void TreeViewer::export_leaves() const {
 }
 
 void TreeViewer::export_lsystem() const{
-    //TODO make work
-    return;
+
+    if (!branches() || !skeleton_) {
+        std::cerr << "model of skeleton does not exist" << std::endl;
+        return;
+    }
+
+    const std::vector<std::string> filetypes = {"*.json", "*.txt"};
+    const std::string& initial_name = file_system::base_name(cloud()->name()) + "_lsystem.json";
+    const std::string& file_name = FileDialog::save(filetypes, initial_name);
+
+    Lsystem l_system;
+
+    l_system.readSkeleton(skeleton_);
+    l_system.outputLsys(file_system::extension(file_name), file_name);
 }
 
 
@@ -487,8 +555,8 @@ bool TreeViewer::reconstruct_skeleton() {
     bool status = skeleton_->reconstruct_mesh(cloud(), mesh);
 
     /// new: L-system part
-    Lsystem *lsys = new Lsystem();
-    lsys->readSkeleton(skeleton_);
+    //Lsystem *lsys = new Lsystem();
+    //lsys->readSkeleton(skeleton_);
 
     if (status) {
         auto offset = cloud()->get_model_property<dvec3>("translation");

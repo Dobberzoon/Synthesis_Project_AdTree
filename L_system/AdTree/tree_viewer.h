@@ -65,7 +65,7 @@ protected:
     bool key_press_event(int key, int modifiers) override;
 
     bool open() override;
-    void open_lsystem() override;
+    bool open_lsystem() override;
     bool save() const override;
 
     void export_skeleton() const override;

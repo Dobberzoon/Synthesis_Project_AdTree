@@ -49,7 +49,7 @@ public:
         OUT_TEXTFILE
     };
     /// write the L-system to an output (JSON, command line)
-    void outputLsys(outputFormat out_type);
+    void outputLsys(const std::string& out_type, const std::string& path);
 
     /// print the L-system to the command line
     void printLsystem();
@@ -60,7 +60,11 @@ public:
                     double default_rotation,
                     double default_roll);
     /// write the L-system to a txt file
-    void lsysToText();
+    void lsysToText(const std::string &filename,
+                    double rec,
+                    double def_f,
+                    double def_rot,
+                    double def_roll);
 
 private:
     std::string Lstring_;

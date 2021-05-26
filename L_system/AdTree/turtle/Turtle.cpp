@@ -4,20 +4,20 @@
 
 #include "Turtle.h"
 
-Turtle::Turtle(double x, double y, double z) {
+Turtle::Turtle(float x, float y, float z) {
     {
         loc = {x, y, z};
-        plane.set_row(0, easy3d::Vec<3, double>{1, 0, 0});
-        plane.set_row(1, easy3d::Vec<3, double>{0, 1, 0});
-        plane.set_row(2, easy3d::Vec<3, double>{0, 0, 1});
+        plane.set_row(0, easy3d::vec3 {1, 0, 0});
+        plane.set_row(1, easy3d::vec3 {0, 1, 0});
+        plane.set_row(2, easy3d::vec3 {0, 0, 1});
     }
 }
 
-Turtle::Turtle(easy3d::Vec<3, double> p) {
+Turtle::Turtle(easy3d::vec3 p) {
     loc = p;
-    plane.set_row(0, easy3d::Vec<3, double>{1, 0, 0});
-    plane.set_row(1, easy3d::Vec<3, double>{0, 1, 0});
-    plane.set_row(2, easy3d::Vec<3, double>{0, 0, 1});
+    plane.set_row(0, easy3d::vec3{1, 0, 0});
+    plane.set_row(1, easy3d::vec3{0, 1, 0});
+    plane.set_row(2, easy3d::vec3{0, 0, 1});
 }
 
 Turtle::Turtle(Turtle const &other) {
@@ -30,7 +30,7 @@ void Turtle::printLocation() const {
     std::cout << loc.x << ", " << loc.y << ", " << loc.z << ")" << std::endl;
 }
 
-void Turtle::setRotation(double angle, double roll) {
+void Turtle::setRotation(float angle, float roll) {
     // roll is executed before the angle
     rollPlane(roll);
     rotatePlane(angle);
@@ -44,16 +44,26 @@ void Turtle::set2Degrees() {
     deg = true;
 }
 
-auto Turtle::getStoredPoints() {
-    return graph.m_vertices;
+std::vector<easy3d::vec3> Turtle::getStoredPoints() {
+    std::vector<easy3d::vec3> pointList;
+    for (const auto& p: graph.m_vertices){pointList.emplace_back(p.m_property.cVert);}
+    return pointList;
 }
 
 std::vector<std::vector<unsigned int>> Turtle::getStoredEdges() {
     return storedEdges;
 }
 
-Graph Turtle::getGraph() {
+Graph Turtle::getGraph() const {
     return graph;
+}
+
+easy3d::vec3 Turtle::getAnchor() const{
+    return anchor;
+}
+
+easy3d::vec3 Turtle::setAnchor() {
+    return anchor;
 }
 
 void Turtle::writeToXYZ(const std::string &fileName) {
@@ -112,22 +122,22 @@ void Turtle::readFile(const std::string &path) {
     readLine(line);
 }
 
-void Turtle::stepForward(double distance) {
-    loc = loc + (plane * easy3d::Vec<3, double>(1, 0, 0) * distance);
+void Turtle::stepForward(float distance) {
+    loc = loc + (plane * easy3d::vec3(1, 0, 0) * distance);
 }
 
 /// rotate ///
-void Turtle::rotatePlane(double angle){
+void Turtle::rotatePlane(float angle){
     if (deg){angle = angle * M_PI/180;}
 
     /// 1: roll to XZ plane
     // project current z-axis onto XY plane;
-    easy3d::Vec<3, double> xAxis_orig = {1, 0, 0};
-    easy3d::Vec<3, double> xAxis = plane * xAxis_orig;
-    easy3d::Vec<3, double> xAxis_proj = {xAxis.x, xAxis.y, 0.0};
+    easy3d::vec3 xAxis_orig = {1, 0, 0};
+    easy3d::vec3 xAxis = plane * xAxis_orig;
+    easy3d::vec3 xAxis_proj = {xAxis.x, xAxis.y, 0.0};
 
     // angle of projected x-axis to original x-axis
-    double angle_z;
+    float angle_z;
 
     if (xAxis_proj.y < 0){
         angle_z = - acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
@@ -135,8 +145,14 @@ void Turtle::rotatePlane(double angle){
     else{
         angle_z = acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
     }
-
+    // angle_z is close to 0
+    // problem: nan
     if (isnan(angle_z)){
+        angle_z = 0;
+    }
+    // vector points (almost) straight up/down
+    // problem: incorrect angle_z between very small x and y coords
+    if (abs(xAxis.z) - 1 < 0.00001){
         angle_z = 0;
     }
 
@@ -144,7 +160,7 @@ void Turtle::rotatePlane(double angle){
     rollPlane(-angle_z);
 
     /// 2: rotation around Y axis
-    easy3d::Mat3<double> ry(1);
+    easy3d::Mat3<float> ry(1);
     ry(0, 0) = std::cos(angle);
     ry(0, 2) = std::sin(angle);
     ry(2, 0) = -std::sin(angle);
@@ -156,10 +172,10 @@ void Turtle::rotatePlane(double angle){
     rollPlane(angle_z);
 }
 
-void Turtle::rollPlane(double rollAngle) {
+void Turtle::rollPlane(float rollAngle) {
     if (deg) { rollAngle = rollAngle * M_PI / 180; }
 
-    easy3d::Mat3<double> rz(1);
+    easy3d::Mat3<float> rz(1);
     rz(0, 0) = std::cos(rollAngle);
     rz(0, 1) = -std::sin(rollAngle);
     rz(1, 0) = std::sin(rollAngle);
@@ -269,7 +285,7 @@ void Turtle::readLine(std::string line) {
     bool returnEdge = false;
 
     for (int i = 0; i < line.size(); ++i) {
-        double override = 0;
+        float override = 0;
         int j = 0;
 
         // find override values;
@@ -402,6 +418,5 @@ void Turtle::readLine(std::string line) {
         i += j;
     }
 }
-
 
 

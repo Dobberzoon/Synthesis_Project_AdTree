@@ -1,0 +1,17 @@
+{
+    "recursions": 8,
+    "axiom": "X",
+    "rules":
+    {
+        "X": "F-[[X]+X]+F[+FX]-X",
+        "F": "FF"
+    },
+    "dimensions":
+    {
+        "forward" : 5,
+        "rotation" : 22.5,
+        "roll" : 20
+    },
+    "anchor" : [100,500,0],
+    "degrees": true
+}
