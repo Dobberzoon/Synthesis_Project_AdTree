@@ -43,6 +43,9 @@
 #include "tree_viewer.h"
 #include "L-system.h"
 
+#include <Generalization/generalization_methods.h>
+#include <Generalization//l_branch_generalization.h>
+
 using namespace easy3d;
 
 // returns the number of processed input files.
@@ -134,10 +137,13 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
 }
 
 
-int main(int argc, char *argv[]) {
-//    argc = 3;
+int main(int argc, const char *argv[]) {
+    argc = 3;
 //    argv[1] = "/Users/lnan/Projects/adtree/data";
 //    argv[2] = "/Users/lnan/Projects/adtree/data-results";
+
+    argv[1] = "../../data/input/tree7.xyz";
+    argv[2] = "../../data/output";
 
     if (argc == 1) {
         TreeViewer viewer;
@@ -152,7 +158,11 @@ int main(int argc, char *argv[]) {
             std::string output_dir = second_arg;
             if (file_system::is_file(first_arg)) {
                 std::vector<std::string> cloud_files = {first_arg};
-                return batch_reconstruct(cloud_files, output_dir) > 0;
+//                return batch_reconstruct(cloud_files, output_dir) > 0;
+
+                /// new: run AdTree w/o GUI: generalization with hardcoded input/output
+                return l_test(cloud_files, output_dir) > 0;
+
             } else if (file_system::is_directory(first_arg)) {
                 std::vector<std::string> entries;
                 file_system::get_directory_entries(first_arg, entries, false);
