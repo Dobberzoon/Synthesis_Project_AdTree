@@ -186,12 +186,9 @@ bool TreeViewer::open()
     return false;
 }
 
+
 bool TreeViewer::open_lsystem()
 {
-    for (auto m : models_)
-        delete m;
-    models_.clear();
-    
     // get file
     const std::vector<std::string> filetypes = {"*.json"};
     const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, "");
@@ -204,6 +201,11 @@ bool TreeViewer::open_lsystem()
         std::cerr << "could not open file \'" << file_names[0] << "\'" << std::endl;
         return false;
     }
+
+    // clear loaded models
+    for (auto m : models_)
+        delete m;
+    models_.clear();
 
     // read l-system
     Turtle turtle;
@@ -227,7 +229,7 @@ bool TreeViewer::open_lsystem()
     }
 
     easy3d::PointCloud::ModelProperty<easy3d::dvec3> prop = cloud->add_model_property<dvec3>("translation");
-    prop[0] = static_cast<dvec3> (turtle.getAnchor()); // TODO set anchor
+    prop[0] = static_cast<dvec3> (turtle.getAnchor());
     std::cout << "input point cloud translated by [" << -prop[0] << "]" << std::endl;
 
     set_title("AdTree - " + file_system::simple_name(file_names[0]));
@@ -242,12 +244,18 @@ bool TreeViewer::open_lsystem()
     std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
 
     skeleton_ = new Skeleton;
-    skeleton_->set_mst(turtle.getGraph());
-    create_skeleton_drawable(ST_MST);
+    SurfaceMesh *mesh = new SurfaceMesh;
+    mesh->set_name(file_names[0]);
+
+    if (!skeleton_->clone_skeleton(turtle.getGraph())) {return false;}
+    create_skeleton_drawable(ST_SIMPLIFIED);
+
+    //TODO make geometry
+
+
+    //skeleton_->reconstruct_mesh(cloud, mesh);
 
     return true;
-    //TODO draw skeleton
-    //return;
 }
 
 
@@ -346,7 +354,6 @@ void TreeViewer::export_leaves() const {
 }
 
 void TreeViewer::export_lsystem() const{
-    //TODO make work
 
     if (!branches() || !skeleton_) {
         std::cerr << "model of skeleton does not exist" << std::endl;

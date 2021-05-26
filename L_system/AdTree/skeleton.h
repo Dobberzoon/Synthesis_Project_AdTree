@@ -104,7 +104,8 @@ public:
     const Graph& get_simplified_skeleton() const { return simplified_skeleton_; }
     const Graph& get_smoothed_skeleton() const { return smoothed_skeleton_; }
 
-    Graph& set_mst(const Graph& other) { return MST_ = other; }
+    Graph& set_mst() { return MST_; }
+    Graph& set_simplified_skeleton() { return simplified_skeleton_; }
 
     struct Branch {
         std::vector<easy3d::vec3> points;
@@ -114,11 +115,13 @@ public:
 
     bool reconstruct_skeleton(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
 
+    bool clone_skeleton(Graph otherSkeleton);
+
     bool reconstruct_mesh(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
 
     // get root
     const SGraphVertexDescriptor& get_root() const { return RootV_; }
-
+    SGraphVertexDescriptor& set_root() { return RootV_; }
 private:
 
 	/*-------------------------------------------------------------*/

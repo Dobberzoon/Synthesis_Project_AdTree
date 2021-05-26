@@ -12,5 +12,6 @@
         "rotation" : 22.5,
         "roll" : 20
     },
+    "anchor" : [100,500,0],
     "degrees": true
 }

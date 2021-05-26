@@ -30,6 +30,21 @@ void Turtle::printLocation() const {
     std::cout << loc.x << ", " << loc.y << ", " << loc.z << ")" << std::endl;
 }
 
+void Turtle::setLocation(easy3d::vec3 p) {
+        loc = p;
+}
+
+void Turtle::setLocation(const nlohmann::json &p) {
+    if (p.size() < 2){
+        std::cout << "no anchor is supplied in json, 0,0,0 is used as anchor!" << std::endl;
+    } else if (p.size() == 2){
+        std::cout << "2d coordinates are supplied as anchor, coordinates are used as x,y!" << std::endl;
+        loc = {0, p[0], p[1]};
+    } else if (p.size() == 3){
+        loc = {p[2], p[0], p[1]};
+    }
+}
+
 void Turtle::setRotation(float angle, float roll) {
     // roll is executed before the angle
     rollPlane(roll);
@@ -54,14 +69,13 @@ std::vector<std::vector<unsigned int>> Turtle::getStoredEdges() {
     return storedEdges;
 }
 
-Graph Turtle::getGraph() {
+Graph Turtle::getGraph() const {
     return graph;
 }
 
-easy3d::vec3 Turtle::getAnchor() {
+easy3d::vec3 Turtle::getAnchor() const{
     return anchor;
 }
-
 
 void Turtle::writeToXYZ(const std::string &fileName) {
     std::ofstream storageFile;
@@ -113,6 +127,7 @@ void Turtle::readFile(const std::string &path) {
     treeFile >> j;
     treeFile.close();
 
+    setLocation(j["anchor"]);
     setDefaultValues(j["dimensions"]);
     std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
     line = cleanLine(line);
@@ -415,5 +430,4 @@ void Turtle::readLine(std::string line) {
         i += j;
     }
 }
-
 

@@ -53,6 +53,10 @@ public:
     /// output the current location of the turtle ///
     void printLocation() const;
 
+    void setLocation(easy3d::vec3 p);
+
+    void setLocation(const nlohmann::json &p);
+
     /// initializer override from crooked stems (do not use while walking)///
     void setRotation(float angle, float roll = 0);
 
@@ -68,9 +72,11 @@ public:
     /// return the stored edges that were internalized ///
     std::vector<std::vector<unsigned int>> getStoredEdges();
 
-    Graph getGraph();
+    /// return the graph ///
+    Graph getGraph() const;
 
-    easy3d::vec3 getAnchor();
+    /// return the anchor point ///
+    easy3d::vec3 getAnchor() const;
 
     /// store internalized points to file ///
     void writeToXYZ(const std::string &fileName);
