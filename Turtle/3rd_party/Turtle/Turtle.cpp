@@ -7,9 +7,9 @@
 Turtle::Turtle(float x, float y, float z) {
     {
         loc = {x, y, z};
-        plane.set_row(0, easy3d::vec3 {1, 0, 0});
-        plane.set_row(1, easy3d::vec3 {0, 1, 0});
-        plane.set_row(2, easy3d::vec3 {0, 0, 1});
+        plane.set_row(0, easy3d::vec3{1, 0, 0});
+        plane.set_row(1, easy3d::vec3{0, 1, 0});
+        plane.set_row(2, easy3d::vec3{0, 0, 1});
     }
 }
 
@@ -30,18 +30,29 @@ void Turtle::printLocation() const {
     std::cout << loc.x << ", " << loc.y << ", " << loc.z << ")" << std::endl;
 }
 
-void Turtle::setLocation(easy3d::vec3 p) {
-        loc = p;
-}
+void Turtle::setStartingValues(const nlohmann::json &j) {
 
-void Turtle::setLocation(const nlohmann::json &p) {
-    if (p.size() < 2){
+    // set anchorpoint
+    nlohmann::json p = j["anchor"];
+
+    if (p.size() < 2) {
         std::cout << "no anchor is supplied in json, 0,0,0 is used as anchor!" << std::endl;
-    } else if (p.size() == 2){
+    } else if (p.size() == 2) {
         std::cout << "2d coordinates are supplied as anchor, coordinates are used as x,y!" << std::endl;
         loc = {0, p[0], p[1]};
-    } else if (p.size() == 3){
+        anchor = {0, p[0], p[1]};
+    } else if (p.size() == 3) {
         loc = {p[2], p[0], p[1]};
+        anchor = {p[2], p[0], p[1]};
+    }
+
+    nlohmann::json r = j["radius"];
+
+    if (r.size() == 0) {
+        std::cout << "no radius is supplied in json" << std::endl;
+        trunkR = 0;
+    } else {
+        trunkR = j["radius"];
     }
 }
 
@@ -61,7 +72,7 @@ void Turtle::set2Degrees() {
 
 std::vector<easy3d::vec3> Turtle::getStoredPoints() {
     std::vector<easy3d::vec3> pointList;
-    for (const auto& p: graph.m_vertices){pointList.emplace_back(p.m_property.cVert);}
+    for (const auto &p: graph.m_vertices) { pointList.emplace_back(p.m_property.cVert); }
     return pointList;
 }
 
@@ -73,8 +84,12 @@ Graph Turtle::getGraph() const {
     return graph;
 }
 
-easy3d::vec3 Turtle::getAnchor() const{
+easy3d::vec3 Turtle::getAnchor() const {
     return anchor;
+}
+
+float Turtle::getradius() const {
+    return trunkR;
 }
 
 void Turtle::writeToXYZ(const std::string &fileName) {
@@ -127,8 +142,16 @@ void Turtle::readFile(const std::string &path) {
     treeFile >> j;
     treeFile.close();
 
-    setLocation(j["anchor"]);
-    setDefaultValues(j["dimensions"]);
+    if (j["trunk"].size() == 0){
+        setStartingValues(j["trunk"]);
+        std::cout << "No trunk data has been supplied" << std::endl;
+    }
+
+    if (j["dimensions"].size() == 0){
+        setDefaultValues(j["dimensions"]);
+        std::cout << "No default dimensions data has been supplied" << std::endl;
+    }
+
     std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
     line = cleanLine(line);
     readLine(line);
@@ -139,8 +162,8 @@ void Turtle::stepForward(float distance) {
 }
 
 /// rotate ///
-void Turtle::rotatePlane(float angle){
-    if (deg){angle = angle * M_PI/180;}
+void Turtle::rotatePlane(float angle) {
+    if (deg) { angle = angle * M_PI / 180; }
 
     /// 1: roll to XZ plane
     // project current z-axis onto XY plane;
@@ -151,24 +174,23 @@ void Turtle::rotatePlane(float angle){
     // angle of projected x-axis to original x-axis
     float angle_z;
 
-    if (xAxis_proj.y < 0){
-        angle_z = - acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
-    }
-    else{
+    if (xAxis_proj.y < 0) {
+        angle_z = -acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
+    } else {
         angle_z = acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
     }
     // angle_z is close to 0
     // problem: nan
-    if (isnan(angle_z)){
+    if (isnan(angle_z)) {
         angle_z = 0;
     }
     // vector points (almost) straight up/down
     // problem: incorrect angle_z between very small x and y coords
-    if (abs(xAxis.z) - 1 < 0.00001){
+    if (abs(xAxis.z) - 1 < 0.00001) {
         angle_z = 0;
     }
 
-    if (deg){angle_z = angle_z / (M_PI / 180);}
+    if (deg) { angle_z = angle_z / (M_PI / 180); }
     rollPlane(-angle_z);
 
     /// 2: rotation around Y axis
@@ -283,7 +305,6 @@ std::string Turtle::translateLine(const nlohmann::json &axiom, const nlohmann::j
     }
     return line;
 }
-
 
 
 void Turtle::readLine(std::string line) {
@@ -430,4 +451,3 @@ void Turtle::readLine(std::string line) {
         i += j;
     }
 }
-

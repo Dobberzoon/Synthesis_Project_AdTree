@@ -247,13 +247,12 @@ bool TreeViewer::open_lsystem()
     SurfaceMesh *mesh = new SurfaceMesh;
     mesh->set_name(file_names[0]);
 
-    if (!skeleton_->clone_skeleton(turtle.getGraph())) {return false;}
+    float trunkRadius = turtle.getradius();
+    if (!skeleton_->clone_skeleton(turtle.getGraph(), trunkRadius)) {return false;}
     create_skeleton_drawable(ST_SIMPLIFIED);
 
     //TODO make geometry
-
-
-    //skeleton_->reconstruct_mesh(cloud, mesh);
+    skeleton_->reconstruct_mesh(cloud, mesh);
 
     return true;
 }

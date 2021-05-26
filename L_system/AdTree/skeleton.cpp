@@ -196,6 +196,7 @@ bool Skeleton::smooth_skeleton() {
     std::vector<Path> pathList;
     get_graph_for_smooth(pathList);
 
+
     // for each path get its coordinates and generate a smooth curve
     for (std::size_t n_path = 0; n_path < pathList.size(); ++n_path) {
         Path currentPath = pathList[n_path];
@@ -652,7 +653,6 @@ void Skeleton::compute_length_of_subtree(Graph *i_Graph, SGraphVertexDescriptor 
             }
         }
     }
-
     return;
 }
 
@@ -1217,25 +1217,26 @@ bool Skeleton::reconstruct_skeleton(const PointCloud *cloud, SurfaceMesh *mesh) 
     return true;
 }
 
-bool Skeleton::clone_skeleton(Graph otherSkeleton) {
+bool Skeleton::clone_skeleton(const Graph& otherSkeleton, float radius) {
     if (otherSkeleton.m_vertices.empty() || otherSkeleton.m_edges.empty()){
         std::cerr << "Turtle has been unable to translate the l-system file!" << std::endl;
         return false;
     }
 
     set_simplified_skeleton() = otherSkeleton;
-    std::vector<SGraphVertexDescriptor> vecParent(num_vertices(otherSkeleton));
-
+    RootV_ = 0;
+    TrunkRadius_ = radius;
 
     //update the length of subtree and weights for all vertices and edges
-    //compute_length_of_subtree(&simplified_skeleton_, RootV_);
-    //compute_graph_edges_weight(&simplified_skeleton_);
-    //compute_all_edges_radius(TrunkRadius_);
+    compute_length_of_subtree(&simplified_skeleton_, RootV_);
+    compute_graph_edges_weight(&simplified_skeleton_);
+    compute_all_edges_radius(TrunkRadius_);
+
+    smooth_skeleton();
+
+    std::cout << "test" <<std::endl;
 
     return true;
-
-    //std::pair<SGraphVertexIterator, SGraphVertexIterator> vp = vertices(get_simplified_skeleton());
-    //set_root() = *(vp.first);
 }
 
 // mesh
