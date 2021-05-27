@@ -142,6 +142,9 @@ void Turtle::readFile(const std::string &path) {
     treeFile >> j;
     treeFile.close();
 
+    if  (j["degrees"].empty()){std::cout << "no degree indidcator has been supplied" << std::endl;}
+    else {deg = j["degrees"];}
+
     if (j["trunk"].empty()){std::cout << "No trunk data has been supplied" << std::endl;}
     else{setStartingValues(j["trunk"]);}
 

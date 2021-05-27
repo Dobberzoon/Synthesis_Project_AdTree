@@ -1,5 +1,5 @@
 {
-    "recursions": 8,
+    "recursions": 6,
     "axiom": "X",
     "rules":
     {
@@ -12,7 +12,7 @@
     },
     "dimensions":
     {
-        "forward" : 5,
+        "forward" : 3,
         "rotation" : 22.5,
         "roll" : 20
     },

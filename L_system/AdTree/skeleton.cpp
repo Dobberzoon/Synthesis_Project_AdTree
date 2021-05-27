@@ -202,7 +202,7 @@ bool Skeleton::smooth_skeleton() {
         Path currentPath = pathList[n_path];
         std::vector<vec3> interpolatedPoints;
         std::vector<double> interpolatedRadii;
-        static int numOfSlices = 20;
+        static int numOfSlices = 20; //3
         std::vector<int> numOfSlicesCurrent;
         // retrieve the current path and its vertices
         for (std::size_t n_node = 0; n_node < currentPath.size() - 1; ++n_node) {
@@ -327,6 +327,7 @@ bool Skeleton::add_leaves() {
         std::cout << "step 2: randomly generate leaves for each leaf vertex" << std::endl;
     //initialize
     std::size_t nLeaves = leafVertices.size();
+
     if (VecLeaves_.size() > 0)
         VecLeaves_.clear();
     //generate leaves for each leaf vertex
@@ -1080,7 +1081,6 @@ void Skeleton::generate_leaves(SGraphVertexDescriptor i_LeafVertex, double leafs
         newleaf.nRad = newleaf.nLength / 5;
         VecLeaves_.push_back(newleaf);
     }
-
     return;
 }
 
@@ -1234,7 +1234,7 @@ bool Skeleton::clone_skeleton(const Graph& otherSkeleton, float radius) {
 
     smooth_skeleton();
 
-    std::cout << "test" <<std::endl;
+    //std::cout << "test" <<std::endl;
 
     return true;
 }
@@ -1334,7 +1334,6 @@ void Skeleton::add_generalized_cylinder_to_model(SurfaceMesh *mesh, const Branch
         //std::cerr << "two few points to represent a generalized cylinder" << std::endl;
         return;
     }
-
     typedef std::vector<SurfaceMesh::Vertex> CrossSection;
     std::vector<CrossSection> crosssections;
     vec3 perp;
@@ -1430,7 +1429,6 @@ bool Skeleton::reconstruct_leaves(SurfaceMesh *mesh) {
         mesh->add_triangle(va, vb, vc);
         mesh->add_triangle(va, vc, vd);
     }
-
     return true;
 }
 
