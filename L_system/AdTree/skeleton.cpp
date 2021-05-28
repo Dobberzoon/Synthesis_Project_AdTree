@@ -1217,6 +1217,22 @@ bool Skeleton::reconstruct_skeleton(const PointCloud *cloud, SurfaceMesh *mesh) 
     return true;
 }
 
+bool Skeleton::clone_skeleton_variable(PointCloud *cloud){
+
+    PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
+    vec3 pOther;
+    vec3 pLowest = points.array()[0];
+
+    for (auto v : cloud->vertices()) {
+        pOther = points[v];
+        if ((pOther.z - pLowest.z) > TreeHeight_)
+            TreeHeight_ = pOther.z - pLowest.z;
+        if (std::sqrt(pOther.distance2(pLowest)) > BoundingDistance_)
+            BoundingDistance_ = std::sqrt(pOther.distance2(pLowest));
+    }
+}
+
+
 bool Skeleton::clone_skeleton(const Graph& otherSkeleton, float radius) {
     if (otherSkeleton.m_vertices.empty() || otherSkeleton.m_edges.empty()){
         std::cerr << "Turtle has been unable to translate the l-system file!" << std::endl;

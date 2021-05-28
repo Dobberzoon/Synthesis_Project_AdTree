@@ -93,6 +93,8 @@ protected:
 private:
     easy3d::SoftShadow* shadow_;
     Skeleton*           skeleton_;
+
+    bool isLsystem = false;
 };
 
 #endif

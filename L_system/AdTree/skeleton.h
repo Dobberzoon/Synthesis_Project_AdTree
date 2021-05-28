@@ -115,6 +115,7 @@ public:
 
     bool reconstruct_skeleton(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
 
+    bool clone_skeleton_variable(easy3d::PointCloud *cloud);
     bool clone_skeleton(const Graph& otherSkeleton, float radius);
 
     bool reconstruct_mesh(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);

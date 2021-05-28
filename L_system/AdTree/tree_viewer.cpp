@@ -175,6 +175,9 @@ bool TreeViewer::open()
         delete m;
     models_.clear();
 
+    // set rules
+    isLsystem = false;
+
     const std::vector<std::string> filetypes = {"*.xyz"};
     const std::string& file_name = FileDialog::open(filetypes, std::string(""));
 
@@ -201,6 +204,9 @@ bool TreeViewer::open_lsystem()
         std::cerr << "could not open file \'" << file_names[0] << "\'" << std::endl;
         return false;
     }
+
+    // set rules
+    isLsystem = true;
 
     // clear loaded models
     for (auto m : models_)
@@ -243,6 +249,7 @@ bool TreeViewer::open_lsystem()
     // create skeleton
     skeleton_ = new Skeleton;
     float trunkRadius = turtle.getradius();
+    if (!skeleton_->clone_skeleton_variable(cloud())) {return false;}
     if (!skeleton_->clone_skeleton(turtle.getGraph(), trunkRadius)) {return false;}
     create_skeleton_drawable(ST_SIMPLIFIED);
 
@@ -529,6 +536,11 @@ bool TreeViewer::reconstruct_skeleton() {
         return false;
     }
 
+    if (isLsystem){
+        std::cout << "non valid lsystem operation" << std::endl;
+        return false;
+    }
+
     /*{   // offer users the option to remove duplicated points
         int answer = message_box("Robustness hint!",
                                  "The point cloud may has duplicated points. Remove duplication "
@@ -606,7 +618,6 @@ bool TreeViewer::add_leaves() {
             auto prop = mesh->model_property<dvec3>("translation");
             prop[0] = offset[0];
         }
-
         TrianglesDrawable* leaves_drawable = mesh->triangles_drawable("surface");
         if (leaves_drawable) {
             leaves_drawable->set_per_vertex_color(false);
