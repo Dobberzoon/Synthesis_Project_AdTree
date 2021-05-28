@@ -1230,6 +1230,7 @@ bool Skeleton::clone_skeleton_variable(PointCloud *cloud){
         if (std::sqrt(pOther.distance2(pLowest)) > BoundingDistance_)
             BoundingDistance_ = std::sqrt(pOther.distance2(pLowest));
     }
+    return true;
 }
 
 
