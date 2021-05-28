@@ -153,6 +153,10 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             lbranch.lsys_describe_branchnode(lsys);
             std::cout << std::endl;
 
+            for (auto bnode : lbranch.return_branchnodes()){
+                std::cout << "movement to node " << bnode.node_skel << ": " << bnode.lsys_motion << std::endl;
+            }
+
             /*lbranch.Build_Branches();
             for (std::string l:lbranch.Return_Ls()){
                 std::cout << l << std::endl;

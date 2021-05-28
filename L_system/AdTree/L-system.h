@@ -19,6 +19,8 @@ class Lsystem
 public:
     Lsystem();
 
+    Graph graph_;
+
     /// get a skeleton (from AdTree), convert it into an L-system, write it to output
     void readSkeleton(Skeleton* skeleton, bool deg);
     /// traverse all children of a node

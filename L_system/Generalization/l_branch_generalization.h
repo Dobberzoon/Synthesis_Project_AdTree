@@ -34,7 +34,7 @@ public:
         int visit_time = 0;                             // ?? (used for building branches)
         easy3d::vec3 cVert;                             // coordinates
         std::vector<size_t> nexts;                      // indices node branches to
-        std::map<std::string, std::string> lsys_motion; // Lstring description of movement towards this node (from its parent)
+        std::string lsys_motion;                        // Lstring description of movement towards this node (from its parent)
         SGraphVertexDescriptor node_skel;               // node in skeleton (boost vertex index)
     };
 
@@ -45,6 +45,7 @@ public:
 
     std::vector<std::string> return_Ls() {return Ls; }
     std::map<size_t, BranchNode> return_pool() {return pool; }
+    std::vector<BranchNode>& return_branchnodes() {return nodes; }
 
     void lsys_describe_branchnode(Lsystem *lsys);
 
@@ -166,11 +167,8 @@ void Lbranch::build_branches() {
 
 
 void Lbranch::lsys_describe_branchnode(Lsystem *lsys){
-    std::cout << "lsys movement assignment test" << std::endl;
-    for (auto n:nodes){
-        std::cout << n.node_skel << std::endl;
-        std::cout << graph[n.node_skel].cVert << std::endl;
-        std::cout << " parent: " << graph[n.node_skel].nParent << std::endl;
+    for (auto& n:nodes){
+        n.lsys_motion = lsys->graph_[n.node_skel].lstring;
     }
 }
 
