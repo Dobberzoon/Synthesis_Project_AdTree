@@ -30,11 +30,12 @@ public:
 
     struct BranchNode {
         // Attributes
-        unsigned degree;
-//        unsigned visit_time=0;
-        int visit_time = 0;
-        easy3d::vec3 cVert;
-        std::vector<size_t> nexts;
+        unsigned degree;                                // nr. of neighbours
+        int visit_time = 0;                             // ?? (used for building branches)
+        easy3d::vec3 cVert;                             // coordinates
+        std::vector<size_t> nexts;                      // indices node branches to
+        std::map<std::string, std::string> lsys_motion; // Lstring description of movement towards this node (from its parent)
+        SGraphVertexDescriptor node_skel;               // node in skeleton (boost vertex index)
     };
 
     bool notleaf(size_t vid);
@@ -45,43 +46,46 @@ public:
     std::vector<std::string> return_Ls() {return Ls; }
     std::map<size_t, BranchNode> return_pool() {return pool; }
 
+    void lsys_describe_branchnode(Lsystem *lsys);
+
 
 
 private:
     // Attributes
-    std::vector<std::string> Ls;
-    Skeleton* skl;
-    Graph graph;
-    size_t root;
-    std::vector<size_t> vs;
-    std::vector<BranchNode> nodes;
-    std::map<size_t, BranchNode> pool;
-    std::vector<std::vector<size_t>> branches;
-    float th_d;
-    float th_x;
-    float th_y;
+    std::vector<std::string> Ls;                // Lsys node chain descriptor
+//    Skeleton* skl;                              // ...
+    Graph graph;                                // simplified skeleton of graph
+    SGraphVertexDescriptor root;                // root node (used to be index; size_t)
+//    std::vector<size_t> vs;                     // vertices
+    std::vector<BranchNode> nodes;              // custom branch node struct
+    std::map<size_t, BranchNode> pool;          // index <--> custom branch node struct
+    std::vector<std::vector<size_t>> branches;  // list of lists of indexes
+    float th_d;                                 // ??
+    float th_x;                                 // ??
+    float th_y;                                 // ??
 };
 
+
+// initialize graph & node organisation
 Lbranch::Lbranch(Skeleton *skeleton, float th_d, float th_x, float th_y) {
-    skl = skeleton;
+//    skl = skeleton;
     graph = skeleton->get_simplified_skeleton();
     root = skeleton->get_root();
     this->th_d = th_d; this->th_x=th_x; this->th_y = th_y;
     std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
     for (auto vit = vi.first; vit != vi.second; ++vit){
         if (boost::degree(*vit, graph)!=0) {
-            vs.push_back(*vit);
+//            vs.push_back(*vit);
             BranchNode temp;
             temp.degree = boost::degree(*vit, graph);
             temp.cVert = graph[*vit].cVert;
+            temp.node_skel = *vit;
             if(notleaf(*vit)) {
                 temp.nexts = find_next(*vit);
             }
             nodes.push_back(temp);
+            pool.insert(std::make_pair(*vit, temp));
         }
-    }
-    for (int i=0; i<vs.size(); ++i){
-        pool.insert(std::make_pair(vs[i], nodes[i]));
     }
 }
 
@@ -115,6 +119,7 @@ void Lbranch::print_detail() {
 }
 
 
+// make visit_time, Ls & branches
 void Lbranch::build_branches() {
     std::vector<size_t> wait_list;
     wait_list.push_back(root);
@@ -156,6 +161,16 @@ void Lbranch::build_branches() {
         pool[next_].visit_time += 1;
         Ls.push_back(B);
         branches.push_back(branch);
+    }
+}
+
+
+void Lbranch::lsys_describe_branchnode(Lsystem *lsys){
+    std::cout << "lsys movement assignment test" << std::endl;
+    for (auto n:nodes){
+        std::cout << n.node_skel << std::endl;
+        std::cout << graph[n.node_skel].cVert << std::endl;
+        std::cout << " parent: " << graph[n.node_skel].nParent << std::endl;
     }
 }
 

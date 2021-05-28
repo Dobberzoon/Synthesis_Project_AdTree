@@ -137,6 +137,7 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
         // //l_sys->outputLsys(file_system::extension(file_name), file_name);
 
         lsys->printLsystem();
+        std::cout << "--------------------\n" << std::endl;
 
         if (status) {
 //            get_detail_branches(skeleton, output_folder);
@@ -146,8 +147,11 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             Lbranch lbranch(skeleton, th_d, th_x, th_y);
 
             lbranch.build_branches();
-            print_branches(lbranch, output_folder);
+//            print_branches(lbranch, output_folder);
             lbranch.print_detail();
+
+            lbranch.lsys_describe_branchnode(lsys);
+            std::cout << std::endl;
 
             /*lbranch.Build_Branches();
             for (std::string l:lbranch.Return_Ls()){
