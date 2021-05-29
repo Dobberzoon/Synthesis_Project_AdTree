@@ -135,6 +135,8 @@ private:
     /// roll ///
     void rollPlane(float rollAngle);
 
+    void updateStats();
+
     /// internalize current location ///
     void storeLoc(unsigned int parent = -1);
 

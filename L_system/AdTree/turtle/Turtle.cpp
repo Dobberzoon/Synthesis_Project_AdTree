@@ -162,6 +162,7 @@ void Turtle::readFile(const std::string &path) {
     std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
     line = cleanLine(line);
     readLine(line);
+    updateStats();
 }
 
 void Turtle::stepForward(float distance) {
@@ -194,9 +195,9 @@ void Turtle::rotatePlane(float angle) {
     // vector points (almost) straight up/down
     // problem: incorrect angle_z between very small x and y coords
     if (abs(xAxis.z) - 1 < 0.1 && abs(xAxis.z) - 1 > - 0.1 &&
-        abs(xAxis.x)  <  0.0001 && abs(xAxis.x) > - 0.0001 ||
+        abs(xAxis.x)  <  0.00001 && abs(xAxis.x) > - 0.00001 ||
         abs(xAxis.z) - 1 < 0.1 && abs(xAxis.z) - 1 > - 0.1 &&
-        abs(xAxis.y)  <  0.0001 && abs(xAxis.y) > - 0.0001) {
+        abs(xAxis.y)  <  0.00001 && abs(xAxis.y) > - 0.00001) {
         angle_z = 0;
     }
 
@@ -228,6 +229,18 @@ void Turtle::rollPlane(float rollAngle) {
     plane = rz * plane;
 }
 
+void Turtle::updateStats(){
+    // update graph statistics
+    for (auto p: graph.m_vertices){
+        easy3d::vec3 point = p.m_property.cVert;
+
+        if ((point.z - anchor.z) > TreeHeight)
+            TreeHeight = point.z - anchor.z;
+        if (std::sqrt(point.distance2(anchor)) > BoundingDistance)
+            BoundingDistance = std::sqrt(point.distance2(anchor));
+    }
+}
+
 void Turtle::storeLoc(unsigned int parent) {
     // add vert to graph
     SGraphVertexProp p1;
@@ -237,11 +250,7 @@ void Turtle::storeLoc(unsigned int parent) {
 
     graph.m_vertices.emplace_back(p1);
 
-    // update graph statistics
-    if ((loc.z - anchor.z) > TreeHeight)
-        TreeHeight = loc.z - anchor.z;
-    if (std::sqrt(loc.distance2(anchor)) > BoundingDistance)
-        BoundingDistance = std::sqrt(loc.distance2(anchor));
+
 }
 
 void Turtle::setDefaultValues(const nlohmann::json &d) {
