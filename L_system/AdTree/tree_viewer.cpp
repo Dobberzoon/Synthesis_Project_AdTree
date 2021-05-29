@@ -248,9 +248,7 @@ bool TreeViewer::open_lsystem()
 
     // create skeleton
     skeleton_ = new Skeleton;
-    float trunkRadius = turtle.getradius();
-    if (!skeleton_->clone_skeleton_variable(cloud())) {return false;};
-    if (!skeleton_->clone_skeleton(turtle.getGraph(), trunkRadius)) {return false;}
+    if (!skeleton_->clone_skeleton(turtle)) {return false;}
     create_skeleton_drawable(ST_SIMPLIFIED);
 
     // create mesh

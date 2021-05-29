@@ -1217,24 +1217,9 @@ bool Skeleton::reconstruct_skeleton(const PointCloud *cloud, SurfaceMesh *mesh) 
     return true;
 }
 
-bool Skeleton::clone_skeleton_variable(PointCloud *cloud){
+bool Skeleton::clone_skeleton(const Turtle& turtle) {
+    Graph otherSkeleton = turtle.getGraph();
 
-    PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
-    vec3 pOther;
-    vec3 pLowest = points.array()[0];
-
-    for (auto v : cloud->vertices()) {
-        pOther = points[v];
-        if ((pOther.z - pLowest.z) > TreeHeight_)
-            TreeHeight_ = pOther.z - pLowest.z;
-        if (std::sqrt(pOther.distance2(pLowest)) > BoundingDistance_)
-            BoundingDistance_ = std::sqrt(pOther.distance2(pLowest));
-    }
-    return true;
-}
-
-
-bool Skeleton::clone_skeleton(const Graph& otherSkeleton, float radius) {
     if (otherSkeleton.m_vertices.empty() || otherSkeleton.m_edges.empty()){
         std::cerr << "Turtle has been unable to translate the l-system file!" << std::endl;
         return false;
@@ -1242,7 +1227,9 @@ bool Skeleton::clone_skeleton(const Graph& otherSkeleton, float radius) {
 
     set_simplified_skeleton() = otherSkeleton;
     RootV_ = 0;
-    TrunkRadius_ = radius;
+    TrunkRadius_ = turtle.getRadius();
+    TreeHeight_ = turtle.getHeight();
+    BoundingDistance_ = turtle.getBoundingDistance();
 
     //update the length of subtree and weights for all vertices and edges
     compute_length_of_subtree(&simplified_skeleton_, RootV_);
@@ -1250,9 +1237,6 @@ bool Skeleton::clone_skeleton(const Graph& otherSkeleton, float radius) {
     compute_all_edges_radius(TrunkRadius_);
 
     smooth_skeleton();
-
-    //std::cout << "test" <<std::endl;
-
     return true;
 }
 
