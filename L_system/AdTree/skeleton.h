@@ -103,6 +103,10 @@ public:
     // get root
     const SGraphVertexDescriptor& get_root() const { return RootV_; }
     SGraphVertexDescriptor& set_root() { return RootV_; }
+
+    double getRadius() const { return TrunkRadius_; }
+    easy3d::vec3 getAnchor() const { return {RootPos_.x, RootPos_.y, RootPos_.z}; }
+
 private:
 
 	/*-------------------------------------------------------------*/
@@ -237,6 +241,8 @@ private:
 	/*store important vertex and geometrical attributes*/
 	SGraphVertexDescriptor RootV_;
 	Vector3D RootPos_;
+
+
 	double TrunkRadius_;
 	double TreeHeight_;
 	double BoundingDistance_;

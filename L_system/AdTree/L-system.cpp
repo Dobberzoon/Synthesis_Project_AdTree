@@ -41,19 +41,22 @@ void Lsystem::printLsystem() {
 }
 
 
-void Lsystem::lsysToJson(const std::string &filename,
-                         double rec,
-                         double def_f,
-                         double def_rot,
-                         double def_roll) {
+void Lsystem::lsysToJson(const std::string &filename) {
     std::cout << "L-system: writing to file..." << std::endl;
 
     nlohmann::json j;
 
-    j["recursions"] = rec;
+    j["recursions"] = rec_;
     j["axiom"] = Lstring_;  // todo: this will at some point be axiom_
     j["rules"] = {};        // empty for now
-    j["dimensions"] = { {"forward", def_f}, {"rotation", def_rot}, {"roll", def_roll} };
+    j["trunk"] = {{"anchor", {anchor_.x, anchor_.y, anchor_.z}},
+                  {"radius", radius_}};
+
+    j["dimensions"] = { {"forward", forward_},
+                        {"rotation", rotation_},
+                        {"roll", roll_} };
+
+    j["degrees"] = true;
 
 //    std::cout << std::setw(4) << j << std::endl;
 //    std::cout << "dir: " << output_dir + filename << std::endl;
@@ -66,11 +69,7 @@ void Lsystem::lsysToJson(const std::string &filename,
 }
 
 
-void Lsystem::lsysToText(const std::string &filename,
-                         double rec,
-                         double def_f,
-                         double def_rot,
-                         double def_roll){};
+void Lsystem::lsysToText(const std::string &filename){};
 
 
 void Lsystem::readSkeleton(Skeleton *skel) {
@@ -79,7 +78,8 @@ void Lsystem::readSkeleton(Skeleton *skel) {
 
     /// set parameters
     degrees_ = true;
-    outputFormat format = OUT_JSON_CUSTOM;
+    radius_ = skel->getRadius();
+    anchor_ = skel->getAnchor();
 
     /// convert skeleton to Lsystem
     SGraphVertexDescriptor root = skel->get_root();
@@ -356,23 +356,9 @@ double Lsystem::getYAngle(vec3 vec){
 
 
 void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
-    /// set parameters
-    double recursions = 1;
-    // in meters
-    double default_forward = 1;      // F()
-    // always in degrees!
-    double default_rotation = 90;    // +-()
-    double default_roll = 45;        // ><()
-
-    if (!degrees_){
-        default_rotation *= M_PI / 180;
-        default_roll *= M_PI / 180;
-    }
-
     if(out_type == "json"){
-        lsysToJson(path, recursions, default_forward, default_rotation, default_roll);
+        lsysToJson(path);
     } else if (out_type == "txt"){
-        lsysToText(path, recursions, default_forward, default_rotation, default_roll);
+        lsysToText(path);
     }
-
 }
