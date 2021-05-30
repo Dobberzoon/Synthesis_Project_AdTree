@@ -77,7 +77,7 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
 
     /// set parameters
-    degrees_ = true;
+    degrees_ = deg;
     radius_ = skel->getRadius();
     anchor_ = skel->getAnchor();
 
