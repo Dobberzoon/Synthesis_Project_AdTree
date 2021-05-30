@@ -243,7 +243,7 @@ bool TreeViewer::open_lsystem()
 
     easy3d::PointCloud::ModelProperty<easy3d::dvec3> prop = cloud()->add_model_property<dvec3>("translation");
     prop[0] = static_cast<dvec3> (turtle.getAnchor());
-    std::cout << "input point cloud translated by [" << -prop[0] << "]" << std::endl;
+    std::cout << "tree origin has been translated by [" << -prop[0] << "]" << std::endl;
     std::cout << "cloud loaded. num vertices: " << cloud()->n_vertices() << std::endl;
 
     // create skeleton

@@ -1227,7 +1227,7 @@ bool Skeleton::clone_skeleton(const Turtle& turtle) {
 
     set_simplified_skeleton() = otherSkeleton;
     RootV_ = 0;
-    RootPos_ = otherSkeleton.m_vertices.begin()->m_property.cVert;
+    RootPos_ = turtle.getAnchor();
     TrunkRadius_ = turtle.getRadius();
     TreeHeight_ = turtle.getHeight();
     BoundingDistance_ = turtle.getBoundingDistance();

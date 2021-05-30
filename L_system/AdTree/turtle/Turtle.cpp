@@ -39,11 +39,11 @@ void Turtle::setStartingValues(const nlohmann::json &j) {
         std::cout << "no anchor is supplied in json, 0,0,0 is used as anchor!" << std::endl;
     } else if (p.size() == 2) {
         std::cout << "2d coordinates are supplied as anchor, coordinates are used as x,y!" << std::endl;
-        loc = {0, p[0], p[1]};
-        anchor = {0, p[0], p[1]};
+        loc = {p[0], p[1], 0};
+        anchor = {p[0], p[1], 0};
     } else if (p.size() == 3) {
-        loc = {p[2], p[0], p[1]};
-        anchor = {p[2], p[0], p[1]};
+        loc = {p[0], p[1], p[2]};
+        anchor = {p[0], p[1], p[2]};
     }
 
     nlohmann::json r = j["radius"];
