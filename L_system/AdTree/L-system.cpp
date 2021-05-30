@@ -285,14 +285,14 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         ss << std::fixed << std::setprecision(accuracy) << angle_y;
         std::string angle_y_string = ss.str();
         Lstring_ += "+(" + angle_y_string + ")";
-        graph_[nextV].lstring += "+(" + angle_y_string + ")";
+        graph_[nextV].lstring["rotation"] += "+(" + angle_y_string + ")";
     }
     if (angle_y < 0){
         std::stringstream ss;
         ss << std::fixed << std::setprecision(accuracy) << abs(angle_y);
         std::string angle_y_string = ss.str();
         Lstring_ += "-(" + angle_y_string + ")";
-        graph_[nextV].lstring += "-(" + angle_y_string + ")";
+        graph_[nextV].lstring["rotation"] += "-(" + angle_y_string + ")";
     }
     /// write roll
     if (angle_z > 0){
@@ -300,14 +300,14 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         ss << std::fixed << std::setprecision(accuracy) << angle_z;
         std::string angle_z_string = ss.str();
         Lstring_ += ">(" + angle_z_string + ")";
-        graph_[nextV].lstring += ">(" + angle_z_string + ")";
+        graph_[nextV].lstring["roll"] += ">(" + angle_z_string + ")";
     }
     if (angle_z < 0){
         std::stringstream ss;
         ss << std::fixed << std::setprecision(accuracy) << abs(angle_z);
         std::string angle_z_string = ss.str();
         Lstring_ += "<(" + angle_z_string + ")";
-        graph_[nextV].lstring += "<(" + angle_z_string + ")";
+        graph_[nextV].lstring["roll"] += "<(" + angle_z_string + ")";
     }
     /// write forward
     if (distance > 0) {
@@ -315,7 +315,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         ss << std::fixed << std::setprecision(accuracy) << distance;
         std::string dist_string = ss.str();
         Lstring_ += "F(" + dist_string + ")";
-        graph_[nextV].lstring += "F(" + dist_string + ")";
+        graph_[nextV].lstring["forward"] += "F(" + dist_string + ")";
     }
 }
 

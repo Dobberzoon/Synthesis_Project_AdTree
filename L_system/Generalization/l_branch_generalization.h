@@ -34,8 +34,10 @@ public:
         int visit_time = 0;                             // ?? (used for building branches)
         easy3d::vec3 cVert;                             // coordinates
         std::vector<size_t> nexts;                      // indices node branches to
-        std::string lsys_motion;                        // Lstring description of movement towards this node (from its parent)
         SGraphVertexDescriptor node_skel;               // node in skeleton (boost vertex index)
+        // Lstring description of movement towards this node (from its parent)
+        std::map<std::string, std::string> lsys_motion ;
+
     };
 
     bool notleaf(size_t vid);

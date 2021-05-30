@@ -154,8 +154,14 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             std::cout << std::endl;
 
             for (auto bnode : lbranch.return_branchnodes()){
-                std::cout << "movement to node " << bnode.node_skel << ": " << bnode.lsys_motion << std::endl;
+                std::cout << "movement to node " << bnode.node_skel << ": " <<
+                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
+                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
+                "\n\troll:     " << bnode.lsys_motion["roll"] << std::endl;
             }
+
+            int cursor = 0;
+
 
             /*lbranch.Build_Branches();
             for (std::string l:lbranch.Return_Ls()){
