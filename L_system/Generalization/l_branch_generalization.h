@@ -48,6 +48,7 @@ public:
     std::vector<std::string> return_Ls() {return Ls; }
     std::map<size_t, BranchNode> return_pool() {return pool; }
     std::vector<BranchNode>& return_branchnodes() {return nodes; }
+    std::vector<std::vector<SGraphVertexDescriptor>>& return_branches() {return branches; }
 
     void lsys_describe_branchnode(Lsystem *lsys);
 
@@ -55,17 +56,17 @@ public:
 
 private:
     // Attributes
-    std::vector<std::string> Ls;                // Lsys node chain descriptor
-//    Skeleton* skl;                              // ...
-    Graph graph;                                // simplified skeleton of graph
-    SGraphVertexDescriptor root;                // root node (used to be index; size_t)
-//    std::vector<size_t> vs;                     // vertices
-    std::vector<BranchNode> nodes;              // custom branch node struct
-    std::map<size_t, BranchNode> pool;          // index <--> custom branch node struct
-    std::vector<std::vector<size_t>> branches;  // list of lists of indexes
-    float th_d;                                 // ??
-    float th_x;                                 // ??
-    float th_y;                                 // ??
+    std::vector<std::string> Ls;                                // Lsys node chain descriptor
+//    Skeleton* skl;                                            // ...
+    Graph graph;                                                // simplified skeleton of graph
+    SGraphVertexDescriptor root;                                // root node (used to be index; size_t)
+//    std::vector<size_t> vs;                                   // vertices
+    std::vector<BranchNode> nodes;                              // custom branch node struct
+    std::map<SGraphVertexDescriptor , BranchNode> pool;         // index <--> custom branch node struct
+    std::vector<std::vector<SGraphVertexDescriptor>> branches;  // list of lists of indexes
+    float th_d;                                                 // ??
+    float th_x;                                                 // ??
+    float th_y;                                                 // ??
 };
 
 

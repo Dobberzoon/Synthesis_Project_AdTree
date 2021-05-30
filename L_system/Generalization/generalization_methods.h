@@ -148,20 +148,96 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
 
             lbranch.build_branches();
 //            print_branches(lbranch, output_folder);
-            lbranch.print_detail();
+//            lbranch.print_detail();
 
             lbranch.lsys_describe_branchnode(lsys);
             std::cout << std::endl;
 
-            for (auto bnode : lbranch.return_branchnodes()){
-                std::cout << "movement to node " << bnode.node_skel << ": " <<
-                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
-                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
-                "\n\troll:     " << bnode.lsys_motion["roll"] << std::endl;
+//            for (auto bnode : lbranch.return_branchnodes()){
+//                std::cout << "movement to node " << bnode.node_skel << ": " <<
+//                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
+//                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
+//                "\n\troll:     " << bnode.lsys_motion["roll"] << std::endl;
+//            }
+
+            /// walk all branches node-by-node, compare movement
+            int cursor = 0; // current node number on branch
+            int max_branch_size = 2;
+            bool finished_comparing = false;
+            std::map<std::string, std::vector<SGraphVertexDescriptor>> rules;   // rule as string, with list of nodes having it
+            /*while (!finished_comparing){
+                // collect the node of the current step on all branches
+                std::vector<SGraphVertexDescriptor> current_nodes;
+                for (auto branch:lbranch.return_branches()){
+                    if (branch.size() > cursor){
+                        current_nodes.push_back(branch[cursor]);
+                    }
+                }
+                std::cout << "\nnumber of nodes in step " << current_nodes.size() << ":" << std::endl;
+
+                // compare
+                if (current_nodes.size() >= 2){
+                    for (auto nd:current_nodes){
+//                        std::cout << nd << std::endl;   // branch.return_pool()[nd].node_skel
+                        for (auto nd_comp:current_nodes){
+                            if (nd != nd_comp){
+                                if (lbranch.return_pool()[nd].lsys_motion["forward"] ==
+                                lbranch.return_pool()[nd_comp].lsys_motion["forward"] &&
+                                ! lbranch.return_pool()[nd].lsys_motion["forward"].empty()){
+                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd);
+                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd_comp);
+                                    std::cout << "rule found: " << lbranch.return_pool()[nd].lsys_motion["forward"] << std::endl;
+                                }
+                            }
+                        }
+                    }
+                    cursor += 1;
+                } else {
+                    finished_comparing = true;
+                }
+            }*/
+
+            while (!finished_comparing){
+                // collect the node of the current step on all branches
+                std::vector<SGraphVertexDescriptor> current_nodes;
+                for (auto branch:lbranch.return_branches()){
+                    if (branch.size() > cursor && branch.size() <= max_branch_size){
+                        current_nodes.push_back(branch[cursor]);
+                    }
+                }
+                std::cout << "\nnumber of nodes in step " << current_nodes.size() << ":" << std::endl;
+
+                // compare
+                if (current_nodes.size() >= 2){
+                    for (auto nd:current_nodes){
+//                        std::cout << nd << std::endl;   // branch.return_pool()[nd].node_skel
+                        for (auto nd_comp:current_nodes){
+                            if (nd != nd_comp){
+                                if (lbranch.return_pool()[nd].lsys_motion["forward"] ==
+                                lbranch.return_pool()[nd_comp].lsys_motion["forward"] &&
+                                ! lbranch.return_pool()[nd].lsys_motion["forward"].empty()){
+                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd);
+                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd_comp);
+                                    std::cout << "rule found: " << lbranch.return_pool()[nd].lsys_motion["forward"] << std::endl;
+                                }
+                            }
+                        }
+                    }
+                    cursor += 1;
+                } else {
+                    finished_comparing = true;
+                }
             }
 
-            int cursor = 0;
+            std::cout << "\nrules:" << std::endl;
+            for (auto rule:rules){
+                std::cout << rule.first << ": " << rule.second.size() << std::endl;
+            }
 
+            /// rewrite the axiom
+            // - walk skeleton once
+            // - rewrite lstring to axiom with rules
+            // - recursively for nesting, see Lsystem::traverse()
 
             /*lbranch.Build_Branches();
             for (std::string l:lbranch.Return_Ls()){
