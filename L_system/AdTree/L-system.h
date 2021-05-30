@@ -20,7 +20,7 @@ public:
     Lsystem();
 
     /// get a skeleton (from AdTree), convert it into an L-system, write it to output
-    void readSkeleton(Skeleton* skeleton);
+    void readSkeleton(Skeleton* skeleton, bool deg);
     /// traverse all children of a node
     void traverse(SGraphVertexDescriptor prevV,
                   SGraphVertexDescriptor startV,

@@ -72,7 +72,7 @@ void Lsystem::lsysToJson(const std::string &filename) {
 void Lsystem::lsysToText(const std::string &filename){};
 
 
-void Lsystem::readSkeleton(Skeleton *skel) {
+void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
     std::cout << "\n---------- initializing L-system ----------" << std::endl;
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
 
