@@ -56,7 +56,7 @@ void Lsystem::lsysToJson(const std::string &filename) {
                         {"rotation", rotation_},
                         {"roll", roll_} };
 
-    j["degrees"] = true;
+    j["degrees"] = degrees_;
 
 //    std::cout << std::setw(4) << j << std::endl;
 //    std::cout << "dir: " << output_dir + filename << std::endl;
