@@ -52,9 +52,12 @@ public:
     std::vector<std::string> return_Ls() {return Ls; }
     std::map<size_t, BranchNode> return_pool() {return pool; }
 
-    //TODO:
+    //TODO: (Now form Noortje)
 
     std::vector<float> compute_nodes(easy3d::vec3 parent,easy3d::vec3 child) ;
+    float getZAngle(easy3d::vec3 vec);
+    float getYAngle(easy3d::vec3 vec);
+
     std::string make_nstr(std::vector<float> results) ;
 
     std::string make_lstr(std::vector<size_t> branch);
@@ -223,22 +226,6 @@ void Lbranch::build_lstr() {
         }
         while (notleaf(next_)){
 
-//            int i = 0;
-//            while(pool[next_].degree-2 < pool[next_].visit_time) {
-//                std::string lstr;
-//                branch.push_back(next_);
-//                lstr += make_nstr(compute_nodes(pool[next_]., pool[next_].cVert))
-//            }
-
-//            int ns = pool[next_].degree-1 - pool[next_].visit_time;
-//            if (ns>1){
-//                B+="(";
-//                for (int i=pool[next_].visit_time; i<ns; ++i){
-//                    B+= "N"+std::to_string(next_)+"_"+std::to_string(i+1)+" ";
-//                }
-//                B+=") --> ";
-//            }
-//            else B+= "N"+std::to_string(next_)+" --> ";
             p = strlist.insert(p, make_nstr(compute_nodes(pool[branch.back()].cVert, pool[next_].cVert)));
             branch.push_back(next_);
 
@@ -252,66 +239,176 @@ void Lbranch::build_lstr() {
             pool[next_].visit_time += 1;
             next_ = pool[next_].nexts[pool[next_].visit_time-1];
         }
-//        B += ("L" + std::to_string(next_));
         // TODO: grow?
         p = strlist.insert(p, make_nstr(compute_nodes(pool[branch.back()].cVert, pool[next_].cVert)));
         branch.push_back(next_);
         pool[next_].visit_time += 1;
-//        Ls.push_back(B);
         branches.push_back(branch);
     }
 }
 
 std::vector<float> Lbranch::compute_nodes(easy3d::vec3 parent,easy3d::vec3 child) {
 
-    // TODO: rotation and roll?
+    // All from Noortje
+
+    // TODO: rotation and roll? (my version)
     // tan
-    std::vector<float> results;
-    float dis = easy3d::distance(parent, child);
-    results.push_back(dis);
-    float x_d = (child.x-parent.x)/dis;
-    float y_d = (child.y-parent.y)/dis;
-    results.push_back(x_d);
-    results.push_back(y_d);
-//    std::cout << results[0] << ", " << results[1] << ", " << results[2] << std::endl;
+    std::vector<float> results= {0.0, 0.0, 0.0};
+//    easy3d::vec3 root_c = pool[root].cVert;
+    easy3d::vec3 ori = parent;
+    float branch_length = easy3d::distance(parent, child);
+
+    easy3d::vec3 to_target = child-parent;
+    easy3d::vec3 to_origin = parent-ori;
+
+    easy3d::vec3 xaxis = {1, 0, 0};
+    easy3d::vec3 yaxis = {0, 1, 0};
+    easy3d::vec3 zaxis = {0, 0, 1};
+
+    easy3d::vec3 to_origin_xy = {to_origin.x, to_origin.y, 0};
+    easy3d::vec3 to_target_xy = {to_target.x, to_target.y, 0};
+
+    float angle_z_orig = getZAngle(to_origin_xy);
+    float angle_z_target = getZAngle(to_target_xy);
+
+    easy3d::vec3 to_origin_xz = easy3d::mat3::rotation(zaxis, -angle_z_orig) * to_origin;
+    easy3d::vec3 to_target_xz = easy3d::mat3::rotation(zaxis, -angle_z_target) * to_target;
+
+    float angle_y_orig = getYAngle(to_origin_xz);
+    float angle_y_target = getYAngle(to_target_xz);
+
+    float angle_diff_z = angle_z_target - angle_z_orig;
+    float angle_diff_y = angle_y_target - angle_y_orig;
+
+    if (abs(2 * M_PI - angle_diff_y) > 0.0001 && (abs(0 - angle_diff_y) > 0.0001)) {
+        results[0] = angle_diff_y;
+    }
+    if (abs(2 * M_PI - angle_diff_z) > 0.0001 && (abs(0 - angle_diff_z) > 0.0001)) {
+        results[1] = angle_diff_z;
+    }
+    results[2] = branch_length;
+
     return results;
 }
 
+float Lbranch::getZAngle(easy3d::vec3 vec){
+    easy3d::vec3 xaxis = {1, 0, 0};
+    float angle_z;
+
+    // angle is dependent on what side of the x-axis (XY plane) the vector is
+    if (vec.y < 0){
+        angle_z = - acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+    else{
+        angle_z = acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+
+    // zero angle returns nan, should be 0
+    if (isnan(angle_z)) {
+        angle_z = 0;
+    }
+
+    return angle_z;
+}
+
+
+float Lbranch::getYAngle(easy3d::vec3 vec){
+    easy3d::vec3 xaxis = {1, 0, 0};
+    float angle_y;
+
+    // angle is dependent on what side of the x-axis (XZ plane) the vector is
+    if (vec.z < 0) {
+        angle_y = acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+    else{
+        angle_y = (2 * M_PI) - acos(dot(vec, xaxis) / (length(vec) * length(xaxis)));
+    }
+
+    // zero angle returns nan, should be 0
+    if (isnan(angle_y)) {
+        angle_y = 0;
+    }
+
+    return angle_y;
+}
+
 std::string Lbranch::make_nstr (std::vector<float> results){
-    float dis = results[0];
-    float x_d = results[1];
-    float y_d = results[2];
+    float angle_y = results[0];
+    float angle_z = results[1];
+    float distance = results[2];
+    int accuracy = 2;
     std::string nstr;
-    if (std::abs(y_d)>th_y) {
-        int n = (int) (y_d / th_y);
-        if (n > 0) {
-            std::stringstream ss;
-            for (int i = 0; i < n; ++i) {
-                ss << '>';
-            }
-            nstr += ss.str();
-        } else {
 
-            std::stringstream ss;
-            for (int i = 0; i < n; ++i) {
-                ss << '<';
-            }
-            nstr += ss.str();
-        }
+    bool degree_ = true;
+    if (degree_){
+        angle_y = results[0] / (M_PI / 180);
+        angle_z = results[1] / (M_PI / 180);
     }
 
-    if (std::abs(x_d)>th_x){
-        if (x_d>0) nstr+="-";
-        else nstr += "+";
+    // All from Noortje
+
+    if (angle_y > 0){
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(accuracy) << angle_y;
+        std::string angle_y_string = ss.str();
+        nstr += "+(" + angle_y_string + ")";
     }
-    int nf = std::ceil(dis/th_d);
-    std::stringstream ss;
-    for (int i=0; i<nf; ++i){
-        ss << 'F';
+    if (angle_y < 0){
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(accuracy) << abs(angle_y);
+        std::string angle_y_string = ss.str();
+        nstr += "-(" + angle_y_string + ")";
     }
-    nstr+=ss.str();
+    /// write roll
+    if (angle_z > 0){
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(accuracy) << angle_z;
+        std::string angle_z_string = ss.str();
+        nstr += ">(" + angle_z_string + ")";
+    }
+    if (angle_z < 0){
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(accuracy) << abs(angle_z);
+        std::string angle_z_string = ss.str();
+        nstr += "<(" + angle_z_string + ")";
+    }
+    /// write forward
+    if (distance > 0) {
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision(accuracy) << distance;
+        std::string dist_string = ss.str();
+        nstr += "F(" + dist_string + ")";
+    }
+//    if (std::abs(y_d)>th_y) {
+//        int n = (int) (y_d / th_y);
+//        if (n > 0) {
+//            std::stringstream ss;
+//            for (int i = 0; i < n; ++i) {
+//                ss << '>';
+//            }
+//            nstr += ss.str();
+//        } else {
+//
+//            std::stringstream ss;
+//            for (int i = 0; i < n; ++i) {
+//                ss << '<';
+//            }
+//            nstr += ss.str();
+//        }
+//    }
+//
+//    if (std::abs(x_d)>th_x){
+//        if (x_d>0) nstr+="-";
+//        else nstr += "+";
+//    }
+//    int nf = std::ceil(dis/th_d);
+//    std::stringstream ss;
+//    for (int i=0; i<nf; ++i){
+//        ss << 'F';
+//    }
+//    nstr+=ss.str();
     return nstr;
-//    return "F";
+//    return "-<F";
 }
 
 std::string Lbranch::make_lstr(std::vector<size_t> branch) {
