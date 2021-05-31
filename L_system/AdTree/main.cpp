@@ -43,6 +43,9 @@
 #include "tree_viewer.h"
 #include "L-system.h"
 
+#include "Test_L_system/test_methods.h"
+//#include "Test_L_system/StringList.h"
+
 using namespace easy3d;
 
 // returns the number of processed input files.
@@ -135,15 +138,24 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
 
 
 int main(int argc, char *argv[]) {
-//    argc = 3;
-//    argv[1] = "/Users/lnan/Projects/adtree/data";
-//    argv[2] = "/Users/lnan/Projects/adtree/data-results";
+    argc = 3;
+    argv[1] = "/home/hyde/Git/Main/Synthesis_Project_AdTree/data/tiny(for_debug).xyz";
+    argv[2] = "/home/hyde/Git/Main/Synthesis_Project_AdTree/L_system/data/output";
 
     if (argc == 1) {
         TreeViewer viewer;
         viewer.run();
         return EXIT_SUCCESS;
-    } else if (argc == 3) {
+    }
+    else if (argc==2) {
+        StringList list_;
+        StringList::LstrNode *p = list_.insert(list_.get_head(), "F");
+        list_.traverse();
+        return 0;
+    }
+
+
+    else if (argc == 3) {
         std::string first_arg(argv[1]);
         std::string second_arg(argv[2]);
         if (file_system::is_file(second_arg))
@@ -152,7 +164,8 @@ int main(int argc, char *argv[]) {
             std::string output_dir = second_arg;
             if (file_system::is_file(first_arg)) {
                 std::vector<std::string> cloud_files = {first_arg};
-                return batch_reconstruct(cloud_files, output_dir) > 0;
+//                return batch_reconstruct(cloud_files, output_dir) > 0;
+                return l_test(cloud_files, output_dir);
             } else if (file_system::is_directory(first_arg)) {
                 std::vector<std::string> entries;
                 file_system::get_directory_entries(first_arg, entries, false);
@@ -161,7 +174,8 @@ int main(int argc, char *argv[]) {
                     if (file_name.size() > 3 && file_name.substr(file_name.size() - 3) == "xyz")
                         cloud_files.push_back(first_arg + "/" + file_name);
                 }
-                return batch_reconstruct(cloud_files, output_dir) > 0;
+//                return batch_reconstruct(cloud_files, output_dir) > 0;
+                return l_test(cloud_files, output_dir);
             } else
                 std::cerr
                         << "WARNING: unknown first argument (expecting either a point cloud file in *.xyz format or a\n"

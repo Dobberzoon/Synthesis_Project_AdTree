@@ -316,8 +316,9 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             float th_y = 0.5;
             Lbranch lbranch(skeleton, th_d, th_x, th_y);
 //            std::cout << "here" << std::endl;
-            lbranch.build_branches();
-            print_detail(lbranch, output_folder);
+//            lbranch.build_branches();
+            lbranch.build_lstr();
+//            print_detail(lbranch, output_folder);
             lbranch.print_detail();
 //            lbranch.Build_Branches();
 //            for (std::string l:lbranch.Return_Ls()){

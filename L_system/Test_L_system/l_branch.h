@@ -24,6 +24,7 @@
 #include <string>
 #include <sstream>
 #include "AdTree/skeleton.h"
+#include "Test_L_system/StringList.h"
 
 class Lbranch {
 public:
@@ -46,6 +47,7 @@ public:
     void print_detail();
     std::vector<size_t> find_next(size_t vid);
     void build_branches();
+    void build_lstr();
 
     std::vector<std::string> return_Ls() {return Ls; }
     std::map<size_t, BranchNode> return_pool() {return pool; }
@@ -59,7 +61,7 @@ public:
 
     //TODO:
 
-    std::vector<std::vector<size_t>> grow(std::vector<std::vector<size_t>> branches);
+//    std::vector<std::vector<size_t>> grow(std::vector<std::vector<size_t>> branches);
 
 
 
@@ -73,6 +75,7 @@ private:
     std::vector<BranchNode> nodes;
     std::map<size_t, BranchNode> pool;
     std::vector<std::vector<size_t>> branches;
+    StringList strlist;
     float th_d;
     float th_x;
     float th_y;
@@ -126,9 +129,9 @@ void Lbranch::print_detail() {
 //        }
 //        std::cout <<std::endl;
 //    }
-    for (auto B:Ls){
-        std::cout << B << std::endl;
-    }
+//    for (auto B:Ls){
+//        std::cout << B << std::endl;
+//    }
     for (auto b:branches){
         for (auto n:b){
             std::cout << n << " ";
@@ -136,6 +139,7 @@ void Lbranch::print_detail() {
         std::cout << std::endl;
 //        std::cout << make_lstr(b) << std::endl;
     }
+    strlist.traverse();
 }
 
 void Lbranch::build_branches() {
@@ -143,7 +147,7 @@ void Lbranch::build_branches() {
     std::vector<size_t> wait_list;
     wait_list.push_back(root);
     while (!wait_list.empty()){
-        size_t root_ = wait_list[0];
+        size_t root_ = wait_list.back();
         std::string B;
         std::vector<size_t> branch;
         if (root_ == root) {
@@ -155,7 +159,8 @@ void Lbranch::build_branches() {
         size_t next_ = pool[root_].nexts[pool[root_].visit_time];
         pool[root_].visit_time+=1;
         if (pool[root_].degree-1 <= pool[root_].visit_time) {
-            wait_list.erase(std::find(wait_list.begin(), wait_list.end(), root_));
+//            wait_list.erase(std::find(wait_list.begin(), wait_list.end(), root_));
+            wait_list.pop_back();
         }
         while (notleaf(next_)){
             int ns = pool[next_].degree-1 - pool[next_].visit_time;
@@ -190,6 +195,72 @@ void Lbranch::build_branches() {
 //    std::string rule;
 //    return rule;
 //}
+
+void Lbranch::build_lstr() {
+    std::vector<size_t> wait_list;
+    std::vector<StringList::LstrNode*> node_list;
+    wait_list.push_back(root);
+    node_list.push_back(strlist.get_head());
+    while (!wait_list.empty()){
+        size_t root_ = wait_list.back();
+        StringList::LstrNode* head_ = node_list.back();
+        StringList::LstrNode* p = head_;
+        std::string L;
+        std::vector<size_t> branch;
+//        if (root_ == root) {
+//            B += "R --> ";
+//        }
+//        else B+= "N"+std::to_string(root_)+"_"+std::to_string(pool[root_].degree-1-pool[root_].visit_time)+" --> ";
+        branch.push_back(root_);
+//        strlist.insert()
+
+        size_t next_ = pool[root_].nexts[pool[root_].visit_time];
+        pool[root_].visit_time+=1;
+        if (pool[root_].degree-1 <= pool[root_].visit_time) {
+//            wait_list.erase(std::find(wait_list.begin(), wait_list.end(), root_));
+            wait_list.pop_back();
+            node_list.pop_back();
+        }
+        while (notleaf(next_)){
+
+//            int i = 0;
+//            while(pool[next_].degree-2 < pool[next_].visit_time) {
+//                std::string lstr;
+//                branch.push_back(next_);
+//                lstr += make_nstr(compute_nodes(pool[next_]., pool[next_].cVert))
+//            }
+
+//            int ns = pool[next_].degree-1 - pool[next_].visit_time;
+//            if (ns>1){
+//                B+="(";
+//                for (int i=pool[next_].visit_time; i<ns; ++i){
+//                    B+= "N"+std::to_string(next_)+"_"+std::to_string(i+1)+" ";
+//                }
+//                B+=") --> ";
+//            }
+//            else B+= "N"+std::to_string(next_)+" --> ";
+            p = strlist.insert(p, make_nstr(compute_nodes(pool[branch.back()].cVert, pool[next_].cVert)));
+            branch.push_back(next_);
+
+            if (pool[next_].degree-2 > pool[next_].visit_time) {
+                wait_list.push_back(next_);
+                p = strlist.insert(p, "[");
+                node_list.push_back(p);
+                p = strlist.insert(p, "]");
+            }
+
+            pool[next_].visit_time += 1;
+            next_ = pool[next_].nexts[pool[next_].visit_time-1];
+        }
+//        B += ("L" + std::to_string(next_));
+        // TODO: grow?
+        p = strlist.insert(p, make_nstr(compute_nodes(pool[branch.back()].cVert, pool[next_].cVert)));
+        branch.push_back(next_);
+        pool[next_].visit_time += 1;
+//        Ls.push_back(B);
+        branches.push_back(branch);
+    }
+}
 
 std::vector<float> Lbranch::compute_nodes(easy3d::vec3 parent,easy3d::vec3 child) {
 
@@ -240,6 +311,7 @@ std::string Lbranch::make_nstr (std::vector<float> results){
     }
     nstr+=ss.str();
     return nstr;
+//    return "F";
 }
 
 std::string Lbranch::make_lstr(std::vector<size_t> branch) {
