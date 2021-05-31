@@ -62,7 +62,7 @@ void get_detail_branches(Skeleton *skl, const std::string &output_folder) {
 void print_branches(Lbranch lbranch, const std::string &output_folder){
     std::ofstream my_file(output_folder+"/tiny_details.txt");
 
-    for (auto const & mit : lbranch.return_pool()){
+    for (auto const & mit : lbranch.get_pool()){
         my_file << "node: " << mit.first << " (degree: ";
         my_file << mit.second.degree << "): -->";
         for (auto next:mit.second.nexts){
@@ -73,7 +73,7 @@ void print_branches(Lbranch lbranch, const std::string &output_folder){
 
     my_file << "==================================" << std::endl;
 
-    for (auto B:lbranch.return_Ls()){
+    for (auto B:lbranch.get_Ls()){
         my_file << B << std::endl;
         my_file << "-------" << std::endl;
     }
@@ -144,7 +144,7 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             float th_d = 0.1;
             float th_x = 0.00005;
             float th_y = 0.5;
-            Lbranch lbranch(skeleton, th_d, th_x, th_y);
+            Lbranch lbranch(lsys, th_d, th_x, th_y);
 
             lbranch.build_branches();
 //            print_branches(lbranch, output_folder);
@@ -153,12 +153,16 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             lbranch.lsys_describe_branchnode(lsys);
             std::cout << std::endl;
 
-//            for (auto bnode : lbranch.return_branchnodes()){
+//            for (auto bnode : lbranch.get_branchnodes()){
 //                std::cout << "movement to node " << bnode.node_skel << ": " <<
 //                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
 //                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
 //                "\n\troll:     " << bnode.lsys_motion["roll"] << std::endl;
 //            }
+
+            std::cout << "\nF: " << lbranch.get_pool()[3].lsys_motion["forward"] << std::endl;
+            std::cout << "\nF: " << lbranch.get_branchnodes()[3].lsys_motion["forward"] << std::endl;
+            std::cout << "idx: " << lbranch.get_pool()[3].node_skel << std::endl;
 
             /// walk all branches node-by-node, compare movement
             int cursor = 0; // current node number on branch
@@ -166,38 +170,6 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             bool finished_comparing = false;
             std::map<std::string, std::vector<SGraphVertexDescriptor>> rules;   // rule as string, with list of nodes having it
             /*while (!finished_comparing){
-                // collect the node of the current step on all branches
-                std::vector<SGraphVertexDescriptor> current_nodes;
-                for (auto branch:lbranch.return_branches()){
-                    if (branch.size() > cursor){
-                        current_nodes.push_back(branch[cursor]);
-                    }
-                }
-                std::cout << "\nnumber of nodes in step " << current_nodes.size() << ":" << std::endl;
-
-                // compare
-                if (current_nodes.size() >= 2){
-                    for (auto nd:current_nodes){
-//                        std::cout << nd << std::endl;   // branch.return_pool()[nd].node_skel
-                        for (auto nd_comp:current_nodes){
-                            if (nd != nd_comp){
-                                if (lbranch.return_pool()[nd].lsys_motion["forward"] ==
-                                lbranch.return_pool()[nd_comp].lsys_motion["forward"] &&
-                                ! lbranch.return_pool()[nd].lsys_motion["forward"].empty()){
-                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd);
-                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd_comp);
-                                    std::cout << "rule found: " << lbranch.return_pool()[nd].lsys_motion["forward"] << std::endl;
-                                }
-                            }
-                        }
-                    }
-                    cursor += 1;
-                } else {
-                    finished_comparing = true;
-                }
-            }*/
-
-            while (!finished_comparing){
                 // collect the node of the current step on all branches
                 std::vector<SGraphVertexDescriptor> current_nodes;
                 for (auto branch:lbranch.return_branches()){
@@ -218,7 +190,7 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
                                 ! lbranch.return_pool()[nd].lsys_motion["forward"].empty()){
                                     rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd);
                                     rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd_comp);
-                                    std::cout << "rule found: " << lbranch.return_pool()[nd].lsys_motion["forward"] << std::endl;
+                                    std::cout << "rule found: " << lbranch.get_pool()[nd].lsys_motion["forward"] << std::endl;
                                 }
                             }
                         }
@@ -227,12 +199,18 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
                 } else {
                     finished_comparing = true;
                 }
-            }
+            }*/
 
-            std::cout << "\nrules:" << std::endl;
-            for (auto rule:rules){
-                std::cout << rule.first << ": " << rule.second.size() << std::endl;
-            }
+            std::cout << "nr of leaves: " << lbranch.get_leaves().size() << std::endl;
+
+            int steps_to_average = 1;
+
+            std::vector<SGraphVertexDescriptor> current_step = lbranch.get_leaves();
+            lbranch.traverse_branch(current_step);
+
+            // list of nexts, average movements (wirtten to nodes?)
+
+
 
             /// rewrite the axiom
             // - walk skeleton once

@@ -19,7 +19,10 @@ class Lsystem
 public:
     Lsystem();
 
-    Graph graph_;
+    Graph graph_lsys;
+
+    /// get the root node index of the lsystem graph
+    SGraphVertexDescriptor get_root(){return root_;};
 
     /// get a skeleton (from AdTree), convert it into an L-system, write it to output
     void readSkeleton(Skeleton* skeleton, bool deg);
@@ -59,6 +62,7 @@ private:
     std::string axiom_;
     bool degrees_ = true;
     int rec_ = 0;
+    SGraphVertexDescriptor root_;
 
     // default values
     float forward_ = 3;

@@ -26,7 +26,7 @@
 
 class Lbranch {
 public:
-    Lbranch(Skeleton* skl, float th_d, float th_x, float th_y);
+    Lbranch(Lsystem* lsystem, float th_d, float th_x, float th_y);
 
     struct BranchNode {
         // Attributes
@@ -45,12 +45,14 @@ public:
     std::vector<size_t> find_next(size_t vid);
     void build_branches();
 
-    std::vector<std::string> return_Ls() {return Ls; }
-    std::map<size_t, BranchNode> return_pool() {return pool; }
-    std::vector<BranchNode>& return_branchnodes() {return nodes; }
-    std::vector<std::vector<SGraphVertexDescriptor>>& return_branches() {return branches; }
+    std::vector<std::string> get_Ls() {return Ls; }
+    std::map<SGraphVertexDescriptor, BranchNode> get_pool() {return pool; }
+    std::vector<BranchNode>& get_branchnodes() {return nodes; }
+    std::vector<SGraphVertexDescriptor>& get_leaves() {return leaves; }
+    std::vector<std::vector<SGraphVertexDescriptor>>& get_branches() {return branches; }
 
     void lsys_describe_branchnode(Lsystem *lsys);
+    void traverse_branch(std::vector<SGraphVertexDescriptor> starting_nodes);
 
 
 
@@ -62,8 +64,9 @@ private:
     SGraphVertexDescriptor root;                                // root node (used to be index; size_t)
 //    std::vector<size_t> vs;                                   // vertices
     std::vector<BranchNode> nodes;                              // custom branch node struct
+    std::vector<SGraphVertexDescriptor> leaves;                 // list of all leaf nodes
     std::map<SGraphVertexDescriptor , BranchNode> pool;         // index <--> custom branch node struct
-    std::vector<std::vector<SGraphVertexDescriptor>> branches;  // list of lists of indexes
+    std::vector<std::vector<SGraphVertexDescriptor> > branches;  // list of lists of indexes
     float th_d;                                                 // ??
     float th_x;                                                 // ??
     float th_y;                                                 // ??
@@ -71,10 +74,10 @@ private:
 
 
 // initialize graph & node organisation
-Lbranch::Lbranch(Skeleton *skeleton, float th_d, float th_x, float th_y) {
+Lbranch::Lbranch(Lsystem *lsys, float th_d, float th_x, float th_y) {
 //    skl = skeleton;
-    graph = skeleton->get_simplified_skeleton();
-    root = skeleton->get_root();
+    graph = lsys->graph_lsys;
+    root = lsys->get_root();
     this->th_d = th_d; this->th_x=th_x; this->th_y = th_y;
     std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
     for (auto vit = vi.first; vit != vi.second; ++vit){
@@ -84,8 +87,11 @@ Lbranch::Lbranch(Skeleton *skeleton, float th_d, float th_x, float th_y) {
             temp.degree = boost::degree(*vit, graph);
             temp.cVert = graph[*vit].cVert;
             temp.node_skel = *vit;
+            temp.lsys_motion = graph[*vit].lstring;
             if(notleaf(*vit)) {
                 temp.nexts = find_next(*vit);
+            } else {
+                leaves.push_back(*vit);
             }
             nodes.push_back(temp);
             pool.insert(std::make_pair(*vit, temp));
@@ -171,9 +177,86 @@ void Lbranch::build_branches() {
 
 void Lbranch::lsys_describe_branchnode(Lsystem *lsys){
     for (auto& n:nodes){
-        n.lsys_motion = lsys->graph_[n.node_skel].lstring;
+        n.lsys_motion = lsys->graph_lsys[n.node_skel].lstring;
     }
 }
+
+
+void Lbranch::traverse_branch(std::vector<SGraphVertexDescriptor> starting_nodes){
+    std::vector<SGraphVertexDescriptor> next_vertices;
+    SGraphVertexDescriptor next = graph[starting_nodes[0]].nParent;
+
+    float forward_total = 0;
+    float rotation_total = 0;
+    float roll_total = 0;
+
+    float forward_count = 0;
+    float rotation_count = 0;
+    float roll_count = 0;
+
+    // find average & nexts
+    for (SGraphVertexDescriptor nd:starting_nodes){
+        std::cout << "node: " << nd << std::endl;
+        /// forward
+        std::string line_f = get_pool()[nd].lsys_motion["forward"];
+        // line is not an empty string and is overwritten
+        std::cout << "forward: " << pool[nd].lsys_motion["forward"] << std::endl;
+        if (line_f.size()>2){
+            std::string sValue;
+            // skip "F" and "("
+            for (int i = 2; i < line_f.size(); ++i){
+                while (line_f[i + 1] != ')') {
+                    sValue += line_f[i];
+                }
+            }
+            float value = std::stod(sValue);
+            forward_total += value;
+            forward_count += 1;
+        }
+
+        /// rotation
+        std::string line_rot = pool[nd].lsys_motion["rotation"];
+        // line is not an empty string and is overwritten
+        if (line_rot.size()>2){
+            std::string sValue;
+            // skip "F" and "("
+            for (int i = 2; i < line_rot.size(); ++i){
+                while (line_rot[i + 1] != ')') {
+                    sValue += line_rot[i];
+                }
+            }
+            float value = std::stod(sValue);
+            rotation_total += value;
+            rotation_count += 1;
+        }
+
+        /// roll
+        std::string line_roll = pool[nd].lsys_motion["roll"];
+        // line is not an empty string and is overwritten
+        if (line_roll.size()>2){
+            std::string sValue;
+            // skip "F" and "("
+            for (int i = 2; i < line_roll.size(); ++i){
+                while (line_roll[i + 1] != ')') {
+                    sValue += line_roll[i];
+                }
+            }
+            float value = std::stod(sValue);
+            roll_total += value;
+            roll_count += 1;
+        }
+    }
+
+    std::cout << "number of hits: " << "\n\tforward:  " << forward_count
+                                    << "\n\trotation: " << rotation_count
+                                    << "\n\troll:     " << roll_count
+                                    << std::endl;
+
+    std::cout << "averages: " << "\n\tforward:  " << forward_total / forward_count
+              << "\n\trotation: " << rotation_total / rotation_count
+              << "\n\troll:     " << roll_total / roll_count
+              << std::endl;
+};
 
 
 #endif //SYNTHESIS_PROJECT_ADTREE_L_BRANCH_H
