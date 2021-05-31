@@ -23,6 +23,7 @@ public:
 
     /// get the root node index of the lsystem graph
     SGraphVertexDescriptor get_root(){return root_;};
+    bool isDegrees(){return degrees_;};
 
     /// get a skeleton (from AdTree), convert it into an L-system, write it to output
     void readSkeleton(Skeleton* skeleton, bool deg);

@@ -150,19 +150,19 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
 //            print_branches(lbranch, output_folder);
 //            lbranch.print_detail();
 
-            lbranch.lsys_describe_branchnode(lsys);
+//            lbranch.lsys_describe_branchnode(lsys);
             std::cout << std::endl;
 
-//            for (auto bnode : lbranch.get_branchnodes()){
-//                std::cout << "movement to node " << bnode.node_skel << ": " <<
-//                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
-//                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
-//                "\n\troll:     " << bnode.lsys_motion["roll"] << std::endl;
-//            }
+            for (auto bnode : lbranch.get_branchnodes()){
+                std::cout << "movement to node " << bnode.node_skel << ": " <<
+                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
+                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
+                "\n\troll:     " << bnode.lsys_motion["roll"] << std::endl;
+            }
 
-            std::cout << "\nF: " << lbranch.get_pool()[3].lsys_motion["forward"] << std::endl;
-            std::cout << "\nF: " << lbranch.get_branchnodes()[3].lsys_motion["forward"] << std::endl;
-            std::cout << "idx: " << lbranch.get_pool()[3].node_skel << std::endl;
+//            std::cout << "\nF: " << lbranch.get_pool()[3].lsys_motion["forward"] << std::endl;
+//            std::cout << "\nF: " << lbranch.get_branchnodes()[3].lsys_motion["forward"] << std::endl;
+//            std::cout << "idx: " << lbranch.get_pool()[3].node_skel << std::endl;
 
             /// walk all branches node-by-node, compare movement
             int cursor = 0; // current node number on branch
@@ -206,7 +206,7 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             int steps_to_average = 1;
 
             std::vector<SGraphVertexDescriptor> current_step = lbranch.get_leaves();
-            lbranch.traverse_branch(current_step);
+            lbranch.average_branch(current_step);
 
             // list of nexts, average movements (wirtten to nodes?)
 

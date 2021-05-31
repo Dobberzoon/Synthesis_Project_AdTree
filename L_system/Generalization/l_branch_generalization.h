@@ -28,6 +28,8 @@ class Lbranch {
 public:
     Lbranch(Lsystem* lsystem, float th_d, float th_x, float th_y);
 
+    bool degrees = true;
+
     struct BranchNode {
         // Attributes
         unsigned degree;                                // nr. of neighbours
@@ -52,7 +54,7 @@ public:
     std::vector<std::vector<SGraphVertexDescriptor>>& get_branches() {return branches; }
 
     void lsys_describe_branchnode(Lsystem *lsys);
-    void traverse_branch(std::vector<SGraphVertexDescriptor> starting_nodes);
+    void average_branch(std::vector<SGraphVertexDescriptor> starting_nodes);
 
 
 
@@ -78,6 +80,7 @@ Lbranch::Lbranch(Lsystem *lsys, float th_d, float th_x, float th_y) {
 //    skl = skeleton;
     graph = lsys->graph_lsys;
     root = lsys->get_root();
+    degrees = lsys->isDegrees();
     this->th_d = th_d; this->th_x=th_x; this->th_y = th_y;
     std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
     for (auto vit = vi.first; vit != vi.second; ++vit){
@@ -182,7 +185,7 @@ void Lbranch::lsys_describe_branchnode(Lsystem *lsys){
 }
 
 
-void Lbranch::traverse_branch(std::vector<SGraphVertexDescriptor> starting_nodes){
+void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes){
     std::vector<SGraphVertexDescriptor> next_vertices;
     SGraphVertexDescriptor next = graph[starting_nodes[0]].nParent;
 
@@ -197,19 +200,20 @@ void Lbranch::traverse_branch(std::vector<SGraphVertexDescriptor> starting_nodes
     // find average & nexts
     for (SGraphVertexDescriptor nd:starting_nodes){
         std::cout << "node: " << nd << std::endl;
+
         /// forward
         std::string line_f = get_pool()[nd].lsys_motion["forward"];
         // line is not an empty string and is overwritten
-        std::cout << "forward: " << pool[nd].lsys_motion["forward"] << std::endl;
         if (line_f.size()>2){
             std::string sValue;
             // skip "F" and "("
             for (int i = 2; i < line_f.size(); ++i){
-                while (line_f[i + 1] != ')') {
+                if (line_f[i] != ')') {
                     sValue += line_f[i];
                 }
             }
             float value = std::stod(sValue);
+            std::cout << "\tforward value: " << value << std::endl;
             forward_total += value;
             forward_count += 1;
         }
@@ -219,13 +223,27 @@ void Lbranch::traverse_branch(std::vector<SGraphVertexDescriptor> starting_nodes
         // line is not an empty string and is overwritten
         if (line_rot.size()>2){
             std::string sValue;
-            // skip "F" and "("
-            for (int i = 2; i < line_rot.size(); ++i){
-                while (line_rot[i + 1] != ')') {
+            int i = 0;
+            bool negative_rotation = false;
+            while (line_rot[i] != ')') {
+                if (line_rot[i] == '-'){
+                    negative_rotation = true;
+                }
+                else if (line_rot[i] != '(' && line_rot[i] != '+'){
                     sValue += line_rot[i];
                 }
+                i++;
             }
             float value = std::stod(sValue);
+            // to make sure negative rotation gets read the same as positive rotation
+            if (negative_rotation){
+                if (degrees){
+                    value = 360 - value;
+                } else {
+                    value = 2*M_PI - value;
+                }
+            }
+            std::cout << "\trotation value: " << value << std::endl;
             rotation_total += value;
             rotation_count += 1;
         }
@@ -235,13 +253,27 @@ void Lbranch::traverse_branch(std::vector<SGraphVertexDescriptor> starting_nodes
         // line is not an empty string and is overwritten
         if (line_roll.size()>2){
             std::string sValue;
-            // skip "F" and "("
-            for (int i = 2; i < line_roll.size(); ++i){
-                while (line_roll[i + 1] != ')') {
+            int i = 0;
+            bool negative_roll = false;
+            while (line_roll[i] != ')') {
+                if (line_roll[i] == '<'){
+                    negative_roll = true;
+                }
+                else if (line_roll[i] != '(' && line_roll[i] != '>'){
                     sValue += line_roll[i];
                 }
+                i++;
             }
             float value = std::stod(sValue);
+            // to make sure negative roll gets read the same as positive roll
+            if (negative_roll){
+                if (degrees){
+                    value = 360 - value;
+                } else {
+                    value = 2*M_PI - value;
+                }
+            }
+            std::cout << "\troll value: " << value << std::endl;
             roll_total += value;
             roll_count += 1;
         }
