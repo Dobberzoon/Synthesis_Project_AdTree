@@ -157,7 +157,8 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
                 std::cout << "movement to node " << bnode.node_skel << ": " <<
                 "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
                 "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
-                "\n\troll:     " << bnode.lsys_motion["roll"] << std::endl;
+                "\n\troll:     " << bnode.lsys_motion["roll"] << " " <<
+                "\n\tnesting:  " << bnode.lsys_motion["nesting"] << std::endl;
             }
 
 //            std::cout << "\nF: " << lbranch.get_pool()[3].lsys_motion["forward"] << std::endl;

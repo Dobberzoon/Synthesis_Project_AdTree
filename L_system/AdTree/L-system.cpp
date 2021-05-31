@@ -95,7 +95,7 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
 }
 
 
-void Lsystem::traverse(SGraphVertexDescriptor prevV,
+SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
                        SGraphVertexDescriptor startV,
                        Skeleton *skel){
     // write movement from prevV to nextV to Lstring
@@ -110,9 +110,11 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
     std::vector<SGraphVertexDescriptor> slower_children;
 
     // skip if node is leaf
-    if (!((out_degree(startV, skel->get_simplified_skeleton()) == 1)
-        && (startV != skel->get_simplified_skeleton()[startV].nParent))) {
-
+    if ((out_degree(startV, skel->get_simplified_skeleton()) == 1)
+        && (startV != skel->get_simplified_skeleton()[startV].nParent)) {
+        return startV;
+    }
+    else {
         /// find children of start node
         double maxR = -1;
         int isUsed = -1;
@@ -141,21 +143,22 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
 
         /// start node has one child: straight segment
         if (out_degree(startV, skel->get_simplified_skeleton()) == 1) {
-            traverse(startV, nextV, skel);
+            return traverse(startV, nextV, skel);
         }
         /// start node has multiple children: beginning of 2 or more branches
         else {
-            // write the fastest child
-            Lstring_ += "[";
-            traverse(startV, nextV, skel);
-            Lstring_ += "]";
+            slower_children.insert(slower_children.begin(), nextV);
 
+            SGraphVertexDescriptor leaf;
             // also write all the other children
             for (int nChild = 0; nChild < slower_children.size(); ++nChild) {
                 Lstring_ += "[";
-                traverse(startV, slower_children[nChild], skel);
+                graph_lsys[slower_children[nChild]].lstring["nesting"] += "[";
+                leaf = traverse(startV, slower_children[nChild], skel);
+                graph_lsys[leaf].lstring["nesting"] += "]";
                 Lstring_ += "]";
             }
+            return leaf;
         }
     }
 }

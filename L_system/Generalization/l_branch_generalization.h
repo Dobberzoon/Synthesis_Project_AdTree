@@ -199,8 +199,6 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes)
 
     // find average & nexts
     for (SGraphVertexDescriptor nd:starting_nodes){
-        std::cout << "node: " << nd << std::endl;
-
         /// forward
         std::string line_f = get_pool()[nd].lsys_motion["forward"];
         // line is not an empty string and is overwritten
@@ -213,7 +211,6 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes)
                 }
             }
             float value = std::stod(sValue);
-            std::cout << "\tforward value: " << value << std::endl;
             forward_total += value;
             forward_count += 1;
         }
@@ -243,7 +240,6 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes)
                     value = 2*M_PI - value;
                 }
             }
-            std::cout << "\trotation value: " << value << std::endl;
             rotation_total += value;
             rotation_count += 1;
         }
@@ -273,7 +269,6 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes)
                     value = 2*M_PI - value;
                 }
             }
-            std::cout << "\troll value: " << value << std::endl;
             roll_total += value;
             roll_count += 1;
         }
