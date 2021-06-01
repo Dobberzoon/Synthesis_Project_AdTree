@@ -25,8 +25,8 @@ using namespace easy3d;
 Lsystem::Lsystem()
     {
         Lstring_ = "";
-        axiom_ = "";
-        rules_ = {};
+        axiom = "";
+        rules = {};
         degrees_ = false;
     }
 
@@ -37,9 +37,9 @@ Lsystem::Lsystem()
 void Lsystem::printLsystem() {
     std::cout << "printing L-system..." << std::endl;
     std::cout << "string: " << Lstring_ << std::endl;
-    std::cout << "axiom:  " << axiom_ << std::endl;
+    std::cout << "axiom:  " << axiom << std::endl;
     std::cout << "rules:  " << std::endl;
-    for (auto rule:rules_){
+    for (auto rule:rules){
         std::cout << "\t" << rule.first << ": " << rule.second << std::endl;
     }
     std::cout << "printing L-system: done" << std::endl;
@@ -94,7 +94,7 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
     traverse(root, root, skel);
-    axiom_ = Lstring_;  // initially axiom is the full string
+    axiom = Lstring_;  // initially axiom is the full string
 
     // todo: generalisation call here?
 

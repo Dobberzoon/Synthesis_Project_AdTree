@@ -53,6 +53,7 @@ public:
     std::vector<BranchNode>& get_branchnodes() {return nodes; }
     std::vector<SGraphVertexDescriptor>& get_leaves() {return leaves; }
     std::vector<std::vector<SGraphVertexDescriptor>>& get_branches() {return branches; }
+    std::map<std::string, std::string>& get_rules() {return rules; }
 
     void average_branch(std::vector<SGraphVertexDescriptor> starting_nodes, int nr_steps, std::string rule_marker);
     void branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts);
@@ -299,11 +300,64 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes,
 
 
 void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
+    // traverse the given nodes
     for (auto nd:starts){
-        // do something: write to axiom & rules
-        // don't forget the nesting!
-//        pool[nd].lsys_motion;
-        std::cout << "node " << nd << ": " << graph[nd].lstring["forward"] << std::endl;
+        bool rule_found = false;
+        // check for rules
+        for (auto rule:rules){
+            std::string forward_cur = graph[nd].lstring["forward"];
+
+            // start node of rule
+            if (forward_cur == rule.first) {
+                rule_found = true;
+
+                // write nesting & rule marker
+                int back_nest = 0;
+                for (auto nest:graph[nd].lstring["nesting"]) {
+                    if (nest == '[') {
+                        lsys->axiom += '[';
+                    }
+                    if (nest == ']') {
+                        back_nest++;
+                    }
+                }
+                lsys->axiom += rule.first;
+
+                for (int i = 0; i < back_nest; ++i) {
+                    lsys->axiom += ']';
+                }
+            }
+
+            // continuation node of rule
+            if (forward_cur == rule.first + '*'){
+                rule_found = true;
+                // just write nesting
+                lsys->axiom += graph[nd].lstring["nesting"];
+                // todo: remove useless nesting markers
+            }
+            // todo: write rules to lsystem rules
+        }
+
+        // if no rules, write all movement
+        if (!rule_found){
+            int back_nest = 0;
+            for (auto nest:graph[nd].lstring["nesting"]){
+                if (nest == '['){
+                    lsys->axiom += '[';
+                }
+                if (nest == ']'){
+                    back_nest++;
+                }
+            }
+            lsys->axiom += graph[nd].lstring["rotation"] +
+                           graph[nd].lstring["roll"] +
+                           graph[nd].lstring["forward"];
+
+            for (int i = 0; i < back_nest; ++i) {
+                lsys->axiom += ']';
+            }
+        }
+        // go down next step in traversal
         branches_to_lsystem(lsys, pool[nd].nexts);
     }
 }

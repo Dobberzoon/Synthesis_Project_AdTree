@@ -20,6 +20,9 @@ public:
     Lsystem();
 
     Graph graph_lsys;
+    // public for writing during generalisation
+    std::string axiom;
+    std::map<std::string, std::string> rules;
 
     /// get the root node index of the lsystem graph
     SGraphVertexDescriptor get_root(){return root_;};

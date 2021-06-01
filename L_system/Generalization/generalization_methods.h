@@ -152,17 +152,13 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
 
             std::cout << std::endl;
 
-            for (auto bnode : lbranch.get_branchnodes()){
-                std::cout << "movement to node " << bnode.node_skel << ": " <<
-                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
-                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
-                "\n\troll:     " << bnode.lsys_motion["roll"] << " " <<
-                "\n\tnesting:  " << bnode.lsys_motion["nesting"] << std::endl;
-            }
-
-//            std::cout << "\nF: " << lbranch.get_pool()[3].lsys_motion["forward"] << std::endl;
-//            std::cout << "\nF: " << lbranch.get_branchnodes()[3].lsys_motion["forward"] << std::endl;
-//            std::cout << "idx: " << lbranch.get_pool()[3].node_skel << std::endl;
+//            for (auto bnode : lbranch.get_branchnodes()){
+//                std::cout << "movement to node " << bnode.node_skel << ": " <<
+//                "\n\tforward:  " << bnode.lsys_motion["forward"] << " " <<
+//                "\n\trotation: " << bnode.lsys_motion["rotation"] << " " <<
+//                "\n\troll:     " << bnode.lsys_motion["roll"] << " " <<
+//                "\n\tnesting:  " << bnode.lsys_motion["nesting"] << std::endl;
+//            }
 
             std::cout << "nr of leaves: " << lbranch.get_leaves().size() << std::endl;
 
@@ -177,7 +173,9 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             std::vector<size_t> rt;
             rt.push_back(lsys->get_root());
 
-            lsys->printLsystem();
+            // clear axiom before writing with rules
+            lsys->axiom = "";
+            lsys->rules = lbranch.get_rules();
             lbranch.branches_to_lsystem(lsys, rt);
             lsys->printLsystem();
 
