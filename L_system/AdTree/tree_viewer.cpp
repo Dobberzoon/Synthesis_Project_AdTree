@@ -316,18 +316,28 @@ void TreeViewer::export_skeleton() const {
     // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
     std::vector<vec3> vertices;
     std::vector<std::tuple<int, int>> edges;
+    std::map<int,int> off_map;
+    int off_value = 0;
 
     auto vts = boost::vertices(skeleton);
     for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
-        SGraphVertexDescriptor vd = *iter;
+        int vd = *iter;
         if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
             vertices.emplace_back(skeleton[vd].cVert);
+            off_map.insert({vd, off_value});
+        } else {
+            off_value ++;
         }
     }
 
     auto egs = boost::edges(skeleton);
     for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
-        std::tuple<int,int> i = { boost::source(*iter, skeleton),boost::target(*iter, skeleton) };
+        int s_b = boost::source(*iter, skeleton);
+        int s = s_b - off_map[s_b];
+        int t_b = boost::target(*iter, skeleton);
+        int t = t_b - off_map[t_b];
+
+        std::tuple<int,int> i = {s, t};
         edges.emplace_back(i);
     }
 
