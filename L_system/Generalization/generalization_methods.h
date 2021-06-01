@@ -150,7 +150,6 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
 //            print_branches(lbranch, output_folder);
 //            lbranch.print_detail();
 
-//            lbranch.lsys_describe_branchnode(lsys);
             std::cout << std::endl;
 
             for (auto bnode : lbranch.get_branchnodes()){
@@ -165,96 +164,22 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
 //            std::cout << "\nF: " << lbranch.get_branchnodes()[3].lsys_motion["forward"] << std::endl;
 //            std::cout << "idx: " << lbranch.get_pool()[3].node_skel << std::endl;
 
-            /// walk all branches node-by-node, compare movement
-            int cursor = 0; // current node number on branch
-            int max_branch_size = 2;
-            bool finished_comparing = false;
-            std::map<std::string, std::vector<SGraphVertexDescriptor>> rules;   // rule as string, with list of nodes having it
-            /*while (!finished_comparing){
-                // collect the node of the current step on all branches
-                std::vector<SGraphVertexDescriptor> current_nodes;
-                for (auto branch:lbranch.return_branches()){
-                    if (branch.size() > cursor && branch.size() <= max_branch_size){
-                        current_nodes.push_back(branch[cursor]);
-                    }
-                }
-                std::cout << "\nnumber of nodes in step " << current_nodes.size() << ":" << std::endl;
-
-                // compare
-                if (current_nodes.size() >= 2){
-                    for (auto nd:current_nodes){
-//                        std::cout << nd << std::endl;   // branch.return_pool()[nd].node_skel
-                        for (auto nd_comp:current_nodes){
-                            if (nd != nd_comp){
-                                if (lbranch.return_pool()[nd].lsys_motion["forward"] ==
-                                lbranch.return_pool()[nd_comp].lsys_motion["forward"] &&
-                                ! lbranch.return_pool()[nd].lsys_motion["forward"].empty()){
-                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd);
-                                    rules[lbranch.return_pool()[nd].lsys_motion["forward"]].push_back(nd_comp);
-                                    std::cout << "rule found: " << lbranch.get_pool()[nd].lsys_motion["forward"] << std::endl;
-                                }
-                            }
-                        }
-                    }
-                    cursor += 1;
-                } else {
-                    finished_comparing = true;
-                }
-            }*/
-
             std::cout << "nr of leaves: " << lbranch.get_leaves().size() << std::endl;
 
-            int steps_to_average = 1;
+            /// write rules for averaged tips of branches
+            int steps_to_average = 2;
+            std::string rule_marker = "X";
 
             std::vector<SGraphVertexDescriptor> current_step = lbranch.get_leaves();
-            std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> > branch_step =
-                    lbranch.average_branch(current_step);
+            lbranch.average_branch(current_step, steps_to_average, rule_marker);
 
-            std::map<std::string, float> averages = get<0>(branch_step);
-            std::vector<SGraphVertexDescriptor> next_step = get<1>(branch_step);
+            /// write rules and axiom to L-system
+            std::vector<size_t> rt;
+            rt.push_back(lsys->get_root());
 
-            std::cout << "averages:\n"
-                      << "\tforward: " << averages["forward"]
-                      << "\n\trotation: " << averages["rotation"]
-                      << "\n\troll: " << averages["roll"]
-                      << std::endl;
-            std::cout << "next step vertices:\n" ;
-            for (auto nextV:next_step){
-                std::cout << nextV << std::endl;
-            }
-
-
-
-            // list of nexts, average movements (wirtten to nodes?)
-
-
-
-            /// rewrite the axiom
-            // - walk skeleton once
-            // - rewrite lstring to axiom with rules
-            // - recursively for nesting, see Lsystem::traverse()
-
-            /*lbranch.Build_Branches();
-            for (std::string l:lbranch.Return_Ls()){
-                std::cout << l << std::endl;
-            }
-            std::vector<Skeleton::Branch> branches = skeleton->get_branches_parameters();
-            int count_branch = 0;
-            Graph graph = skeleton->get_simplified_skeleton();
-            SGraphVertexDescriptor rootv = skeleton->get_root();
-            SGraphVertexProp& vr = graph[rootv];
-            std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
-            std::pair<SGraphEdgeIterator, SGraphEdgeIterator> es = boost::edges(graph);
-            std::copy(es.first, es.second, std::ostream_iterator<SGraphEdgeDescriptor> {std::cout, "\n"});
-            std::cout<< "vertices number: " << boost::num_vertices(graph) << ", edges number: " << boost::num_edges(graph) << ", root: " << vr.cVert << std::endl;
-            SGraphVertexProp& vstart = graph[*(vi.first+1)];
-            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies = boost::adjacent_vertices(rootv, graph);
-            std::
-            for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter){
-                std::cout << *cIter << std::endl;
-            }
-
-            std::cout << "start of vertices: " << typeid(*(vi.first+1)).name() << std::endl;*/
+            lsys->printLsystem();
+            lbranch.branches_to_lsystem(lsys, rt);
+            lsys->printLsystem();
 
         } else {
             std::cerr << "failed in reconstructing branches" << std::endl;

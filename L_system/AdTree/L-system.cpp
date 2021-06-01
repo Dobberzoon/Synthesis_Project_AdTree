@@ -26,6 +26,7 @@ Lsystem::Lsystem()
     {
         Lstring_ = "";
         axiom_ = "";
+        rules_ = {};
         degrees_ = false;
     }
 
@@ -37,6 +38,10 @@ void Lsystem::printLsystem() {
     std::cout << "printing L-system..." << std::endl;
     std::cout << "string: " << Lstring_ << std::endl;
     std::cout << "axiom:  " << axiom_ << std::endl;
+    std::cout << "rules:  " << std::endl;
+    for (auto rule:rules_){
+        std::cout << "\t" << rule.first << ": " << rule.second << std::endl;
+    }
     std::cout << "printing L-system: done" << std::endl;
 }
 
@@ -47,8 +52,9 @@ void Lsystem::lsysToJson(const std::string &filename) {
     nlohmann::json j;
 
     j["recursions"] = rec_;
-    j["axiom"] = Lstring_;  // todo: this will at some point be axiom_
-    j["rules"] = {};        // empty for now
+    j["axiom"] = axiom_;        // Lstring_
+    j["rules"] = rules_;        // empty for now
+
     j["trunk"] = {{"anchor", {anchor_.x, anchor_.y, anchor_.z}},
                   {"radius", radius_}};
 
@@ -88,6 +94,9 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
     traverse(root, root, skel);
+    axiom_ = Lstring_;  // initially axiom is the full string
+
+    // todo: generalisation call here?
 
     std::cout << "converting to L-system: done" << std::endl;
 

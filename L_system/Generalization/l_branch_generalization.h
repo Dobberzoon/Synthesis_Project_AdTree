@@ -29,6 +29,7 @@ public:
     Lbranch(Lsystem* lsystem, float th_d, float th_x, float th_y);
 
     bool degrees = true;
+    Graph graph;                                        // simplified skeleton of graph
 
     struct BranchNode {
         // Attributes
@@ -53,8 +54,8 @@ public:
     std::vector<SGraphVertexDescriptor>& get_leaves() {return leaves; }
     std::vector<std::vector<SGraphVertexDescriptor>>& get_branches() {return branches; }
 
-    std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> >
-    average_branch(std::vector<SGraphVertexDescriptor> starting_nodes);
+    void average_branch(std::vector<SGraphVertexDescriptor> starting_nodes, int nr_steps, std::string rule_marker);
+    void branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts);
 
 
 
@@ -62,13 +63,13 @@ private:
     // Attributes
     std::vector<std::string> Ls;                                // Lsys node chain descriptor
 //    Skeleton* skl;                                            // ...
-    Graph graph;                                                // simplified skeleton of graph
     SGraphVertexDescriptor root;                                // root node (used to be index; size_t)
 //    std::vector<size_t> vs;                                   // vertices
     std::vector<BranchNode> nodes;                              // custom branch node struct
     std::vector<SGraphVertexDescriptor> leaves;                 // list of all leaf nodes
     std::map<SGraphVertexDescriptor , BranchNode> pool;         // index <--> custom branch node struct
-    std::vector<std::vector<SGraphVertexDescriptor> > branches;  // list of lists of indexes
+    std::vector<std::vector<SGraphVertexDescriptor> > branches; // list of lists of indexes
+    std::map<std::string, std::string> rules;                   // rules map for axiom recursion
     float th_d;                                                 // ??
     float th_x;                                                 // ??
     float th_y;                                                 // ??
@@ -178,29 +179,28 @@ void Lbranch::build_branches() {
 }
 
 
-std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> >
-        Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes){
-    // return a map of the averages, and a vector with all the parents
-    std::map<std::string, float> averages = {{"forward", 0}, {"rotation", 0}, {"roll", 0} };
+void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes, int nr_steps, std::string rule_marker){
+    std::map<std::string, float> averages = {{"forward",  0},
+                                             {"rotation", 0},
+                                             {"roll",     0}};
     std::vector<SGraphVertexDescriptor> next_vertices;
 
     float forward_total = 0;
     float rotation_total = 0;
     float roll_total = 0;
 
-
     // find average & nexts
-    for (SGraphVertexDescriptor nd:starting_nodes){
+    for (SGraphVertexDescriptor nd:starting_nodes) {
         /// parents of branch tips
         next_vertices.push_back(graph[nd].nParent);
 
         /// forward
         std::string line_f = get_pool()[nd].lsys_motion["forward"];
         // line is not an empty string and is overwritten
-        if (line_f.size()>2){
+        if (line_f.size() > 2) {
             std::string sValue;
             // skip "F" and "("
-            for (int i = 2; i < line_f.size(); ++i){
+            for (int i = 2; i < line_f.size(); ++i) {
                 if (line_f[i] != ')') {
                     sValue += line_f[i];
                 }
@@ -212,26 +212,25 @@ std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> >
         /// rotation
         std::string line_rot = pool[nd].lsys_motion["rotation"];
         // line is not an empty string and is overwritten
-        if (line_rot.size()>2){
+        if (line_rot.size() > 2) {
             std::string sValue;
             int i = 0;
             bool negative_rotation = false;
             while (line_rot[i] != ')') {
-                if (line_rot[i] == '-'){
+                if (line_rot[i] == '-') {
                     negative_rotation = true;
-                }
-                else if (line_rot[i] != '(' && line_rot[i] != '+'){
+                } else if (line_rot[i] != '(' && line_rot[i] != '+') {
                     sValue += line_rot[i];
                 }
                 i++;
             }
             float value = std::stod(sValue);
             // to make sure negative rotation gets read the same as positive rotation
-            if (negative_rotation){
-                if (degrees){
+            if (negative_rotation) {
+                if (degrees) {
                     value = 360 - value;
                 } else {
-                    value = 2*M_PI - value;
+                    value = 2 * M_PI - value;
                 }
             }
             rotation_total += value;
@@ -240,38 +239,74 @@ std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> >
         /// roll
         std::string line_roll = pool[nd].lsys_motion["roll"];
         // line is not an empty string and is overwritten
-        if (line_roll.size()>2){
+        if (line_roll.size() > 2) {
             std::string sValue;
             int i = 0;
             bool negative_roll = false;
             while (line_roll[i] != ')') {
-                if (line_roll[i] == '<'){
+                if (line_roll[i] == '<') {
                     negative_roll = true;
-                }
-                else if (line_roll[i] != '(' && line_roll[i] != '>'){
+                } else if (line_roll[i] != '(' && line_roll[i] != '>') {
                     sValue += line_roll[i];
                 }
                 i++;
             }
             float value = std::stod(sValue);
             // to make sure negative roll gets read the same as positive roll
-            if (negative_roll){
-                if (degrees){
+            if (negative_roll) {
+                if (degrees) {
                     value = 360 - value;
                 } else {
-                    value = 2*M_PI - value;
+                    value = 2 * M_PI - value;
                 }
             }
             roll_total += value;
         }
     }
 
-    averages["forward"] = forward_total / starting_nodes.size();
-    averages["rotation"] = rotation_total / starting_nodes.size();
-    averages["roll"] = roll_total / starting_nodes.size();
+    float forward_average = forward_total / starting_nodes.size();
+    float rotation_average = rotation_total / starting_nodes.size();
+    float roll_average = roll_total / starting_nodes.size();
 
-    return std::make_tuple(averages, next_vertices);
-};
+    // todo: add configurable accuracy to float conversions
+
+    std::string forward_rule = "F(" + std::to_string(forward_average) + ")";
+    std::string rotation_rule = "+(" + std::to_string(rotation_average) + ")";
+    std::string roll_rule = ">(" + std::to_string(roll_average) + ")";
+
+    // if still more than 1 step left, continue, mark as to be deleted part of axiom
+    if (nr_steps - 1 > 0){
+        // write average movement to start of current rule
+        std::string current_rule = rules[rule_marker];
+        rules[rule_marker] = rotation_rule + roll_rule + forward_rule + current_rule;
+        // mark all current step nodes to belong to not-start of rule
+        for (SGraphVertexDescriptor nd:starting_nodes) {
+            graph[nd].lstring["forward"] = rule_marker + "*";
+        }
+        average_branch(next_vertices, nr_steps -1, rule_marker);
+    }
+    // if this was the last step: rule marker
+    else if (nr_steps - 1 == 0){
+        // write average movement to start of current rule
+        std::string current_rule = rules[rule_marker];
+        rules[rule_marker] = rotation_rule + roll_rule + forward_rule + current_rule;
+        // mark all current step nodes to belong to start of rule
+        for (SGraphVertexDescriptor nd:starting_nodes){
+            graph[nd].lstring["forward"] = rule_marker;
+        }
+    }
+}
+
+
+void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
+    for (auto nd:starts){
+        // do something: write to axiom & rules
+        // don't forget the nesting!
+//        pool[nd].lsys_motion;
+        std::cout << "node " << nd << ": " << graph[nd].lstring["forward"] << std::endl;
+        branches_to_lsystem(lsys, pool[nd].nexts);
+    }
+}
 
 
 #endif //SYNTHESIS_PROJECT_ADTREE_L_BRANCH_H
