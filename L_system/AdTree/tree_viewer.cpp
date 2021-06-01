@@ -314,37 +314,50 @@ void TreeViewer::export_skeleton() const {
         return;
 
     // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
-
-    std::unordered_map<SGraphVertexDescriptor, easy3d::Graph::Vertex>  vvmap;
-    easy3d::Graph g;
+    std::vector<vec3> vertices;
+    std::vector<std::tuple<int, int>> edges;
 
     auto vts = boost::vertices(skeleton);
     for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
         SGraphVertexDescriptor vd = *iter;
         if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
-            const vec3& vp = skeleton[vd].cVert;
-            vvmap[vd] = g.add_vertex(vp);
+            vertices.emplace_back(skeleton[vd].cVert);
         }
     }
 
     auto egs = boost::edges(skeleton);
     for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
-        SGraphVertexDescriptor s = boost::source(*iter, skeleton);
-        SGraphVertexDescriptor t = boost::target(*iter, skeleton);
-        g.add_edge(vvmap[s], vvmap[t]);
+        std::tuple<int,int> i = { boost::source(*iter, skeleton),boost::target(*iter, skeleton) };
+        edges.emplace_back(i);
     }
 
-    auto offset = cloud()->get_model_property<dvec3>("translation");
-    if (offset) {
-        auto prop = g.model_property<dvec3>("translation");
-        prop[0] = offset[0];
+    std::ofstream storageFile;
+    storageFile.open(file_name);
+
+    // write header
+    storageFile << "ply" << std::endl;
+    storageFile << "format ascii 1.0" << std::endl;
+    storageFile << "element vertex " << vertices.size() << std::endl;
+    storageFile << "property float x" << std::endl;
+    storageFile << "property float y" << std::endl;
+    storageFile << "property float z" << std::endl;
+    storageFile << "element edge " << edges.size() << std::endl;
+    storageFile << "property int vertex1" << std::endl;
+    storageFile << "property int vertex2" << std::endl;
+    storageFile << "end_header" << std::endl << std::endl;
+
+    for (auto &vertex : vertices) {
+        storageFile << vertex << std::endl;
     }
 
-    if (GraphIO::save(file_name, &g))
-        std::cout << "successfully saved the model of skeleton to file. You can use Easy3D to visualize the skeleton,\n"
-                     "\twhich can be downloaded from: https://github.com/LiangliangNan/Easy3D" << std::endl;
-    else
-        std::cerr << "failed saving the model of skeleton" << std::endl;
+    storageFile << std::endl;
+    for (const auto& edge: edges) {
+        storageFile << std::get<0>(edge) << " " << std::get<1>(edge) << std::endl;
+    }
+
+    storageFile.close();
+
+    std::cout << "skeleton file stored" <<std::endl;
 }
 
 
