@@ -193,11 +193,11 @@ void Turtle::rotatePlane(float angle) {
         angle_z = 0;
     }
     // vector points (almost) straight up/down
-    // problem: incorrect angle_z between very small x and y coords
+    // problem: incorrect angle_z in 2d cases
     if (abs(xAxis.z) - 1 < 0.1 && abs(xAxis.z) - 1 > - 0.1 &&
-        abs(xAxis.x)  <  0.00001 && abs(xAxis.x) > - 0.00001 ||
+        abs(xAxis.x)  == 0 ||
         abs(xAxis.z) - 1 < 0.1 && abs(xAxis.z) - 1 > - 0.1 &&
-        abs(xAxis.y)  <  0.00001 && abs(xAxis.y) > - 0.00001) {
+        abs(xAxis.y) == 0) {
         angle_z = 0;
     }
 
