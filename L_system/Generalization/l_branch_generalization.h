@@ -53,8 +53,8 @@ public:
     std::vector<SGraphVertexDescriptor>& get_leaves() {return leaves; }
     std::vector<std::vector<SGraphVertexDescriptor>>& get_branches() {return branches; }
 
-    void lsys_describe_branchnode(Lsystem *lsys);
-    void average_branch(std::vector<SGraphVertexDescriptor> starting_nodes);
+    std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> >
+    average_branch(std::vector<SGraphVertexDescriptor> starting_nodes);
 
 
 
@@ -178,27 +178,22 @@ void Lbranch::build_branches() {
 }
 
 
-void Lbranch::lsys_describe_branchnode(Lsystem *lsys){
-    for (auto& n:nodes){
-        n.lsys_motion = lsys->graph_lsys[n.node_skel].lstring;
-    }
-}
-
-
-void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes){
+std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> >
+        Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes){
+    // return a map of the averages, and a vector with all the parents
+    std::map<std::string, float> averages = {{"forward", 0}, {"rotation", 0}, {"roll", 0} };
     std::vector<SGraphVertexDescriptor> next_vertices;
-    SGraphVertexDescriptor next = graph[starting_nodes[0]].nParent;
 
     float forward_total = 0;
     float rotation_total = 0;
     float roll_total = 0;
 
-    float forward_count = 0;
-    float rotation_count = 0;
-    float roll_count = 0;
 
     // find average & nexts
     for (SGraphVertexDescriptor nd:starting_nodes){
+        /// parents of branch tips
+        next_vertices.push_back(graph[nd].nParent);
+
         /// forward
         std::string line_f = get_pool()[nd].lsys_motion["forward"];
         // line is not an empty string and is overwritten
@@ -212,7 +207,6 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes)
             }
             float value = std::stod(sValue);
             forward_total += value;
-            forward_count += 1;
         }
 
         /// rotation
@@ -241,7 +235,6 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes)
                 }
             }
             rotation_total += value;
-            rotation_count += 1;
         }
 
         /// roll
@@ -270,19 +263,14 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes)
                 }
             }
             roll_total += value;
-            roll_count += 1;
         }
     }
 
-    std::cout << "number of hits: " << "\n\tforward:  " << forward_count
-                                    << "\n\trotation: " << rotation_count
-                                    << "\n\troll:     " << roll_count
-                                    << std::endl;
+    averages["forward"] = forward_total / starting_nodes.size();
+    averages["rotation"] = rotation_total / starting_nodes.size();
+    averages["roll"] = roll_total / starting_nodes.size();
 
-    std::cout << "averages: " << "\n\tforward:  " << forward_total / forward_count
-              << "\n\trotation: " << rotation_total / rotation_count
-              << "\n\troll:     " << roll_total / roll_count
-              << std::endl;
+    return std::make_tuple(averages, next_vertices);
 };
 
 

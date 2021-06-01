@@ -207,7 +207,23 @@ int l_test(std::vector<std::string>& point_cloud_files, const std::string& outpu
             int steps_to_average = 1;
 
             std::vector<SGraphVertexDescriptor> current_step = lbranch.get_leaves();
-            lbranch.average_branch(current_step);
+            std::tuple<std::map<std::string, float>, std::vector<SGraphVertexDescriptor> > branch_step =
+                    lbranch.average_branch(current_step);
+
+            std::map<std::string, float> averages = get<0>(branch_step);
+            std::vector<SGraphVertexDescriptor> next_step = get<1>(branch_step);
+
+            std::cout << "averages:\n"
+                      << "\tforward: " << averages["forward"]
+                      << "\n\trotation: " << averages["rotation"]
+                      << "\n\troll: " << averages["roll"]
+                      << std::endl;
+            std::cout << "next step vertices:\n" ;
+            for (auto nextV:next_step){
+                std::cout << nextV << std::endl;
+            }
+
+
 
             // list of nexts, average movements (wirtten to nodes?)
 
