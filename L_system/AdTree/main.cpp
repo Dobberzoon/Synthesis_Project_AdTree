@@ -138,7 +138,7 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
 
 
 int main(int argc, const char *argv[]) {
-    argc = 3;
+//    argc = 3;
 //    argv[1] = "/Users/lnan/Projects/adtree/data";
 //    argv[2] = "/Users/lnan/Projects/adtree/data-results";
 

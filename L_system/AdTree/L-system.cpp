@@ -4,19 +4,6 @@
 
 #include "L-system.h"
 
-#include "skeleton.h"
-#include "cylinder.h"
-
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/random.h>
-#include <easy3d/core/principal_axes.h>
-#include <3rd_party/tetgen/tetgen.h>
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-
 
 using namespace boost;
 using namespace easy3d;
@@ -29,9 +16,6 @@ Lsystem::Lsystem()
         rules = {};
         degrees_ = false;
     }
-
-    // todo: add rules
-    // todo: add radii
 
 
 void Lsystem::printLsystem() {
@@ -381,4 +365,9 @@ void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
     } else if (out_type == "txt"){
         lsysToText(path);
     }
+}
+
+
+void Lsystem::generalise() {
+
 }
