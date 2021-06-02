@@ -53,6 +53,8 @@
 
 #include <iostream>
 
+#include "AdTree/generalisation/lbranchGen.h"
+
 using namespace easy3d;
 
 TreeViewer::TreeViewer()
@@ -397,10 +399,49 @@ void TreeViewer::export_lsystem(bool deg) const{
     const std::string& initial_name = file_system::base_name(cloud()->name()) + "_lsystem.json";
     const std::string& file_name = FileDialog::save(filetypes, initial_name);
 
-    Lsystem l_system;
+    /// L-system initialization
+    auto *lsys = new Lsystem();
+    lsys->readSkeleton(skeleton_, deg);
+    // //l_sys->outputLsys(file_system::extension(file_name), file_name);
 
-    l_system.readSkeleton(skeleton_, deg);
-    l_system.outputLsys(file_system::extension(file_name), file_name);
+    lsys->printLsystem();
+    std::cout << "--------------------\n" << std::endl;
+
+    float th_d = 0.1;
+    float th_x = 0.00005;
+    float th_y = 0.5;
+    auto lbranch = new Lbranch(lsys, th_d, th_x, th_y);
+
+    lbranch->build_branches();
+
+
+    std::cout << std::endl;
+
+
+    std::cout << "nr of leaves: " << lbranch->get_leaves().size() << std::endl;
+
+    /// write rules for averaged tips of branches
+    int steps_to_average = 2;
+    std::string rule_marker = "X";
+
+    std::vector<SGraphVertexDescriptor> current_step = lbranch->get_leaves();
+    lbranch->average_branch(current_step, steps_to_average, rule_marker);
+
+    /// write rules and axiom to L-system
+    std::vector<size_t> rt;
+    rt.push_back(lsys->get_root());
+
+    // clear axiom before writing with rules
+    lsys->axiom = "";
+    lsys->rules = lbranch->get_rules();
+    lbranch->branches_to_lsystem(lsys, rt);
+    lsys->printLsystem();
+
+//    Lsystem l_system;
+//
+//    l_system.readSkeleton(skeleton_);
+
+    lsys->outputLsys(file_system::extension(file_name), file_name);
 }
 
 

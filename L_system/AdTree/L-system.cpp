@@ -5,6 +5,7 @@
 #include "L-system.h"
 
 
+
 using namespace boost;
 using namespace easy3d;
 
@@ -369,5 +370,19 @@ void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
 
 
 void Lsystem::generalise() {
-
+//    int steps_to_average = 2;
+//    std::string rule_marker = "X";
+//
+//    std::vector<SGraphVertexDescriptor> current_step = lbranch.get_leaves();
+//    lbranch.average_branch(current_step, steps_to_average, rule_marker);
+//
+//    /// write rules and axiom to L-system
+//    std::vector<size_t> rt;
+//    rt.push_back(lsys->get_root());
+//
+//    // clear axiom before writing with rules
+//    lsys->axiom = "";
+//    lsys->rules = lbranch.get_rules();
+//    lbranch.branches_to_lsystem(lsys, rt);
+//    lsys->printLsystem();
 }
