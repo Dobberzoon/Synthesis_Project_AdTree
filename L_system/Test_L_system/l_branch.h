@@ -40,6 +40,7 @@ public:
 //        unsigned visit_time=0;
         int visit_time = 0;
         easy3d::vec3 cVert;
+        size_t pre;
         std::vector<size_t> nexts;
     };
 
@@ -54,7 +55,7 @@ public:
 
     //TODO: (Now form Noortje)
 
-    std::vector<float> compute_nodes(easy3d::vec3 parent,easy3d::vec3 child) ;
+    std::vector<float> compute_nodes(size_t parent,size_t child) ;
     float getZAngle(easy3d::vec3 vec);
     float getYAngle(easy3d::vec3 vec);
 
@@ -95,6 +96,7 @@ Lbranch::Lbranch(Skeleton *skeleton, float th_d, float th_x, float th_y) {
             vs.push_back(*vit);
             BranchNode temp;
             temp.degree = boost::degree(*vit, graph);
+            temp.pre = graph[*vit].nParent;
             temp.cVert = graph[*vit].cVert;
             if(notleaf(*vit)) {
                 temp.nexts = find_next(*vit);
@@ -226,7 +228,7 @@ void Lbranch::build_lstr() {
         }
         while (notleaf(next_)){
 
-            p = strlist.insert(p, make_nstr(compute_nodes(pool[branch.back()].cVert, pool[next_].cVert)));
+            p = strlist.insert(p, make_nstr(compute_nodes(branch.back(), next_)));
             branch.push_back(next_);
 
             if (pool[next_].degree-2 > pool[next_].visit_time) {
@@ -240,26 +242,32 @@ void Lbranch::build_lstr() {
             next_ = pool[next_].nexts[pool[next_].visit_time-1];
         }
         // TODO: grow?
-        p = strlist.insert(p, make_nstr(compute_nodes(pool[branch.back()].cVert, pool[next_].cVert)));
+        strlist.insert(p, make_nstr(compute_nodes(branch.back(), next_)));
         branch.push_back(next_);
         pool[next_].visit_time += 1;
         branches.push_back(branch);
     }
 }
 
-std::vector<float> Lbranch::compute_nodes(easy3d::vec3 parent,easy3d::vec3 child) {
+std::vector<float> Lbranch::compute_nodes(size_t parent,size_t child) {
 
     // All from Noortje
 
     // TODO: rotation and roll? (my version)
     // tan
     std::vector<float> results= {0.0, 0.0, 0.0};
-//    easy3d::vec3 root_c = pool[root].cVert;
-    easy3d::vec3 ori = parent;
-    float branch_length = easy3d::distance(parent, child);
+    easy3d::vec3 startV = pool[parent].cVert;
+    easy3d::vec3 nextV = pool[child].cVert;
+    easy3d::vec3 preV = pool[pool[parent].pre].cVert;
 
-    easy3d::vec3 to_target = child-parent;
-    easy3d::vec3 to_origin = parent-ori;
+//    pool[branch.back()].cVert, pool[next_].cVert
+
+//    easy3d::vec3 root_c = pool[root].cVert;
+//    easy3d::vec3 ori = parent;
+    float branch_length = easy3d::distance(startV, nextV);
+
+    easy3d::vec3 to_target = nextV-startV;
+    easy3d::vec3 to_origin = startV-preV;
 
     easy3d::vec3 xaxis = {1, 0, 0};
     easy3d::vec3 yaxis = {0, 1, 0};
@@ -416,7 +424,7 @@ std::string Lbranch::make_lstr(std::vector<size_t> branch) {
     int n = branch.size();
     // TODO: add markers
     for (int i=0; i<n-1; ++i){
-        lstr += make_nstr(compute_nodes(pool[branch[i]].cVert, pool[branch[i+1]].cVert));
+        lstr += make_nstr(compute_nodes(branch[i], branch[i+1]));
     }
     return lstr;
 }
