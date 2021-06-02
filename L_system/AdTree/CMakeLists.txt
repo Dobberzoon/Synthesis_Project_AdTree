@@ -16,6 +16,8 @@ set(${PROJECT_NAME}_SOURCES
         viewer_imgui.cpp
         L-system.h
         L-system.cpp
+        turtle/Turtle.cpp
+        turtle/Turtle.h
         )
 
 if (APPLE)
@@ -38,7 +40,7 @@ if (APPLE)
     resource(FRAGMENT_SHADERS ${ADTREE_ROOT}/resources/shaders Resources/shaders *.frag)
 
     # This tells CMake where to find and install the ICON file
-    set(${PROJECT_NAME}_ICON ${ADTREE_ROOT}/resources/icons/adtree.icns L-system.h L-system.cpp L-system.h ../Test_L_system/StringList.cpp ../Test_L_system/StringList.h)
+    set(${PROJECT_NAME}_ICON ${ADTREE_ROOT}/resources/icons/adtree.icns L-system.h L-system.cpp L-system.h)
 
     #Append the new files to the resources file list
     list(APPEND ${PROJECT_NAME}_SOURCES ${${PROJECT_NAME}_ICON} ${VERTEX_SHADERS} ${FRAGMENT_SHADERS})

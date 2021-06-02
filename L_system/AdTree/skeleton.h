@@ -36,32 +36,13 @@
 #include <3rd_party/kd_tree/KdTree.h>
 #include <easy3d/core/types.h>
 
+#include "turtle/Turtle.h"
+
 namespace easy3d {
 	class PointCloud;
     class SurfaceMesh;
 }
 
-//define the vertex and edge properties
-struct SGraphVertexProp
-{
-	easy3d::vec3  cVert;
-	std::size_t nParent;
-	double lengthOfSubtree;
-
-    double radius; // used only by the smoothed skeleton
-    bool   visited;
-};
-
-struct SGraphEdgeProp
-{
-	double nWeight;
-	double nRadius;
-	std::vector<int> vecPoints;
-};
-
-
-//define the tree graph
-typedef boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS, SGraphVertexProp, SGraphEdgeProp > Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor SGraphVertexDescriptor;
 typedef boost::graph_traits<Graph>::edge_descriptor SGraphEdgeDescriptor;
 typedef boost::graph_traits<Graph>::vertex_iterator SGraphVertexIterator;
@@ -104,6 +85,9 @@ public:
     const Graph& get_simplified_skeleton() const { return simplified_skeleton_; }
     const Graph& get_smoothed_skeleton() const { return smoothed_skeleton_; }
 
+    Graph& set_mst() { return MST_; }
+    Graph& set_simplified_skeleton() { return simplified_skeleton_; }
+
     struct Branch {
         std::vector<easy3d::vec3> points;
         std::vector<double>       radii;
@@ -112,10 +96,16 @@ public:
 
     bool reconstruct_skeleton(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
 
+    bool clone_skeleton(const Turtle& turtle);
+
     bool reconstruct_mesh(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh);
 
     // get root
     const SGraphVertexDescriptor& get_root() const { return RootV_; }
+    SGraphVertexDescriptor& set_root() { return RootV_; }
+
+    double getRadius() const { return TrunkRadius_; }
+    easy3d::vec3 getAnchor() const { return {RootPos_.x, RootPos_.y, RootPos_.z}; }
 
 private:
 
@@ -251,6 +241,8 @@ private:
 	/*store important vertex and geometrical attributes*/
 	SGraphVertexDescriptor RootV_;
 	Vector3D RootPos_;
+
+
 	double TrunkRadius_;
 	double TreeHeight_;
 	double BoundingDistance_;

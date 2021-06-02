@@ -41,25 +41,27 @@ void Lsystem::printLsystem() {
 }
 
 
-void Lsystem::lsysToJson(const std::string &filename,
-                         double rec,
-                         double def_f,
-                         double def_rot,
-                         double def_roll) {
+void Lsystem::lsysToJson(const std::string &filename) {
     std::cout << "L-system: writing to file..." << std::endl;
 
-    std::string output_dir = "../../data/output/";
     nlohmann::json j;
 
-    j["recursions"] = rec;
+    j["recursions"] = rec_;
     j["axiom"] = Lstring_;  // todo: this will at some point be axiom_
     j["rules"] = {};        // empty for now
-    j["dimensions"] = { {"forward", def_f}, {"rotation", def_rot}, {"roll", def_roll} };
+    j["trunk"] = {{"anchor", {anchor_.x, anchor_.y, anchor_.z}},
+                  {"radius", radius_}};
+
+    j["dimensions"] = { {"forward", forward_},
+                        {"rotation", rotation_},
+                        {"roll", roll_} };
+
+    j["degrees"] = degrees_;
 
 //    std::cout << std::setw(4) << j << std::endl;
 //    std::cout << "dir: " << output_dir + filename << std::endl;
 
-    std::ofstream storageFile(output_dir + filename);
+    std::ofstream storageFile(filename);
     storageFile << std::setw(4) << j << std::endl;
     storageFile.close();
 
@@ -67,16 +69,17 @@ void Lsystem::lsysToJson(const std::string &filename,
 }
 
 
-void Lsystem::lsysToText(){};
+void Lsystem::lsysToText(const std::string &filename){};
 
 
-void Lsystem::readSkeleton(Skeleton *skel) {
+void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
     std::cout << "\n---------- initializing L-system ----------" << std::endl;
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
 
     /// set parameters
-    degrees_ = true;
-    outputFormat format = OUT_JSON_CUSTOM;
+    degrees_ = deg;
+    radius_ = skel->getRadius();
+    anchor_ = skel->getAnchor();
 
     /// convert skeleton to Lsystem
     SGraphVertexDescriptor root = skel->get_root();
@@ -84,8 +87,6 @@ void Lsystem::readSkeleton(Skeleton *skel) {
     traverse(root, root, skel);
 
     std::cout << "converting to L-system: done" << std::endl;
-
-    outputLsys(format);
 
     // todo: add more parameters to the L-system (branch diameters, subtrees, ...)
 }
@@ -354,31 +355,10 @@ double Lsystem::getYAngle(vec3 vec){
 }
 
 
-void Lsystem::outputLsys(outputFormat out_type){
-    /// set parameters
-    std::string file_out = "lsys_out1.json";
-    double recursions = 1;
-    // in meters
-    double default_forward = 1;      // F()
-    // always in degrees!
-    double default_rotation = 90;    // +-()
-    double default_roll = 45;        // ><()
-
-    if (!degrees_){
-        default_rotation *= M_PI / 180;
-        default_roll *= M_PI / 180;
-    }
-
-    /// output the right format
-    switch (out_type) {
-        case OUT_COMMANDLINE:
-            printLsystem();
-            break;
-        case OUT_JSON_CUSTOM:
-            lsysToJson(file_out, recursions, default_forward, default_rotation, default_roll);
-            break;
-        case OUT_TEXTFILE:
-            lsysToText();
-            break;
+void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
+    if(out_type == "json"){
+        lsysToJson(path);
+    } else if (out_type == "txt"){
+        lsysToText(path);
     }
 }

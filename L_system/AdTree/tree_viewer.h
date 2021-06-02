@@ -65,12 +65,12 @@ protected:
     bool key_press_event(int key, int modifiers) override;
 
     bool open() override;
-    void open_lsystem() override;
+    bool open_lsystem() override;
     bool save() const override;
 
     void export_skeleton() const override;
     void export_leaves() const override;
-    void export_lsystem() const override;
+    void export_lsystem(bool deg) const override;
 
     bool reconstruct_skeleton() override;
     bool add_leaves() override;
@@ -93,6 +93,8 @@ protected:
 private:
     easy3d::SoftShadow* shadow_;
     Skeleton*           skeleton_;
+
+    bool isLsystem = false;
 };
 
 #endif
