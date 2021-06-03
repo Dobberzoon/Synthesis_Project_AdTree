@@ -344,7 +344,7 @@ std::string Lbranch::make_nstr (std::vector<float> results){
     float angle_y = results[0];
     float angle_z = results[1];
     float distance = results[2];
-    int accuracy = 2;
+    int accuracy = 3;
     std::string nstr;
 
     bool degree_ = true;
