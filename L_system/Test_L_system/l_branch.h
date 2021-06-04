@@ -68,6 +68,7 @@ public:
 //    std::vector<std::vector<size_t>> grow(std::vector<std::vector<size_t>> branches);
 
 
+typedef boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS, SGraphVertexProp, SGraphEdgeProp > Graph;
 
 private:
     // Attributes
@@ -144,7 +145,7 @@ void Lbranch::print_detail() {
         std::cout << std::endl;
 //        std::cout << make_lstr(b) << std::endl;
     }
-    strlist.traverse();
+    strlist.printLstr();
 }
 
 void Lbranch::build_branches() {
@@ -344,7 +345,7 @@ std::string Lbranch::make_nstr (std::vector<float> results){
     float angle_y = results[0];
     float angle_z = results[1];
     float distance = results[2];
-    int accuracy = 3;
+    int accuracy = 2;
     std::string nstr;
 
     bool degree_ = true;

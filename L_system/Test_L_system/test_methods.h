@@ -24,46 +24,46 @@
 #include "l_branch.h"
 
 
-void get_detail_branches(Skeleton *skl, const std::string &output_folder) {
-    Graph& graph = *(const_cast<Graph*>(&skl->get_simplified_skeleton()));
-    std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
-    std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ei = boost::edges(graph);
-
-//    std::string my_file_location = output_folder+"/tiny.json";
-    std::ofstream my_file(output_folder+"/tiny_details.txt");
-
-    my_file << "Root: " << *(&skl->get_root()) <<std::endl;
-
-    for (SGraphVertexIterator vit = vi.first; vit != vi.second; ++vit) {
-        SGraphVertexDescriptor cur_vd = *vit;
-        SGraphVertexProp& vp = graph[cur_vd];
-//        vp.visited = false;
-//        std::cout << "id: " << cur_vd << ", (" << vp.cVert  << "), parent:" << vp.nParent << std::endl;
-        my_file << "V id: " << cur_vd << ", degree: " << boost::degree(cur_vd, graph)<< ", parent: " << vp.nParent;
-        my_file << "  {" <<std::endl;
-//        Graph::out_edge_iterator eit, eend;
-        std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei = boost::out_edges(cur_vd, graph);
-        for (auto eit = outei.first; eit!=outei.second; ++eit){
-            my_file << "-->" << boost::target(*eit, graph) << std::endl;
-        }
-        my_file << "  }" << std::endl;
-    }
-
-    my_file << "=======================" << std::endl;
-
-    for (auto eit = ei.first; eit != ei.second; ++eit) {
-        SGraphEdgeDescriptor cur_e = *eit;
-        SGraphEdgeProp& e = graph[cur_e];
-        my_file << "E id: " << cur_e;
-//        for (auto i:e.vecPoints){
-//            my_file << i << " ";
+//void get_detail_branches(Skeleton *skl, const std::string &output_folder) {
+//    Graph& graph = *(const_cast<Graph*>(&skl->get_simplified_skeleton()));
+//    std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
+//    std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ei = boost::edges(graph);
+//
+////    std::string my_file_location = output_folder+"/tiny.json";
+//    std::ofstream my_file(output_folder+"/tiny_details.txt");
+//
+//    my_file << "Root: " << *(&skl->get_root()) <<std::endl;
+//
+//    for (SGraphVertexIterator vit = vi.first; vit != vi.second; ++vit) {
+//        SGraphVertexDescriptor cur_vd = *vit;
+//        SGraphVertexProp& vp = graph[cur_vd];
+////        vp.visited = false;
+////        std::cout << "id: " << cur_vd << ", (" << vp.cVert  << "), parent:" << vp.nParent << std::endl;
+//        my_file << "V id: " << cur_vd << ", degree: " << boost::degree(cur_vd, graph)<< ", parent: " << vp.nParent;
+//        my_file << "  {" <<std::endl;
+////        Graph::out_edge_iterator eit, eend;
+//        std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei = boost::out_edges(cur_vd, graph);
+//        for (auto eit = outei.first; eit!=outei.second; ++eit){
+//            my_file << "-->" << boost::target(*eit, graph) << std::endl;
 //        }
-        my_file << std::endl;
-    }
-
-    my_file.close();
-
-}
+//        my_file << "  }" << std::endl;
+//    }
+//
+//    my_file << "=======================" << std::endl;
+//
+//    for (auto eit = ei.first; eit != ei.second; ++eit) {
+//        SGraphEdgeDescriptor cur_e = *eit;
+//        SGraphEdgeProp& e = graph[cur_e];
+//        my_file << "E id: " << cur_e;
+////        for (auto i:e.vecPoints){
+////            my_file << i << " ";
+////        }
+//        my_file << std::endl;
+//    }
+//
+//    my_file.close();
+//
+//}
 
 void print_detail(Lbranch lbranch, const std::string &output_folder){
     std::ofstream my_file(output_folder+"/tiny_details.txt");
