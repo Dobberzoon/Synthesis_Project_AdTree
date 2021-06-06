@@ -75,6 +75,7 @@ int grow_test(std::vector<std::string>& point_cloud_files, const std::string& ou
         if (status) {
             gLsystem gtest;
             gtest.readSkeleton(skeleton, true);
+            gtest.printSth();
         }
     }
     return 1;

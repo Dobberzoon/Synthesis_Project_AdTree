@@ -139,7 +139,7 @@ int batch_reconstruct(std::vector<std::string>& point_cloud_files, const std::st
 
 
 int main(int argc, char *argv[]) {
-    argc = 1;
+    argc = 3;
     argv[1] = "/home/hyde/Git/Main/Synthesis_Project_AdTree/L_system/data/input/tiny(for_debug).xyz";
     argv[2] = "/home/hyde/Git/Main/Synthesis_Project_AdTree/L_system/data/output";
 

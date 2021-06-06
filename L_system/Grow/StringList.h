@@ -31,6 +31,7 @@ public:
 
     int size() const {return curLength;}
     LstrNode* get_head() const {return head;}
+    int get_len() const {return curLength;}
     void printLstr();
 
     std::string get_ls();
