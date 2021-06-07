@@ -92,7 +92,13 @@ public:
     void buildBranches(Skeleton *skel);
     bool notLeaf(size_t vid, Skeleton *skel);
 
-    void printSth();
+    void printSth(Skeleton *skel);
+
+    //grow parameters
+    int sprout_pos = 1;
+    float grow_co = 0.1;
+    float grow_sp = 0.1;
+    float ratio = 3.0;
 
 private:
     std::string Lstring_;
@@ -114,10 +120,6 @@ private:
 //    std::vector<StringList::LstrNode*> strnodes;
 //    StringList::LstrNode* head;
 
-    //grow parameters
-    int sprout_pos = 1;
-    float grow_co = 0.1;
-    float ratio = 3.0;
 
     //branches
     std::map<size_t, int> node_pos;
@@ -190,7 +192,7 @@ void gLsystem::readSkeleton(Skeleton *skel, bool deg) {
 
     /// set parameters
     degrees_ = deg;
-    radius_ = skel->getRadius();
+    radius_ = skel->getRadius()*(1+grow_sp*grow_co);
     anchor_ = skel->getAnchor();
 
     // l-branches
@@ -204,6 +206,7 @@ void gLsystem::readSkeleton(Skeleton *skel, bool deg) {
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
     traverse(root, root, skel);
 //    Lstring_ = strlist.get_ls();
+//    printSth(skel);
 
     std::cout << "converting to L-system: done" << std::endl;
 
@@ -218,6 +221,7 @@ void gLsystem::traverse(SGraphVertexDescriptor prevV,
     // will not write when prevV is a leaf or the root (preventing doubles and the root writing to itself)
     if (sprout(sprout_pos, prevV, skel)) {
         Lstring_ += selectRule(prevV, startV, skel);
+//        Lstring_+="B";
     }
     writeMovement(prevV, startV, skel, 3, fast(prevV));
 
@@ -399,8 +403,8 @@ void gLsystem::writeMovement(SGraphVertexDescriptor startV,
         angle_z = std::get<1>(movement) / (M_PI / 180);
     }
     double distance = std::get<2>(movement);
-    if (fast) distance = distance*(1+grow_co*ratio);
-    else distance = distance*(1+grow_co);
+    if (fast) distance = distance*(1+grow_sp*ratio);
+    else distance = distance*(1+grow_sp);
 
     // todo: generalisation
 
@@ -497,20 +501,22 @@ void gLsystem::outputLsys(const std::string& out_type, const std::string& path){
 bool gLsystem::sprout(int pos, SGraphVertexDescriptor vid, Skeleton *skel) {
     if (node_pos.count(vid)!=0 && boost::degree(vid, skel->get_simplified_skeleton())==2 &&
     skel->get_simplified_skeleton()[vid].nParent!=skel->get_root()){
-        switch (pos) {
-            case 1:
-                if (node_pos[vid]==1) return true;
-//                break;
-            case 2:
-                if (node_pos[vid]==2) return true;
-//                break;
-            case 3:
-                if (node_pos[vid]==3) return true;
-//                break;
-            case 4:
-                if (node_pos[vid]==4) return true;
-//                break;
-        }
+//        switch (pos) {
+//            case 1:
+//                if (node_pos[vid]==1) return true;
+////                break;
+//            case 2:
+//                if (node_pos[vid]==2) return true;
+////                break;
+//            case 3:
+//                if (node_pos[vid]==3) return true;
+////                break;
+//            case 4:
+//                if (node_pos[vid]==4) return true;
+////                break;
+//        }
+        if (node_pos[vid]==pos) return true;
+//        return false;
     }
     return false;
 }
@@ -530,6 +536,8 @@ void gLsystem::buildBranches(Skeleton *skel) {
     std::vector<std::vector<size_t>> branches;
     std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(skel->get_simplified_skeleton());
 
+//    int count_leaf =0;
+
     for (auto vit = vi.first; vit != vi.second; ++vit){
         if (boost::degree(*vit, skel->get_simplified_skeleton())!=0) {
             vs.push_back(*vit);
@@ -541,18 +549,22 @@ void gLsystem::buildBranches(Skeleton *skel) {
                 temp.nexts = findNext(*vit, skel);
             }
             nodes.push_back(temp);
+
+//            std::cout << *vit << " is a leaf? " << !notLeaf(*vit, skel) << std::endl;
+//            if (!notLeaf(*vit, skel)) count_leaf++;
         }
     }
+//    std::cout << count_leaf << "leaves." << std::endl;
+
     for (int i=0; i<vs.size(); ++i){
         pool.insert(std::make_pair(vs[i], nodes[i]));
     }
-
     std::vector<size_t> wait_list;
     wait_list.push_back(skel->get_root());
     while (!wait_list.empty()){
         size_t root_ = wait_list.back();
         std::vector<size_t> branch;
-//        branch.push_back(root_);
+        branch.push_back(root_);
 
         size_t next_ = pool[root_].nexts[pool[root_].visit_time];
         pool[root_].visit_time+=1;
@@ -576,15 +588,27 @@ void gLsystem::buildBranches(Skeleton *skel) {
 
         for (int i=0; i<branch.size(); i++){
 //            if (pool[branch[i]].degree==2 && skel->get_simplified_skeleton()[branch[i]].nParent!=skel->get_root()){
-            if (node_pos.count(branch[i])==0) {
-                node_pos.insert(std::make_pair(branch[i], branch.size()-i-1));
-            }
-            else {
-                if (node_pos[branch[i]]>branch.size()-i-1) node_pos[branch[i]]=branch.size()-i-1;
-            }
+//            std::cout << branch[i] << " ";
+            if (node_pos.count(branch[i])!=0 && node_pos[branch[i]] < branch.size()-i-1) continue;
+//                node_pos.insert(std::make_pair(branch[i], branch.size()-i-1));
+//                if (node_pos[branch[i]] < branch.size()-i-1) continue;
+
+            else node_pos[branch[i]] = branch.size()-i-1;
+
         }
+//        std::cout << std::endl;
         branches.push_back(branch);
     }
+
+//    std::cout << branches.size() << " branches" << std::endl;
+
+//    for (auto b:branches){
+//        for (auto n:b){
+//            std::cout << n << "(" << boost::degree(n, skel->get_simplified_skeleton()) << ")" << " ";
+//        }
+//        std::cout << std::endl;
+//    }
+
 }
 
 bool gLsystem::notLeaf(size_t vid, Skeleton *skel) {
@@ -687,39 +711,43 @@ void gLsystem::buildRules(Skeleton *skel, int accuracy) {
     avg_dis = sum_dis/count_dis;
 
     double grow_rotation, grow_rotation_, grow_roll, grow_roll_;
-
+///*  A test:
     if (degrees_){
-        if (avg_rotation+45>360) grow_rotation = avg_rotation-45;
-        else grow_rotation = avg_rotation+45;
-        if (avg_rotation_-45 < -360) grow_rotation_ = avg_rotation_+45;
-        else grow_rotation_ = avg_rotation_-45;
-        if (avg_roll+45>360) grow_roll = avg_roll-45;
-        else grow_roll = avg_roll+45;
-        if (avg_roll_-45< -360) grow_roll_ = avg_roll_+45;
-        else grow_roll_ = avg_roll_-45;
+        if (avg_rotation+30>360) grow_rotation = avg_rotation-30;
+        else grow_rotation = avg_rotation+30;
+        if (avg_rotation_-30 < -360) grow_rotation_ = avg_rotation_+30;
+        else grow_rotation_ = avg_rotation_-30;
+        if (avg_roll+30>360) grow_roll = avg_roll-30;
+        else grow_roll = avg_roll+30;
+        if (avg_roll_-30< -360) grow_roll_ = avg_roll_+30;
+        else grow_roll_ = avg_roll_-30;
     }
 
     else {
-        if (avg_rotation+45*M_PI/180>2*M_PI) grow_rotation = avg_rotation-45*M_PI/180;
-        else grow_rotation = avg_rotation+45*M_PI/180;
-        if (avg_rotation_-45*M_PI/180< -2*M_PI) grow_rotation_ = avg_rotation_+45*M_PI/180;
-        else grow_rotation_ = avg_rotation_+45*M_PI/180;
-        if (avg_roll+45*M_PI/180>2*M_PI) grow_roll = avg_roll-45*M_PI/180;
-        else grow_roll = avg_roll+45*M_PI/180;
-        if (avg_roll_-45*M_PI/180< -2*M_PI) grow_roll_ = avg_roll_+45*M_PI/180;
-        else grow_roll_ = avg_roll_-45*M_PI/180;
+        if (avg_rotation+30*M_PI/180>2*M_PI) grow_rotation = avg_rotation-30*M_PI/180;
+        else grow_rotation = avg_rotation+30*M_PI/180;
+        if (avg_rotation_-30*M_PI/180< -2*M_PI) grow_rotation_ = avg_rotation_+30*M_PI/180;
+        else grow_rotation_ = avg_rotation_+30*M_PI/180;
+        if (avg_roll+30*M_PI/180>2*M_PI) grow_roll = avg_roll-30*M_PI/180;
+        else grow_roll = avg_roll+30*M_PI/180;
+        if (avg_roll_-30*M_PI/180< -2*M_PI) grow_roll_ = avg_roll_+30*M_PI/180;
+        else grow_roll_ = avg_roll_-30*M_PI/180;
     }
+//*/
 
 //    std::cout << avg_rotation << " " << avg_rotation_ << std::endl;
-
+//    grow_rotation = avg_rotation;
+//    grow_rotation_ = avg_rotation_;
+//    grow_roll = avg_roll;
+//    grow_roll_ = avg_roll_;
 //    int accuracy = 3;
     std::string r1, r2, r3, r4;
     std::stringstream s1, s2, s3, s4;
 
     s1 << "[+(";
-    s1 << std::fixed << std::setprecision(accuracy) << avg_rotation;
+    s1 << std::fixed << std::setprecision(accuracy) << grow_rotation;
     s1 << ")>(";
-    s1 << std::fixed << std::setprecision(accuracy) << avg_roll;
+    s1 << std::fixed << std::setprecision(accuracy) << grow_roll;
     s1 << ")F(";
     s1 << std::fixed << std::setprecision(accuracy) << avg_dis;
     s1 << ")]";
@@ -727,9 +755,9 @@ void gLsystem::buildRules(Skeleton *skel, int accuracy) {
 //    std::cout << r1 << std::endl;
 
     s2 << "[-(";
-    s2 << std::fixed << std::setprecision(accuracy) << std::abs(avg_rotation_);
+    s2 << std::fixed << std::setprecision(accuracy) << std::abs(grow_rotation_);
     s2 << ")>(";
-    s2 << std::fixed << std::setprecision(accuracy) << avg_roll;
+    s2 << std::fixed << std::setprecision(accuracy) << grow_roll;
     s2 << ")F(";
     s2 << std::fixed << std::setprecision(accuracy) << avg_dis;
     s2 << ")]";
@@ -738,9 +766,9 @@ void gLsystem::buildRules(Skeleton *skel, int accuracy) {
 
 
     s3 << "[+(";
-    s3 << std::fixed << std::setprecision(accuracy) << avg_rotation;
+    s3 << std::fixed << std::setprecision(accuracy) << grow_rotation;
     s3 << ")<(";
-    s3 << std::fixed << std::setprecision(accuracy) << std::abs(avg_roll_);
+    s3 << std::fixed << std::setprecision(accuracy) << std::abs(grow_roll_);
     s3 << ")F(";
     s3 << std::fixed << std::setprecision(accuracy) << avg_dis;
     s3 << ")]";
@@ -749,9 +777,9 @@ void gLsystem::buildRules(Skeleton *skel, int accuracy) {
 
 
     s4 << "[-(";
-    s4 << std::fixed << std::setprecision(accuracy) << std::abs(avg_rotation_);
+    s4 << std::fixed << std::setprecision(accuracy) << std::abs(grow_rotation_);
     s4 << ")<(";
-    s4 << std::fixed << std::setprecision(accuracy) << std::abs(avg_roll_);
+    s4 << std::fixed << std::setprecision(accuracy) << std::abs(grow_roll_);
     s4 << ")F(";
     s4 << std::fixed << std::setprecision(accuracy) << avg_dis;
     s4 << ")]";
@@ -777,16 +805,23 @@ std::string gLsystem::selectRule(SGraphVertexDescriptor startV, SGraphVertexDesc
 }
 
 
-void gLsystem::printSth() {
+void gLsystem::printSth(Skeleton *skel) {
+//    int count_sprouts = 0;
 //    for (auto it=node_pos.begin(); it!=node_pos.end(); ++it){
+//        if (sprout(sprout_pos, it->first, skel)){
+//            std::cout << it->first << ": " << it->second << " ";
+//            count_sprouts++;
+//        }
+
 //        std::cout << it->first << ": " << it->second << " ";
-//        std::cout << " sprout? " << sprout(sprout_pos, it->first, ) << std::endl;
+//        std::cout << " sprout? " << sprout(sprout_pos, it->first, skel) << std::endl;
 //    }
+//    std::cout << count_sprouts << " sprouts." << std::endl;
 //    for (auto it:strnodes){
 //        std::cout << it->Lstr << std::endl;
 //    }
 //    strlist.printLstr();
-    std::cout << Lstring_ << std::endl;
+//    std::cout << Lstring_ << std::endl;
 }
 
 #endif //L_SYSTEM_GLSYSTEM_H

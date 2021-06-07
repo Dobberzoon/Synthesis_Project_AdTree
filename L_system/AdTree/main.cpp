@@ -44,8 +44,8 @@
 #include "L-system.h"
 
 //#include "Grow/gLsystem.h"
-#include "Grow/test_grow.h"
-#include "Test_L_system/test_methods.h"
+//#include "Grow/test_grow.h"
+//#include "Test_L_system/test_methods.h"
 
 using namespace easy3d;
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
 
 //                return batch_reconstruct(cloud_files, output_dir) > 0;
 //                l_test(cloud_files, output_dir);
-                return grow_test(cloud_files, output_dir);
+//                return grow_test(cloud_files, output_dir);
 
             } else if (file_system::is_directory(first_arg)) {
                 std::vector<std::string> entries;
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 
 //                return batch_reconstruct(cloud_files, output_dir) > 0;
 //                l_test(cloud_files, output_dir);
-                return grow_test(cloud_files, output_dir);
+//                return grow_test(cloud_files, output_dir);
 
             } else
                 std::cerr

@@ -247,6 +247,24 @@ namespace easy3d {
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
             }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Load species information"))
+                open_info();
+            if (ImGui::BeginMenu("Export to L-system (grown) ...")) {
+
+                ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.50f);
+
+                if (ImGui::MenuItem("degrees"))
+                    export_lsystem_g(true);
+                if (ImGui::MenuItem("radians"))
+                    export_lsystem_g(false);
+
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Open L-system (grown)"))
+                open_lsystem_g();
+            ImGui::Separator();
             if (ImGui::MenuItem("Save branches ...", "Ctrl+S"))
                 save();
             if (ImGui::MenuItem("Save skeleton ..."))

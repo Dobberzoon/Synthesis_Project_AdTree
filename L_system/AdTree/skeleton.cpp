@@ -1258,6 +1258,7 @@ bool Skeleton::reconstruct_mesh(const PointCloud *cloud, SurfaceMesh *mesh) {
     return true;
 }
 ///
+/// \return
 
 std::vector<Skeleton::Branch> Skeleton::get_branches_parameters() const {
     std::vector<Skeleton::Branch> branches;
@@ -1452,4 +1453,146 @@ bool Skeleton::extract_branch_surfaces(SurfaceMesh *result) {
     result->garbage_collection();
 
     return true;
+}
+
+// for growing
+
+bool Skeleton::reconstruct_mesh_g(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh, float grow_sp,
+                                  float grow_co) {
+    //generate branches
+    if (!compute_branch_radius_g(grow_sp, grow_co)) {
+        std::cerr << "failed computing branch radius" << std::endl;
+        return false;
+    }
+
+    //extract surface model
+    if (!extract_branch_surfaces_g(mesh, grow_sp, grow_co)) {
+        std::cerr << "failed extracting branches" << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool Skeleton::compute_branch_radius_g(const float grow_sp, const float grow_co) {
+    if (!quiet_)
+        std::cout << "step 1: assign points to corresponding branch edges" << std::endl;
+    assign_points_to_edges();
+
+    if (!quiet_)
+        std::cout << "step 2: fit accurate radius to the trunk" << std::endl;
+    fit_trunk();
+
+    if (!quiet_)
+        std::cout << "step 3: adjust the radius for all left branches" << std::endl;
+    compute_all_edges_radius_g(TrunkRadius_, grow_sp, grow_co);
+
+    if (!quiet_)
+        std::cout << "finish the branches inflation!" << std::endl;
+    return true;
+}
+
+void Skeleton::compute_all_edges_radius_g(double trunkRadius, const float grow_sp, const float grow_co) {
+    //find the trunk edge
+    SGraphEdgeDescriptor trunkE;
+    std::pair<SGraphOutEdgeIterator, SGraphOutEdgeIterator> listAdj = out_edges(RootV_, simplified_skeleton_);
+    for (SGraphOutEdgeIterator eIter = listAdj.first; eIter != listAdj.second; ++eIter) {
+        trunkE = *eIter;
+        break;
+    }
+
+    //assign the radius to the rest branches
+    double avrRadius = trunkRadius / pow(simplified_skeleton_[trunkE].nWeight, 1.1);
+    std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ep = edges(simplified_skeleton_);
+    for (SGraphEdgeIterator eIter = ep.first; eIter != ep.second; ++eIter) {
+        simplified_skeleton_[*eIter].nRadius = pow(simplified_skeleton_[*eIter].nWeight, 1.1) * avrRadius * (1+grow_sp*grow_co);
+    }
+
+    return;
+}
+
+bool Skeleton::extract_branch_surfaces_g(SurfaceMesh *result, const float grow_sp, const float grow_co) {
+    const std::vector<Branch> &branches = get_branches_parameters_g(grow_sp, grow_co);
+    if (branches.empty())
+        return false;
+
+    static const int slices = 10;
+    for (const auto &branch : branches)
+        add_generalized_cylinder_to_model(result, branch, slices);
+
+    // remove isolated vertices
+    for (auto v : result->vertices()) {
+        if (result->is_isolated(v))
+            result->delete_vertex(v);
+    }
+    result->garbage_collection();
+
+    return true;
+}
+
+std::vector<Skeleton::Branch> Skeleton::get_branches_parameters_g(const float grow_sp, const float grow_co) const {
+    std::vector<Skeleton::Branch> branches;
+
+    Graph &graph = *(const_cast<Graph *>(&smoothed_skeleton_));
+
+    if (boost::num_edges(smoothed_skeleton_) == 0)
+        return branches;
+
+    //-----------------------------------------------------------------------
+    //  traverse all the vertices of a graph
+    //-----------------------------------------------------------------------
+    std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
+    for (SGraphVertexIterator vit = vi.first; vit != vi.second; ++vit) {
+        SGraphVertexDescriptor cur_vd = *vit;
+        SGraphVertexProp &vp = graph[cur_vd];
+        vp.visited = false;
+    }
+
+    for (SGraphVertexIterator vit = vi.first; vit != vi.second; ++vit) {
+        SGraphVertexDescriptor cur_vd = *vit;
+        SGraphVertexProp &vp = graph[cur_vd];
+        auto deg = boost::degree(cur_vd, graph);
+        if (vp.visited)
+            continue;
+        if (deg != 1)
+            continue;
+
+        Branch branch;
+        vp.visited = true;
+
+        if (branch.points.empty() || easy3d::distance(branch.points.back(), vp.cVert) >= epsilon<float>()) {
+            branch.points.push_back(vp.cVert);
+            branch.radii.push_back(vp.radius*(1+grow_sp*grow_co));
+        }
+
+        bool reached_end = false;
+        do {
+            std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adj_v_iter = boost::adjacent_vertices(cur_vd,
+                                                                                                              smoothed_skeleton_);
+            for (SGraphAdjacencyIterator ait = adj_v_iter.first; ait != adj_v_iter.second; ++ait) {
+                SGraphVertexDescriptor next_vd = *ait;
+
+                SGraphVertexProp &next_vp = graph[next_vd];
+                if (!next_vp.visited) {
+
+                    if (branch.points.empty() ||
+                        easy3d::distance(branch.points.back(), next_vp.cVert) >= epsilon<float>()) {
+                        branch.points.push_back(next_vp.cVert);
+                        branch.radii.push_back(next_vp.radius*(1+grow_sp*grow_co));
+                    }
+
+                    cur_vd = next_vd;
+                    next_vp.visited = true;
+
+                    if (boost::degree(cur_vd, graph) == 1) {
+                        reached_end = true;
+                        break;
+                    }
+                }
+            }
+        } while (!reached_end);
+
+        branches.push_back(branch);
+    }
+
+    return branches;
 }

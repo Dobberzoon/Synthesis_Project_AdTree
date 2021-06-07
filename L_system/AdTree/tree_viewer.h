@@ -68,9 +68,15 @@ protected:
     bool open_lsystem() override;
     bool save() const override;
 
+    bool open_lsystem_g() override;
+    bool open_info() override;
+    void export_lsystem_g(bool deg) const override;
+
+
     void export_skeleton() const override;
     void export_leaves() const override;
     void export_lsystem(bool deg) const override;
+
 
     bool reconstruct_skeleton() override;
     bool add_leaves() override;
@@ -95,6 +101,11 @@ private:
     Skeleton*           skeleton_;
 
     bool isLsystem = false;
+
+    int sprout_pos = 1;
+    float grow_co = 0.1;
+    float grow_sp = 0.1;
+    float ratio = 3.0;
 };
 
 #endif

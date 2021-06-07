@@ -224,6 +224,17 @@ private:
             const Branch& points,
             int slices);
 
+public:
+    /*-------------------------------------------------------------*/
+    /*------------ method for growing -----------------------------*/
+    /*-------------------------------------------------------------*/
+    bool reconstruct_mesh_g(const easy3d::PointCloud *cloud, easy3d::SurfaceMesh *mesh, const float grow_sp, const float grow_co);
+    bool compute_branch_radius_g(const float grow_sp, const float grow_co);
+    void compute_all_edges_radius_g(double trunkRadius, const float grow_sp, const float grow_co);
+    bool extract_branch_surfaces_g(easy3d::SurfaceMesh* result, const float grow_sp, const float grow_co);
+    std::vector<Branch> get_branches_parameters_g(const float grow_sp, const float grow_co) const;
+
+
 private:
 	/*store points and kd index*/
 	Vector3D* Points_;
