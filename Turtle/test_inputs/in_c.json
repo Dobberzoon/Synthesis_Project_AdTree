@@ -1,14 +1,19 @@
 {
-    "recursions": 2,
+    "recursions": 4,
     "axiom": "F",
     "rules":
     {
         "F": "FF-[-F+F+F]+[+F-F-F]"
     },
+    "trunk": {
+        "anchor" : [100,500,0],
+        "radius" : 5
+    },
     "dimensions":
     {
-        "forward" : 5,
+        "forward" : 3,
         "rotation" : 22.5,
         "roll" : 20
-    }
+    },
+    "degrees": true
 }

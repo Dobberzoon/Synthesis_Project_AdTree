@@ -235,8 +235,18 @@ namespace easy3d {
             if (ImGui::MenuItem("Open L-system"))
                 open_lsystem();
             ImGui::Separator();
-            if (ImGui::MenuItem("Export to L-system ..."))
-                export_lsystem();
+            if (ImGui::BeginMenu("Export to L-system ...")) {
+
+                ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.50f);
+
+                if (ImGui::MenuItem("degrees"))
+                    export_lsystem(true);
+                if (ImGui::MenuItem("radians"))
+                    export_lsystem(false);
+
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
             if (ImGui::MenuItem("Save branches ...", "Ctrl+S"))
                 save();
             if (ImGui::MenuItem("Save skeleton ..."))

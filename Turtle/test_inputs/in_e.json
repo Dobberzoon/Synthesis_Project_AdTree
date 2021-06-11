@@ -1,15 +1,20 @@
 {
-    "recursions": 9,
+    "recursions": 7,
     "axiom": "X",
     "rules":
     {
         "X": "F[-X][+X]FX",
         "F": "FF"
     },
+    "trunk": {
+        "anchor" : [100,500,0],
+        "radius" : 10
+    },
     "dimensions":
     {
-        "forward" : 5,
+        "forward" : 3,
         "rotation" : 22.5,
         "roll" : 20
-    }
+    },
+    "degrees": true
 }

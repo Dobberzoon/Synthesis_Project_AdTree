@@ -53,9 +53,7 @@ public:
     /// output the current location of the turtle ///
     void printLocation() const;
 
-    void setLocation(easy3d::vec3 p);
-
-    void setLocation(const nlohmann::json &p);
+    void setStartingValues(const nlohmann::json &p);
 
     /// initializer override from crooked stems (do not use while walking)///
     void setRotation(float angle, float roll = 0);
@@ -77,6 +75,9 @@ public:
 
     /// return the anchor point ///
     easy3d::vec3 getAnchor() const;
+
+    /// return the radius of the trunk ///
+    float getradius() const;
 
     /// store internalized points to file ///
     void writeToXYZ(const std::string &fileName);
@@ -102,6 +103,9 @@ private:
 
     // graph
     Graph graph;
+
+    // trunk diameter
+    float trunkR;
 
     // default variables
     float fValue = 5;

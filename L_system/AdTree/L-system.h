@@ -20,7 +20,7 @@ public:
     Lsystem();
 
     /// get a skeleton (from AdTree), convert it into an L-system, write it to output
-    void readSkeleton(Skeleton* skeleton);
+    void readSkeleton(Skeleton* skeleton, bool deg);
     /// traverse all children of a node
     void traverse(SGraphVertexDescriptor prevV,
                   SGraphVertexDescriptor startV,
@@ -42,34 +42,30 @@ public:
     /// get the angle between a vector and the x-axis around the y-axis
     double getYAngle(easy3d::vec3 vec);
 
-    /// choose the output type
-    enum outputFormat{
-        OUT_COMMANDLINE,
-        OUT_JSON_CUSTOM,
-        OUT_TEXTFILE
-    };
     /// write the L-system to an output (JSON, command line)
     void outputLsys(const std::string& out_type, const std::string& path);
 
     /// print the L-system to the command line
     void printLsystem();
     /// write the L-system to a custom JSON format
-    void lsysToJson(const std::string &filename,
-                    double recursions,
-                    double default_forward,
-                    double default_rotation,
-                    double default_roll);
+    void lsysToJson(const std::string &filenamel);
     /// write the L-system to a txt file
-    void lsysToText(const std::string &filename,
-                    double rec,
-                    double def_f,
-                    double def_rot,
-                    double def_roll);
+    void lsysToText(const std::string &filename);
 
 private:
     std::string Lstring_;
     std::string axiom_;
-    bool degrees_;
+    bool degrees_ = true;
+    int rec_ = 0;
+
+    // default values
+    float forward_ = 3;
+    float rotation_ = 22.5;
+    float roll_ = 20;
+
+    //trunk values;
+    easy3d::vec3 anchor_ = {0,0,0};
+    float radius_ = 0.2;
 };
 
 #endif //L_SYSTEM_L_SYSTEM_H

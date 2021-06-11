@@ -13,11 +13,32 @@
 #include <string>
 #include <easy3d/core/vec.h>
 #include <easy3d/core/mat.h>
+#include <easy3d/core/types.h>
 #include <boost/graph/adjacency_list.hpp>
 
-#include "AdTree/skeleton.h"
-
 #include "nlohmann/json.hpp"
+
+
+//define the vertex and edge properties
+struct SGraphVertexProp
+{
+    easy3d::vec3  cVert;
+    std::size_t nParent;
+    double lengthOfSubtree;
+
+    double radius; // used only by the smoothed skeleton
+    bool   visited;
+};
+
+struct SGraphEdgeProp
+{
+    double nWeight;
+    double nRadius;
+    std::vector<int> vecPoints;
+};
+
+//define the tree graph
+typedef boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS, SGraphVertexProp, SGraphEdgeProp > Graph;
 
 class Turtle {
 public:
@@ -32,6 +53,8 @@ public:
 
     /// output the current location of the turtle ///
     void printLocation() const;
+
+    void setStartingValues(const nlohmann::json &p);
 
     /// initializer override from crooked stems (do not use while walking)///
     void setRotation(float angle, float roll = 0);
@@ -54,8 +77,10 @@ public:
     /// return the anchor point ///
     easy3d::vec3 getAnchor() const;
 
-    /// set the anchor point ///
-    easy3d::vec3 setAnchor();
+    /// return statistics of the graph ///
+    float getRadius() const;
+    float getHeight() const;
+    float getBoundingDistance() const;
 
     /// store internalized points to file ///
     void writeToXYZ(const std::string &fileName);
@@ -82,6 +107,11 @@ private:
     // graph
     Graph graph;
 
+    // cloud/graph statistics
+    float trunkR;
+    float TreeHeight;
+    float BoundingDistance;
+
     // default variables
     float fValue = 5;
     float rotateValue = 10;
@@ -105,6 +135,8 @@ private:
     /// roll ///
     void rollPlane(float rollAngle);
 
+    void updateStats();
+
     /// internalize current location ///
     void storeLoc(unsigned int parent = -1);
 
@@ -121,7 +153,6 @@ private:
     void readLine(std::string line);
 
 };
-
 
 #endif //TURTLE_TURTLE_H
 

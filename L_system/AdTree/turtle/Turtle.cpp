@@ -7,9 +7,9 @@
 Turtle::Turtle(float x, float y, float z) {
     {
         loc = {x, y, z};
-        plane.set_row(0, easy3d::vec3 {1, 0, 0});
-        plane.set_row(1, easy3d::vec3 {0, 1, 0});
-        plane.set_row(2, easy3d::vec3 {0, 0, 1});
+        plane.set_row(0, easy3d::vec3{1, 0, 0});
+        plane.set_row(1, easy3d::vec3{0, 1, 0});
+        plane.set_row(2, easy3d::vec3{0, 0, 1});
     }
 }
 
@@ -30,6 +30,32 @@ void Turtle::printLocation() const {
     std::cout << loc.x << ", " << loc.y << ", " << loc.z << ")" << std::endl;
 }
 
+void Turtle::setStartingValues(const nlohmann::json &j) {
+
+    // set anchorpoint
+    nlohmann::json p = j["anchor"];
+
+    if (p.size() < 2) {
+        std::cout << "no anchor is supplied in json, 0,0,0 is used as anchor!" << std::endl;
+    } else if (p.size() == 2) {
+        std::cout << "2d coordinates are supplied as anchor, coordinates are used as x,y!" << std::endl;
+        loc = {p[0], p[1], 0};
+        anchor = {p[0], p[1], 0};
+    } else if (p.size() == 3) {
+        loc = {p[0], p[1], p[2]};
+        anchor = {p[0], p[1], p[2]};
+    }
+
+    nlohmann::json r = j["radius"];
+
+    if (r.size() == 0) {
+        std::cout << "no radius is supplied in json" << std::endl;
+        trunkR = 0;
+    } else {
+        trunkR = j["radius"];
+    }
+}
+
 void Turtle::setRotation(float angle, float roll) {
     // roll is executed before the angle
     rollPlane(roll);
@@ -46,7 +72,7 @@ void Turtle::set2Degrees() {
 
 std::vector<easy3d::vec3> Turtle::getStoredPoints() {
     std::vector<easy3d::vec3> pointList;
-    for (const auto& p: graph.m_vertices){pointList.emplace_back(p.m_property.cVert);}
+    for (const auto &p: graph.m_vertices) { pointList.emplace_back(p.m_property.cVert); }
     return pointList;
 }
 
@@ -58,12 +84,20 @@ Graph Turtle::getGraph() const {
     return graph;
 }
 
-easy3d::vec3 Turtle::getAnchor() const{
+easy3d::vec3 Turtle::getAnchor() const {
     return anchor;
 }
 
-easy3d::vec3 Turtle::setAnchor() {
-    return anchor;
+float Turtle::getRadius() const {
+    return trunkR;
+}
+
+float Turtle::getHeight() const{
+    return TreeHeight;
+}
+
+float Turtle::getBoundingDistance() const{
+    return BoundingDistance;
 }
 
 void Turtle::writeToXYZ(const std::string &fileName) {
@@ -116,10 +150,19 @@ void Turtle::readFile(const std::string &path) {
     treeFile >> j;
     treeFile.close();
 
-    setDefaultValues(j["dimensions"]);
+    if  (j["degrees"].empty()){std::cout << "no degree indidcator has been supplied" << std::endl;}
+    else {deg = j["degrees"];}
+
+    if (j["trunk"].empty()){std::cout << "No trunk data has been supplied" << std::endl;}
+    else{setStartingValues(j["trunk"]);}
+
+    if (j["dimensions"].empty()){std::cout << "No default dimensions data has been supplied" << std::endl;}
+    else{setDefaultValues(j["dimensions"]);}
+
     std::string line = translateLine(j["axiom"], j["rules"], j["recursions"]);
     line = cleanLine(line);
     readLine(line);
+    updateStats();
 }
 
 void Turtle::stepForward(float distance) {
@@ -127,8 +170,8 @@ void Turtle::stepForward(float distance) {
 }
 
 /// rotate ///
-void Turtle::rotatePlane(float angle){
-    if (deg){angle = angle * M_PI/180;}
+void Turtle::rotatePlane(float angle) {
+    if (deg) { angle =  angle * (float) M_PI / 180; }
 
     /// 1: roll to XZ plane
     // project current z-axis onto XY plane;
@@ -139,24 +182,26 @@ void Turtle::rotatePlane(float angle){
     // angle of projected x-axis to original x-axis
     float angle_z;
 
-    if (xAxis_proj.y < 0){
-        angle_z = - acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
-    }
-    else{
+    if (xAxis_proj.y < 0) {
+        angle_z = -acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
+    } else {
         angle_z = acos(dot(xAxis_proj, xAxis_orig) / (length(xAxis_proj) * length(xAxis_orig)));
     }
     // angle_z is close to 0
     // problem: nan
-    if (isnan(angle_z)){
+    if (isnan(angle_z)) {
         angle_z = 0;
     }
     // vector points (almost) straight up/down
-    // problem: incorrect angle_z between very small x and y coords
-    if (abs(xAxis.z) - 1 < 0.00001){
+    // problem: incorrect angle_z in 2d cases
+    if (abs(xAxis.z) - 1 < 0.1 && abs(xAxis.z) - 1 > - 0.1 &&
+        abs(xAxis.x)  == 0 ||
+        abs(xAxis.z) - 1 < 0.1 && abs(xAxis.z) - 1 > - 0.1 &&
+        abs(xAxis.y) == 0) {
         angle_z = 0;
     }
 
-    if (deg){angle_z = angle_z / (M_PI / 180);}
+    if (deg) { angle_z = angle_z / (float) (M_PI / 180); }
     rollPlane(-angle_z);
 
     /// 2: rotation around Y axis
@@ -173,7 +218,7 @@ void Turtle::rotatePlane(float angle){
 }
 
 void Turtle::rollPlane(float rollAngle) {
-    if (deg) { rollAngle = rollAngle * M_PI / 180; }
+    if (deg) { rollAngle = rollAngle * (float) M_PI / 180; }
 
     easy3d::Mat3<float> rz(1);
     rz(0, 0) = std::cos(rollAngle);
@@ -184,13 +229,28 @@ void Turtle::rollPlane(float rollAngle) {
     plane = rz * plane;
 }
 
+void Turtle::updateStats(){
+    // update graph statistics
+    for (auto p: graph.m_vertices){
+        easy3d::vec3 point = p.m_property.cVert;
+
+        if ((point.z - anchor.z) > TreeHeight)
+            TreeHeight = point.z - anchor.z;
+        if (std::sqrt(point.distance2(anchor)) > BoundingDistance)
+            BoundingDistance = std::sqrt(point.distance2(anchor));
+    }
+}
+
 void Turtle::storeLoc(unsigned int parent) {
+    // add vert to graph
     SGraphVertexProp p1;
     p1.cVert = loc;
     if (parent >= 0) { p1.nParent = parent; }
     else { p1.nParent = NULL; }
 
     graph.m_vertices.emplace_back(p1);
+
+
 }
 
 void Turtle::setDefaultValues(const nlohmann::json &d) {
@@ -253,7 +313,7 @@ std::string Turtle::translateLine(const nlohmann::json &axiom, const nlohmann::j
 
     for (int j = 0; j < r; ++j) {
         unsigned int offsetter = 0;
-        for (int i = 0; i < line.size(); ++i) {
+        for (unsigned int i = 0; i < line.size(); ++i) {
             std::string s;
             s.push_back(line[i]);
 
@@ -273,7 +333,6 @@ std::string Turtle::translateLine(const nlohmann::json &axiom, const nlohmann::j
 }
 
 
-
 void Turtle::readLine(std::string line) {
     // store starting point
     storeLoc(0);
@@ -284,7 +343,7 @@ void Turtle::readLine(std::string line) {
     // allow to connect recursion to the trunk
     bool returnEdge = false;
 
-    for (int i = 0; i < line.size(); ++i) {
+    for (unsigned int i = 0; i < line.size(); ++i) {
         float override = 0;
         int j = 0;
 
@@ -296,7 +355,7 @@ void Turtle::readLine(std::string line) {
                 sValue += line[i + j];
                 j++;
             }
-            override = std::stod(sValue);
+            override = std::stof(sValue);
         }
 
         // execute normal stings
@@ -305,7 +364,7 @@ void Turtle::readLine(std::string line) {
             int cNested = 0;
             int jump = 0;
 
-            for (int k = i; k < line.size(); ++k) {
+            for (unsigned int k = i; k < line.size(); ++k) {
                 if (line[k] == ']' && oNested == cNested) {
                     // recurse turtle
                     Turtle turtle(*this);
@@ -320,7 +379,7 @@ void Turtle::readLine(std::string line) {
                     unsigned int offset = graph.m_vertices.size() - 1;
 
                     // ignore point 0 (is the same point as branch point)
-                    for (int l = 1; l < turtle.graph.m_vertices.size(); ++l) {
+                    for (unsigned int l = 1; l < turtle.graph.m_vertices.size(); ++l) {
                         if (l == 1) { cVertexList[1].m_property.nParent = trunk; }
                         else { cVertexList[l].m_property.nParent += offset; }
                         graph.m_vertices.emplace_back(cVertexList[l]);
@@ -418,5 +477,3 @@ void Turtle::readLine(std::string line) {
         i += j;
     }
 }
-
-

@@ -175,6 +175,9 @@ bool TreeViewer::open()
         delete m;
     models_.clear();
 
+    // set rules
+    isLsystem = false;
+
     const std::vector<std::string> filetypes = {"*.xyz"};
     const std::string& file_name = FileDialog::open(filetypes, std::string(""));
 
@@ -202,60 +205,70 @@ bool TreeViewer::open_lsystem()
         return false;
     }
 
+    // set rules
+    isLsystem = true;
+
     // clear loaded models
     for (auto m : models_)
         delete m;
     models_.clear();
 
+    // set window title
+    set_title("AdTree - " + file_system::simple_name(file_names[0]));
+
     // read l-system
     Turtle turtle;
-    //TODO make degrees read
-    turtle.set2Degrees();
     turtle.readFile(file_names[0]);
 
-    // make and populate cloud
-    PointCloud* cloud = new PointCloud;
-    cloud->set_name(file_names[0]);
+    // make cloud
+    PointCloud* baseCloud = new PointCloud;
+    baseCloud->set_name(file_names[0]);
 
+    // populate cloud
     auto pointList = turtle.getStoredPoints();
+    for (auto p: pointList){baseCloud->add_vertex(p);}
 
-    for (auto p: pointList){
-        cloud->add_vertex(p);
-    }
-
-    if (cloud->n_vertices() == 0){
+    // check if cloud is populated
+    if (baseCloud->n_vertices() == 0){
         std::cerr << "could not create cloud" << std::endl;
         return false;
     }
 
-    easy3d::PointCloud::ModelProperty<easy3d::dvec3> prop = cloud->add_model_property<dvec3>("translation");
-    prop[0] = static_cast<dvec3> (turtle.getAnchor());
-    std::cout << "input point cloud translated by [" << -prop[0] << "]" << std::endl;
-
-    set_title("AdTree - " + file_system::simple_name(file_names[0]));
-
-    create_drawables(cloud);
-    Model* model = cloud;
-
+    // create and set model of cloud
+    create_drawables(baseCloud);
+    Model* model = baseCloud;
     model->set_name(file_names[0]);
     add_model(model);
     fit_screen(model);
 
-    std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
+    easy3d::PointCloud::ModelProperty<easy3d::dvec3> prop = cloud()->add_model_property<dvec3>("translation");
+    prop[0] = static_cast<dvec3> (turtle.getAnchor());
+    std::cout << "tree origin has been translated by [" << -prop[0] << "]" << std::endl;
+    std::cout << "cloud loaded. num vertices: " << cloud()->n_vertices() << std::endl;
 
+    // create skeleton
     skeleton_ = new Skeleton;
-    SurfaceMesh *mesh = new SurfaceMesh;
-    mesh->set_name(file_names[0]);
-
-    if (!skeleton_->clone_skeleton(turtle.getGraph())) {return false;}
+    if (!skeleton_->clone_skeleton(turtle)) {return false;}
     create_skeleton_drawable(ST_SIMPLIFIED);
 
-    //TODO make geometry
+    // create mesh
+    SurfaceMesh *mesh = new SurfaceMesh;
+    mesh->set_name(file_names[0]);
+    bool status =  skeleton_->reconstruct_mesh(cloud(), mesh);
 
+    if (status) {
+        auto offset = cloud()->get_model_property<dvec3>("translation");
+        if (offset) {
+            auto prop = mesh->model_property<dvec3>("translation");
+            prop[0] = offset[0];
+        }
+        if (!branches())
+            add_model(mesh);
 
-    //skeleton_->reconstruct_mesh(cloud, mesh);
-
-    return true;
+        cloud()->set_visible(false);
+        return true;
+    }
+    return false;
 }
 
 
@@ -301,37 +314,57 @@ void TreeViewer::export_skeleton() const {
         return;
 
     // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
-
-    std::unordered_map<SGraphVertexDescriptor, easy3d::Graph::Vertex>  vvmap;
-    easy3d::Graph g;
+    std::vector<vec3> vertices;
+    std::vector<std::tuple<int, int>> edges;
+    std::map<int,int> off_map;
+    int off_value = 0;
 
     auto vts = boost::vertices(skeleton);
     for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
-        SGraphVertexDescriptor vd = *iter;
+        int vd = *iter;
         if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
-            const vec3& vp = skeleton[vd].cVert;
-            vvmap[vd] = g.add_vertex(vp);
+            vertices.emplace_back(skeleton[vd].cVert);
+            off_map.insert({vd, off_value});
+        } else {
+            off_value ++;
         }
     }
 
     auto egs = boost::edges(skeleton);
     for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
-        SGraphVertexDescriptor s = boost::source(*iter, skeleton);
-        SGraphVertexDescriptor t = boost::target(*iter, skeleton);
-        g.add_edge(vvmap[s], vvmap[t]);
+        int s_b = boost::source(*iter, skeleton);
+        int t_b = boost::target(*iter, skeleton);
+
+        std::tuple<int,int> i = { s_b - off_map[s_b], t_b - off_map[t_b] };
+        edges.emplace_back(i);
     }
 
-    auto offset = cloud()->get_model_property<dvec3>("translation");
-    if (offset) {
-        auto prop = g.model_property<dvec3>("translation");
-        prop[0] = offset[0];
+    std::ofstream storageFile;
+    storageFile.open(file_name);
+
+    // write header
+    storageFile << "ply" << std::endl;
+    storageFile << "format ascii 1.0" << std::endl;
+    storageFile << "element vertex " << vertices.size() << std::endl;
+    storageFile << "property float x" << std::endl;
+    storageFile << "property float y" << std::endl;
+    storageFile << "property float z" << std::endl;
+    storageFile << "element edge " << edges.size() << std::endl;
+    storageFile << "property int vertex1" << std::endl;
+    storageFile << "property int vertex2" << std::endl;
+    storageFile << "end_header" << std::endl << std::endl;
+
+    for (auto &vertex : vertices) {
+        storageFile << vertex << std::endl;
     }
 
-    if (GraphIO::save(file_name, &g))
-        std::cout << "successfully saved the model of skeleton to file. You can use Easy3D to visualize the skeleton,\n"
-                     "\twhich can be downloaded from: https://github.com/LiangliangNan/Easy3D" << std::endl;
-    else
-        std::cerr << "failed saving the model of skeleton" << std::endl;
+    storageFile << std::endl;
+    for (const auto& edge: edges) {
+        storageFile << std::get<0>(edge) << " " << std::get<1>(edge) << std::endl;
+    }
+
+    storageFile.close();
+    std::cout << "skeleton file stored" <<std::endl;
 }
 
 
@@ -353,7 +386,7 @@ void TreeViewer::export_leaves() const {
         std::cerr << "failed saving the model of leaves" << std::endl;
 }
 
-void TreeViewer::export_lsystem() const{
+void TreeViewer::export_lsystem(bool deg) const{
 
     if (!branches() || !skeleton_) {
         std::cerr << "model of skeleton does not exist" << std::endl;
@@ -366,7 +399,7 @@ void TreeViewer::export_lsystem() const{
 
     Lsystem l_system;
 
-    l_system.readSkeleton(skeleton_);
+    l_system.readSkeleton(skeleton_, deg);
     l_system.outputLsys(file_system::extension(file_name), file_name);
 }
 
@@ -521,6 +554,11 @@ bool TreeViewer::reconstruct_skeleton() {
         return false;
     }
 
+    if (isLsystem){
+        std::cout << "non valid lsystem operation" << std::endl;
+        return false;
+    }
+
     /*{   // offer users the option to remove duplicated points
         int answer = message_box("Robustness hint!",
                                  "The point cloud may has duplicated points. Remove duplication "
@@ -598,7 +636,6 @@ bool TreeViewer::add_leaves() {
             auto prop = mesh->model_property<dvec3>("translation");
             prop[0] = offset[0];
         }
-
         TrianglesDrawable* leaves_drawable = mesh->triangles_drawable("surface");
         if (leaves_drawable) {
             leaves_drawable->set_per_vertex_color(false);

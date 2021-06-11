@@ -196,12 +196,13 @@ bool Skeleton::smooth_skeleton() {
     std::vector<Path> pathList;
     get_graph_for_smooth(pathList);
 
+
     // for each path get its coordinates and generate a smooth curve
     for (std::size_t n_path = 0; n_path < pathList.size(); ++n_path) {
         Path currentPath = pathList[n_path];
         std::vector<vec3> interpolatedPoints;
         std::vector<double> interpolatedRadii;
-        static int numOfSlices = 20;
+        static int numOfSlices = 20; //3
         std::vector<int> numOfSlicesCurrent;
         // retrieve the current path and its vertices
         for (std::size_t n_node = 0; n_node < currentPath.size() - 1; ++n_node) {
@@ -326,6 +327,7 @@ bool Skeleton::add_leaves() {
         std::cout << "step 2: randomly generate leaves for each leaf vertex" << std::endl;
     //initialize
     std::size_t nLeaves = leafVertices.size();
+
     if (VecLeaves_.size() > 0)
         VecLeaves_.clear();
     //generate leaves for each leaf vertex
@@ -652,7 +654,6 @@ void Skeleton::compute_length_of_subtree(Graph *i_Graph, SGraphVertexDescriptor 
             }
         }
     }
-
     return;
 }
 
@@ -1080,7 +1081,6 @@ void Skeleton::generate_leaves(SGraphVertexDescriptor i_LeafVertex, double leafs
         newleaf.nRad = newleaf.nLength / 5;
         VecLeaves_.push_back(newleaf);
     }
-
     return;
 }
 
@@ -1217,25 +1217,28 @@ bool Skeleton::reconstruct_skeleton(const PointCloud *cloud, SurfaceMesh *mesh) 
     return true;
 }
 
-bool Skeleton::clone_skeleton(Graph otherSkeleton) {
+bool Skeleton::clone_skeleton(const Turtle& turtle) {
+    Graph otherSkeleton = turtle.getGraph();
+
     if (otherSkeleton.m_vertices.empty() || otherSkeleton.m_edges.empty()){
         std::cerr << "Turtle has been unable to translate the l-system file!" << std::endl;
         return false;
     }
 
     set_simplified_skeleton() = otherSkeleton;
-    std::vector<SGraphVertexDescriptor> vecParent(num_vertices(otherSkeleton));
-
+    RootV_ = 0;
+    RootPos_ = turtle.getAnchor();
+    TrunkRadius_ = turtle.getRadius();
+    TreeHeight_ = turtle.getHeight();
+    BoundingDistance_ = turtle.getBoundingDistance();
 
     //update the length of subtree and weights for all vertices and edges
-    //compute_length_of_subtree(&simplified_skeleton_, RootV_);
-    //compute_graph_edges_weight(&simplified_skeleton_);
-    //compute_all_edges_radius(TrunkRadius_);
+    compute_length_of_subtree(&simplified_skeleton_, RootV_);
+    compute_graph_edges_weight(&simplified_skeleton_);
+    compute_all_edges_radius(TrunkRadius_);
 
+    smooth_skeleton();
     return true;
-
-    //std::pair<SGraphVertexIterator, SGraphVertexIterator> vp = vertices(get_simplified_skeleton());
-    //set_root() = *(vp.first);
 }
 
 // mesh
@@ -1333,7 +1336,6 @@ void Skeleton::add_generalized_cylinder_to_model(SurfaceMesh *mesh, const Branch
         //std::cerr << "two few points to represent a generalized cylinder" << std::endl;
         return;
     }
-
     typedef std::vector<SurfaceMesh::Vertex> CrossSection;
     std::vector<CrossSection> crosssections;
     vec3 perp;
@@ -1429,7 +1431,6 @@ bool Skeleton::reconstruct_leaves(SurfaceMesh *mesh) {
         mesh->add_triangle(va, vb, vc);
         mesh->add_triangle(va, vc, vd);
     }
-
     return true;
 }
 
