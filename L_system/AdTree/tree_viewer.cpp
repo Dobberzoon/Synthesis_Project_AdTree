@@ -333,11 +333,9 @@ void TreeViewer::export_skeleton() const {
     auto egs = boost::edges(skeleton);
     for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
         int s_b = boost::source(*iter, skeleton);
-        int s = s_b - off_map[s_b];
         int t_b = boost::target(*iter, skeleton);
-        int t = t_b - off_map[t_b];
 
-        std::tuple<int,int> i = {s, t};
+        std::tuple<int,int> i = { s_b - off_map[s_b], t_b - off_map[t_b] };
         edges.emplace_back(i);
     }
 
@@ -366,7 +364,6 @@ void TreeViewer::export_skeleton() const {
     }
 
     storageFile.close();
-
     std::cout << "skeleton file stored" <<std::endl;
 }
 
