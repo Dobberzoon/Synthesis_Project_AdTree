@@ -78,8 +78,6 @@ public:
 
 private:
     std::string Lstring_;
-    std::string axiom_;
-    std::map<std::string, std::string> rules_;
     bool degrees_ = true;
     int rec_ = 0;
     SGraphVertexDescriptor root_;

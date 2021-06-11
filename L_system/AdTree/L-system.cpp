@@ -37,8 +37,8 @@ void Lsystem::lsysToJson(const std::string &filename) {
     nlohmann::json j;
 
     j["recursions"] = rec_;
-    j["axiom"] = axiom_;        // Lstring_
-    j["rules"] = rules_;        // empty for now
+    j["axiom"] = axiom;        // Lstring_
+    j["rules"] = rules;        // empty for now
 
     j["trunk"] = {{"anchor", {anchor_.x, anchor_.y, anchor_.z}},
                   {"radius", radius_}};
