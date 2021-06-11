@@ -18,7 +18,8 @@ set(${PROJECT_NAME}_SOURCES
         L-system.cpp
         turtle/Turtle.cpp
         turtle/Turtle.h
-        )
+        generalisation/lbranchGen.cpp
+        generalisation/lbranchGen.h)
 
 if (APPLE)
     function(resource VAR SOURCE_PATH DESTINATION PATTERN)

@@ -5,24 +5,45 @@
 #ifndef L_SYSTEM_L_SYSTEM_H
 #define L_SYSTEM_L_SYSTEM_H
 
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <3rd_party/kd_tree/Vector3D.h>
 #include <3rd_party/kd_tree/KdTree.h>
 #include <easy3d/core/types.h>
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/random.h>
+#include <easy3d/core/principal_axes.h>
+#include <3rd_party/tetgen/tetgen.h>
 
 #include "skeleton.h"
 #include "3rd_party/nlohmann/json.hpp"
+#include "cylinder.h"
+
+
 
 class Lsystem
 {
 public:
     Lsystem();
 
+    Graph graph_lsys;
+    // public for writing during generalisation
+    std::string axiom;
+    std::map<std::string, std::string> rules;
+
+    /// get the root node index of the lsystem graph
+    SGraphVertexDescriptor get_root(){return root_;};
+    bool isDegrees(){return degrees_;};
+
     /// get a skeleton (from AdTree), convert it into an L-system, write it to output
     void readSkeleton(Skeleton* skeleton, bool deg);
     /// traverse all children of a node
-    void traverse(SGraphVertexDescriptor prevV,
+    SGraphVertexDescriptor traverse(SGraphVertexDescriptor prevV,
                   SGraphVertexDescriptor startV,
                   Skeleton *skeleton);
 
@@ -52,11 +73,14 @@ public:
     /// write the L-system to a txt file
     void lsysToText(const std::string &filename);
 
+    /// generalisation call
+    void generalise();
+
 private:
     std::string Lstring_;
-    std::string axiom_;
     bool degrees_ = true;
     int rec_ = 0;
+    SGraphVertexDescriptor root_;
 
     // default values
     float forward_ = 3;

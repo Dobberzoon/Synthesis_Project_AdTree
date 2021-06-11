@@ -28,6 +28,13 @@ struct SGraphVertexProp
 
     double radius; // used only by the smoothed skeleton
     bool   visited;
+
+    std::map<std::string, std::string> lstring = {
+            {"forward", ""},
+            {"rotation", ""},
+            {"roll", ""},
+            {"nesting", ""}
+    };
 };
 
 struct SGraphEdgeProp

@@ -4,18 +4,6 @@
 
 #include "L-system.h"
 
-#include "skeleton.h"
-#include "cylinder.h"
-
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/random.h>
-#include <easy3d/core/principal_axes.h>
-#include <3rd_party/tetgen/tetgen.h>
-
-#include <iostream>
-#include <fstream>
-#include <algorithm>
 
 
 using namespace boost;
@@ -25,18 +13,20 @@ using namespace easy3d;
 Lsystem::Lsystem()
     {
         Lstring_ = "";
-        axiom_ = "";
+        axiom = "";
+        rules = {};
         degrees_ = false;
     }
-
-    // todo: add rules
-    // todo: add radii
 
 
 void Lsystem::printLsystem() {
     std::cout << "printing L-system..." << std::endl;
     std::cout << "string: " << Lstring_ << std::endl;
-    std::cout << "axiom:  " << axiom_ << std::endl;
+    std::cout << "axiom:  " << axiom << std::endl;
+    std::cout << "rules:  " << std::endl;
+    for (auto rule:rules){
+        std::cout << "\t" << rule.first << ": " << rule.second << std::endl;
+    }
     std::cout << "printing L-system: done" << std::endl;
 }
 
@@ -47,8 +37,9 @@ void Lsystem::lsysToJson(const std::string &filename) {
     nlohmann::json j;
 
     j["recursions"] = rec_;
-    j["axiom"] = Lstring_;  // todo: this will at some point be axiom_
-    j["rules"] = {};        // empty for now
+    j["axiom"] = axiom;        // Lstring_
+    j["rules"] = rules;        // empty for now
+
     j["trunk"] = {{"anchor", {anchor_.x, anchor_.y, anchor_.z}},
                   {"radius", radius_}};
 
@@ -82,9 +73,15 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
     anchor_ = skel->getAnchor();
 
     /// convert skeleton to Lsystem
+    graph_lsys = skel->get_simplified_skeleton();
+    root_ = skel->get_root();
+
     SGraphVertexDescriptor root = skel->get_root();
     vec3 coords_root = skel->get_simplified_skeleton()[root].cVert;
     traverse(root, root, skel);
+    axiom = Lstring_;  // initially axiom is the full string
+
+    // todo: generalisation call here?
 
     std::cout << "converting to L-system: done" << std::endl;
 
@@ -92,7 +89,7 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
 }
 
 
-void Lsystem::traverse(SGraphVertexDescriptor prevV,
+SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
                        SGraphVertexDescriptor startV,
                        Skeleton *skel){
     // write movement from prevV to nextV to Lstring
@@ -107,9 +104,11 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
     std::vector<SGraphVertexDescriptor> slower_children;
 
     // skip if node is leaf
-    if (!((out_degree(startV, skel->get_simplified_skeleton()) == 1)
-        && (startV != skel->get_simplified_skeleton()[startV].nParent))) {
-
+    if ((out_degree(startV, skel->get_simplified_skeleton()) == 1)
+        && (startV != skel->get_simplified_skeleton()[startV].nParent)) {
+        return startV;
+    }
+    else {
         /// find children of start node
         double maxR = -1;
         int isUsed = -1;
@@ -138,21 +137,22 @@ void Lsystem::traverse(SGraphVertexDescriptor prevV,
 
         /// start node has one child: straight segment
         if (out_degree(startV, skel->get_simplified_skeleton()) == 1) {
-            traverse(startV, nextV, skel);
+            return traverse(startV, nextV, skel);
         }
         /// start node has multiple children: beginning of 2 or more branches
         else {
-            // write the fastest child
-            Lstring_ += "[";
-            traverse(startV, nextV, skel);
-            Lstring_ += "]";
+            slower_children.insert(slower_children.begin(), nextV);
 
+            SGraphVertexDescriptor leaf;
             // also write all the other children
             for (int nChild = 0; nChild < slower_children.size(); ++nChild) {
                 Lstring_ += "[";
-                traverse(startV, slower_children[nChild], skel);
+                graph_lsys[slower_children[nChild]].lstring["nesting"] += "[";
+                leaf = traverse(startV, slower_children[nChild], skel);
+                graph_lsys[leaf].lstring["nesting"] += "]";
                 Lstring_ += "]";
             }
+            return leaf;
         }
     }
 }
@@ -283,12 +283,14 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         ss << std::fixed << std::setprecision(accuracy) << angle_y;
         std::string angle_y_string = ss.str();
         Lstring_ += "+(" + angle_y_string + ")";
+        graph_lsys[nextV].lstring["rotation"] += "+(" + angle_y_string + ")";
     }
     if (angle_y < 0){
         std::stringstream ss;
         ss << std::fixed << std::setprecision(accuracy) << abs(angle_y);
         std::string angle_y_string = ss.str();
         Lstring_ += "-(" + angle_y_string + ")";
+        graph_lsys[nextV].lstring["rotation"] += "-(" + angle_y_string + ")";
     }
     /// write roll
     if (angle_z > 0){
@@ -296,12 +298,14 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         ss << std::fixed << std::setprecision(accuracy) << angle_z;
         std::string angle_z_string = ss.str();
         Lstring_ += ">(" + angle_z_string + ")";
+        graph_lsys[nextV].lstring["roll"] += ">(" + angle_z_string + ")";
     }
     if (angle_z < 0){
         std::stringstream ss;
         ss << std::fixed << std::setprecision(accuracy) << abs(angle_z);
         std::string angle_z_string = ss.str();
         Lstring_ += "<(" + angle_z_string + ")";
+        graph_lsys[nextV].lstring["roll"] += "<(" + angle_z_string + ")";
     }
     /// write forward
     if (distance > 0) {
@@ -309,6 +313,7 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         ss << std::fixed << std::setprecision(accuracy) << distance;
         std::string dist_string = ss.str();
         Lstring_ += "F(" + dist_string + ")";
+        graph_lsys[nextV].lstring["forward"] += "F(" + dist_string + ")";
     }
 }
 
@@ -361,4 +366,23 @@ void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
     } else if (out_type == "txt"){
         lsysToText(path);
     }
+}
+
+
+void Lsystem::generalise() {
+//    int steps_to_average = 2;
+//    std::string rule_marker = "X";
+//
+//    std::vector<SGraphVertexDescriptor> current_step = lbranch.get_leaves();
+//    lbranch.average_branch(current_step, steps_to_average, rule_marker);
+//
+//    /// write rules and axiom to L-system
+//    std::vector<size_t> rt;
+//    rt.push_back(lsys->get_root());
+//
+//    // clear axiom before writing with rules
+//    lsys->axiom = "";
+//    lsys->rules = lbranch.get_rules();
+//    lbranch.branches_to_lsystem(lsys, rt);
+//    lsys->printLsystem();
 }
