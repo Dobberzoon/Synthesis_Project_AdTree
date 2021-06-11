@@ -402,44 +402,45 @@ void TreeViewer::export_lsystem(bool deg) const{
     /// L-system initialization
     auto *lsys = new Lsystem();
     lsys->readSkeleton(skeleton_, deg);
-    // //l_sys->outputLsys(file_system::extension(file_name), file_name);
 
     lsys->printLsystem();
     std::cout << "--------------------\n" << std::endl;
 
-    float th_d = 0.1;
-    float th_x = 0.00005;
-    float th_y = 0.5;
-    auto lbranch = new Lbranch(lsys, th_d, th_x, th_y);
+    // TODO: generalisation part
+    bool generalise = true;
+    if (generalise){
+        // Haoyang's parameters, I don't know what they do so I just left them... ~ Noortje
+        float th_d = 0.1;
+        float th_x = 0.00005;
+        float th_y = 0.5;
+        auto lbranch = new Lbranch(lsys, th_d, th_x, th_y);
 
-    lbranch->build_branches();
+        lbranch->build_branches();
 
+        std::cout << "number of leaves: " << lbranch->get_leaves().size() << std::endl;
 
-    std::cout << std::endl;
+        /// write rules for averaged tips of branches
+        // TODO: steps_to_avergae is how many edges get generalised
+        //  hardcoded now but can maybe be a parameter?
+        int steps_to_average = 1;
+        std::string rule_marker = "X";
 
+        std::vector<SGraphVertexDescriptor> current_step = lbranch->get_leaves();
+        lbranch->average_branch(current_step, steps_to_average, rule_marker);
 
-    std::cout << "nr of leaves: " << lbranch->get_leaves().size() << std::endl;
+        /// write rules and axiom to L-system
+        std::vector<size_t> rt;
+        rt.push_back(lsys->get_root());
 
-    /// write rules for averaged tips of branches
-    int steps_to_average = 2;
-    std::string rule_marker = "X";
+        // clear axiom before writing with rules
+        lsys->axiom = "";
+        lsys->rules = lbranch->get_rules();
+        lbranch->branches_to_lsystem(lsys, rt);
 
-    std::vector<SGraphVertexDescriptor> current_step = lbranch->get_leaves();
-    lbranch->average_branch(current_step, steps_to_average, rule_marker);
-
-    /// write rules and axiom to L-system
-    std::vector<size_t> rt;
-    rt.push_back(lsys->get_root());
-
-    // clear axiom before writing with rules
-    lsys->axiom = "";
-    lsys->rules = lbranch->get_rules();
-    lbranch->branches_to_lsystem(lsys, rt);
-    lsys->printLsystem();
-
-//    Lsystem l_system;
-//
-//    l_system.readSkeleton(skeleton_);
+        /// check new generalised lsystem
+        // can be removed later, if it is too big for larger datasets
+        lsys->printLsystem();
+    }
 
     lsys->outputLsys(file_system::extension(file_name), file_name);
 }
