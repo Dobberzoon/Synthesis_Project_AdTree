@@ -228,6 +228,32 @@ namespace easy3d {
 
 
     void ViewerImGui::draw_menu_file() {
+        static bool show_export = false;
+        if (show_export) {
+            ImGui::SetNextWindowSize({500,220});
+            int w, h;
+            glfwGetWindowSize(window_, &w, &h);
+            ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
+            if (ImGui::Begin("Export to L-system", &show_export, ImGuiWindowFlags_MenuBar))
+            {
+                static bool deg = true;
+                static bool gen = false;
+                static bool grow = false;
+                static int generation = 1;
+                ImGui::Checkbox("  Output in degrees", &deg);
+                ImGui::Checkbox("  Compress output by Generalisation", &gen);
+                ImGui::Checkbox("  Grow", &grow);
+                if (grow){
+                    ImGui::InputInt("Generations", &generation);
+                }
+
+                if (ImGui::Button(" export  ")){
+                    export_lsystem(deg, gen);
+                }
+            }
+            ImGui::End();
+        }
+
         if (ImGui::BeginMenu("File"))
         {
             if (ImGui::MenuItem("Open cloud", "Ctrl+O"))
@@ -235,18 +261,7 @@ namespace easy3d {
             if (ImGui::MenuItem("Open L-system"))
                 open_lsystem();
             ImGui::Separator();
-            if (ImGui::BeginMenu("Export to L-system ...")) {
-
-                ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.50f);
-
-                if (ImGui::MenuItem("degrees"))
-                    export_lsystem(true);
-                if (ImGui::MenuItem("radians"))
-                    export_lsystem(false);
-
-                ImGui::PopItemWidth();
-                ImGui::EndMenu();
-            }
+            if (ImGui::MenuItem("Export to L-system", nullptr, &show_export));
             if (ImGui::MenuItem("Save branches ...", "Ctrl+S"))
                 save();
             if (ImGui::MenuItem("Save skeleton ..."))
