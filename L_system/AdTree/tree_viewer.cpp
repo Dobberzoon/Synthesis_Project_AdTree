@@ -388,11 +388,11 @@ void TreeViewer::export_leaves() const {
         std::cerr << "failed saving the model of leaves" << std::endl;
 }
 
-void TreeViewer::export_lsystem(bool deg, bool gen) const{
+bool TreeViewer::export_lsystem(bool deg, bool gen) const{
 
     if (!branches() || !skeleton_) {
         std::cerr << "model of skeleton does not exist" << std::endl;
-        return;
+        return false;
     }
 
     const std::vector<std::string> filetypes = {"*.json", "*.txt"};
@@ -441,6 +441,8 @@ void TreeViewer::export_lsystem(bool deg, bool gen) const{
     }
 
     lsys->outputLsys(file_system::extension(file_name), file_name);
+
+    return true;
 }
 
 

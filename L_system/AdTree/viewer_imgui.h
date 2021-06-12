@@ -83,7 +83,7 @@ namespace easy3d {
         virtual bool open_lsystem() = 0;
         virtual void export_skeleton() const = 0;
         virtual void export_leaves() const = 0;
-        virtual void export_lsystem(bool deg, bool gen) const = 0;
+        virtual bool export_lsystem(bool deg, bool gen) const = 0;
 
         virtual bool reconstruct_skeleton() = 0;
         virtual bool add_leaves() = 0;
