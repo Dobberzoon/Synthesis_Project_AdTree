@@ -98,6 +98,8 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg, bool grow) {
 
     // todo: generalisation call here?
 
+
+
     std::cout << "converting to L-system: done" << std::endl;
 
     // todo: add more parameters to the L-system (branch diameters, subtrees, ...)
@@ -634,11 +636,14 @@ void Lsystem::buildRules(Skeleton *skel, int accuracy) {
     s4 << ")]";
     r4 = s4.str();
 
-    grow_rules.push_back(r1);
-    grow_rules.push_back(r2);
-    grow_rules.push_back(r3);
-    grow_rules.push_back(r4);
-
+//    grow_rules.push_back(r1);
+//    grow_rules.push_back(r2);
+//    grow_rules.push_back(r3);
+//    grow_rules.push_back(r4);
+    rules.insert(std::make_pair("A", r1));
+    rules.insert(std::make_pair("B", r2));
+    rules.insert(std::make_pair("C", r3));
+    rules.insert(std::make_pair("D", r4));
 }
 
 // not growth

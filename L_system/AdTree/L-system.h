@@ -50,6 +50,16 @@ public:
     std::string axiom;
     std::map<std::string, std::string> rules;
 
+    //grow parameters
+    bool grow_ = false;
+    int sprout_pos = 1;
+    float grow_co = 0.1;
+    float grow_sp = 0.1;
+    float ratio = 3.0;
+
+    //generalisation parameters
+    bool gen_ = false;
+
     /// get the root node index of the lsystem graph
     SGraphVertexDescriptor get_root(){return root_;};
     bool isDegrees(){return degrees_;};
@@ -118,19 +128,20 @@ private:
     easy3d::vec3 anchor_ = {0,0,0};
     float radius_ = 0.2;
 
-    //grow parameters
-    bool grow_ = false;
-    int sprout_pos = 1;
-    float grow_co = 0.1;
-    float grow_sp = 0.1;
-    float ratio = 3.0;
+//    //grow parameters
+//    bool grow_ = false;
+//    int sprout_pos = 1;
+//    float grow_co = 0.1;
+//    float grow_sp = 0.1;
+//    float ratio = 3.0;
 
     //branches
     std::map<size_t, int> node_pos;
     std::vector<LBranch> last_branches;
 
+
     // grow rules
-    std::vector<std::string> grow_rules;
+//    std::vector<std::string> grow_rules;
 
 };
 

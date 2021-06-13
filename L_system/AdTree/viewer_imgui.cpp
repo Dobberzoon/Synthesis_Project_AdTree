@@ -239,23 +239,30 @@ namespace easy3d {
                 static bool deg = true;
                 static bool gen = false;
                 static bool grow = false;
-                static int generation = 1;
+                static int sprout_pos = 1;
+                std::vector<float> species_info = {0.0, 0.0, 0.0};
                 ImGui::Checkbox("  Output in degrees", &deg);
                 ImGui::Checkbox("  Compress output by Generalisation        ", &gen);
                 ImGui::Checkbox("  Grow", &grow);
                 if (grow){
-                    ImGui::InputInt("Generations    ", &generation);
+                    ImGui::Text("Optional:");
+
+                    ImGui::InputInt("sprout position    ", &sprout_pos);
                     // set domain for generations input
                     ImGui::Text("Choose value between 1 and 5");
-                    if (generation < 1){
-                        generation = 1;
+                    if (sprout_pos < 1){
+                        sprout_pos = 1;
                     }
-                    else if (generation > 5){
-                        generation = 5;
+                    else if (sprout_pos > 5){
+                        sprout_pos = 5;
                     }
+                    ImGui::InputFloat("grow speed    ", &species_info[0]);
+                    ImGui::InputFloat("speed ratio    ", &species_info[1]);
+                    ImGui::InputFloat("grow coefficient    ", &species_info[2]);
+
                 }
                 if (ImGui::Button(" export  ")){
-                    if (export_lsystem(deg, gen, grow)){
+                    if (export_lsystem(deg, gen, grow, sprout_pos, species_info)){
                         show_export = false;
                     }
                 }
