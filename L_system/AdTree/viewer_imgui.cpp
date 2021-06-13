@@ -240,25 +240,26 @@ namespace easy3d {
                 static bool gen = false;
                 static bool grow = false;
                 static int sprout_pos = 1;
-                std::vector<float> species_info = {0.0, 0.0, 0.0};
+                static std::vector<float> species_info = {0.0, 0.0, 0.0};
                 ImGui::Checkbox("  Output in degrees", &deg);
                 ImGui::Checkbox("  Compress output by Generalisation        ", &gen);
                 ImGui::Checkbox("  Grow", &grow);
                 if (grow){
-                    ImGui::Text("Optional:");
+                    ImGui::Text("Optional: (the default setting will be used if no changes)");
 
-                    ImGui::InputInt("sprout position    ", &sprout_pos);
+//                    ImGui::InputInt("sprout position    ", &sprout_pos);
+                    ImGui::SliderInt("sprout position    ", &sprout_pos, 1, 5);
                     // set domain for generations input
-                    ImGui::Text("Choose value between 1 and 5");
-                    if (sprout_pos < 1){
-                        sprout_pos = 1;
-                    }
-                    else if (sprout_pos > 5){
-                        sprout_pos = 5;
-                    }
-                    ImGui::InputFloat("grow speed    ", &species_info[0]);
-                    ImGui::InputFloat("speed ratio    ", &species_info[1]);
-                    ImGui::InputFloat("grow coefficient    ", &species_info[2]);
+//                    ImGui::Text("Choose value between 1 and 5");
+//                    if (sprout_pos < 1){
+//                        sprout_pos = 1;
+//                    }
+//                    else if (sprout_pos > 5){
+//                        sprout_pos = 5;
+//                    }
+                    ImGui::SliderFloat("grow speed    ", &species_info[0], 0.0, 1.0);
+                    ImGui::SliderFloat("speed ratio    ", &species_info[1], 0.0, 5.0);
+                    ImGui::SliderFloat("grow coefficient    ", &species_info[2], 0.0, 0.8);
 
                 }
                 if (ImGui::Button(" export  ")){

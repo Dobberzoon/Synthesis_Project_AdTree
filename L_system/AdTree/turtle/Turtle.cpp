@@ -189,7 +189,7 @@ void Turtle::rotatePlane(float angle) {
     }
     // angle_z is close to 0
     // problem: nan
-    if (isnan(angle_z)) {
+    if (std::isnan(angle_z)) {
         angle_z = 0;
     }
     // vector points (almost) straight up/down
