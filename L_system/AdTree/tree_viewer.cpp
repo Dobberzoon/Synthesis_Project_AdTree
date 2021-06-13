@@ -401,7 +401,7 @@ bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, s
 
     /// L-system initialization
     auto *lsys = new Lsystem();
-    if (sprout_pos!=1) lsys->sprout_pos = sprout_pos;
+    if (sprout_pos!=0) lsys->sprout_pos = sprout_pos;
     if (std::abs(species_info[0])>1e-6) lsys->grow_sp = species_info[0];
     if (std::abs(species_info[1])>1e-6) lsys->ratio = species_info[1];
     if (std::abs(species_info[2])>1e-6) lsys->grow_co = species_info[2];

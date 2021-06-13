@@ -248,7 +248,7 @@ namespace easy3d {
                     ImGui::Text("Optional: (the default setting will be used if no changes)");
 
 //                    ImGui::InputInt("sprout position    ", &sprout_pos);
-                    ImGui::SliderInt("sprout position    ", &sprout_pos, 1, 5);
+                    ImGui::SliderInt("sprout position    ", &sprout_pos, 0, 5);
                     // set domain for generations input
 //                    ImGui::Text("Choose value between 1 and 5");
 //                    if (sprout_pos < 1){
