@@ -255,7 +255,7 @@ namespace easy3d {
                     }
                 }
                 if (ImGui::Button(" export  ")){
-                    if (export_lsystem(deg, gen)){
+                    if (export_lsystem(deg, gen, grow)){
                         show_export = false;
                     }
                 }

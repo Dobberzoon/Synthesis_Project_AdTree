@@ -63,14 +63,29 @@ void Lsystem::lsysToJson(const std::string &filename) {
 void Lsystem::lsysToText(const std::string &filename){};
 
 
-void Lsystem::readSkeleton(Skeleton *skel, bool deg) {
+void Lsystem::readSkeleton(Skeleton *skel, bool deg, bool grow) {
     std::cout << "\n---------- initializing L-system ----------" << std::endl;
     std::cout << "nr. vertices of simplified skeleton: " << num_vertices(skel->get_simplified_skeleton()) << std::endl;
 
+    // determine if growing
+    grow_ = grow;
+
     /// set parameters
     degrees_ = deg;
-    radius_ = skel->getRadius();
+    if (grow_){
+        radius_ = skel->getRadius()*(1 + grow_sp * grow_co);
+    } else {
+        radius_ = skel->getRadius();
+    }
     anchor_ = skel->getAnchor();
+
+    if (grow_) {
+        // l-branches
+        buildBranches(skel);
+
+        // rules
+        buildRules(skel, 3);
+    }
 
     /// convert skeleton to Lsystem
     graph_lsys = skel->get_simplified_skeleton();
@@ -94,6 +109,11 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
                        Skeleton *skel){
     // write movement from prevV to nextV to Lstring
     // will not write when prevV is a leaf or the root (preventing doubles and the root writing to itself)
+    if (grow_){
+        if (sprout(sprout_pos, prevV, skel)) {
+            Lstring_ += selectRule(prevV, startV, skel);
+        }
+    }
     writeMovement(prevV, startV, skel, 3);
 
     // also writes index of node to the string, for debug only
@@ -273,6 +293,11 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         angle_z = std::get<1>(movement) / (M_PI / 180);
     }
     double distance = std::get<2>(movement);
+    if (grow_){
+        //if (fast) distance = distance*(1+grow_sp*ratio);
+        distance = distance*(1+grow_sp);
+    }
+
 
     // todo: generalisation
 
@@ -368,7 +393,255 @@ void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
     }
 }
 
+// growth
+void Lsystem::buildBranches(Skeleton *skel) {
+    std::vector<size_t> vs;
+    std::vector<BranchNode> nodes;
+    std::map<size_t, BranchNode> pool;
+    std::vector<std::vector<size_t>> branches;
+    std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(skel->get_simplified_skeleton());
 
+//    int count_leaf =0;
+
+    for (auto vit = vi.first; vit != vi.second; ++vit){
+        if (boost::degree(*vit, skel->get_simplified_skeleton())!=0) {
+            vs.push_back(*vit);
+            BranchNode temp;
+            temp.degree = boost::degree(*vit, skel->get_simplified_skeleton());
+            temp.pre = skel->get_simplified_skeleton()[*vit].nParent;
+            temp.cVert = skel->get_simplified_skeleton()[*vit].cVert;
+            if(notLeaf(*vit, skel)) {
+                temp.nexts = findNext(*vit, skel);
+            }
+            nodes.push_back(temp);
+        }
+    }
+
+    for (int i=0; i<vs.size(); ++i){
+        pool.insert(std::make_pair(vs[i], nodes[i]));
+    }
+    std::vector<size_t> wait_list;
+    wait_list.push_back(skel->get_root());
+    while (!wait_list.empty()){
+        size_t root_ = wait_list.back();
+        std::vector<size_t> branch;
+        branch.push_back(root_);
+
+        size_t next_ = pool[root_].nexts[pool[root_].visit_time];
+        pool[root_].visit_time+=1;
+        if (pool[root_].degree-1 <= pool[root_].visit_time) {
+            wait_list.pop_back();
+        }
+        while (notLeaf(next_, skel)){
+            branch.push_back(next_);
+
+            if (pool[next_].degree-2 > pool[next_].visit_time) {
+                wait_list.push_back(next_);
+            }
+
+            pool[next_].visit_time += 1;
+            next_ = pool[next_].nexts[pool[next_].visit_time-1];
+        }
+        // TODO: grow?
+        branch.push_back(next_);
+        pool[next_].visit_time += 1;
+
+        for (int i=0; i<branch.size(); i++){
+            if (node_pos.count(branch[i])!=0 && node_pos[branch[i]] < branch.size()-i-1) continue;
+
+            else node_pos[branch[i]] = branch.size()-i-1;
+
+        }
+        branches.push_back(branch);
+    }
+}
+
+bool Lsystem::sprout(int pos, SGraphVertexDescriptor vid, Skeleton *skel) {
+    if (node_pos.count(vid)!=0 && boost::degree(vid, skel->get_simplified_skeleton())==2 &&
+        skel->get_simplified_skeleton()[vid].nParent!=skel->get_root()){
+        if (node_pos[vid]==pos) return true;
+    }
+    return false;
+}
+
+std::string Lsystem::selectRule(SGraphVertexDescriptor startV, SGraphVertexDescriptor nextV, Skeleton *skel) {
+//    return "";
+    std::tuple<double, double, double> movement = moveToNext(startV, nextV, skel);
+    if (std::get<0>(movement)>0 && std::get<1>(movement)>0) return "A";
+    else if (std::get<0>(movement)<0 && std::get<1>(movement)>0) return "B";
+    else if (std::get<0>(movement)>0 && std::get<1>(movement)<0) return "C";
+    else if (std::get<0>(movement)<0 && std::get<1>(movement)<0) return "D";
+    return "";
+}
+
+std::vector<size_t> Lsystem::findNext(size_t vid, Skeleton *skel) {
+
+    std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei = boost::out_edges(vid, skel->get_simplified_skeleton());
+    std::vector<size_t> nexts_;
+    for (auto eit = outei.first; eit!=outei.second; ++eit){
+        if (boost::target(*eit, skel->get_simplified_skeleton())!=skel->get_simplified_skeleton()[vid].nParent) nexts_.push_back(boost::target(*eit, skel->get_simplified_skeleton()));
+    }
+    return nexts_;
+}
+
+bool Lsystem::notLeaf(size_t vid, Skeleton *skel) {
+    if (skel->get_simplified_skeleton()[vid].nParent != vid && boost::degree(vid, skel->get_simplified_skeleton())==1) return false;
+    return true;
+}
+
+void Lsystem::buildRules(Skeleton *skel, int accuracy) {
+    for (auto it=node_pos.begin(); it!=node_pos.end(); ++it){
+        if (it->second==1){
+            std::tuple<double, double, double> movement = moveToNext(it->first, findNext(it->first, skel)[0], skel);
+            double angle_y = std::get<0>(movement);
+            double angle_z = std::get<1>(movement);
+            // option to output as degrees instead of radians
+            if (degrees_){
+                angle_y = std::get<0>(movement) / (M_PI / 180);
+                angle_z = std::get<1>(movement) / (M_PI / 180);
+            }
+            double distance = std::get<2>(movement);
+
+            LBranch lbranch;
+
+            if (angle_y > 0){
+                lbranch.rotationSign = "+";
+                lbranch.rotationDegree = angle_y;
+            }
+            if (angle_y < 0){
+                lbranch.rotationSign = "-";
+                lbranch.rotationDegree = angle_y;
+            }
+            // roll
+            if (angle_z > 0){
+                lbranch.rollSign = ">";
+                lbranch.rollDegree = angle_z;
+            }
+            if (angle_z < 0){
+                lbranch.rollSign = "<";
+                lbranch.rollDegree = angle_z;
+            }
+            // forward
+            if (distance > 0) {
+                lbranch.distance = distance;
+            }
+            last_branches.push_back(lbranch);
+        }
+    }
+    int count_rotation = 0;
+    int count_roll = 0;
+    double sum_rotation = 0.0;
+    double avg_rotation = 0.0;
+    double sum_roll = 0.0;
+    double avg_roll = 0.0;
+    int count_rotation_ = 0;
+    int count_roll_ = 0;
+    double sum_rotation_ = 0.0;
+    double avg_rotation_ = 0.0;
+    double sum_roll_ = 0.0;
+    double avg_roll_ = 0.0;
+    int count_dis = 0;
+    double sum_dis = 0.0;
+    double avg_dis = 0.0;
+
+    for (auto lb:last_branches){
+        if (lb.rotationSign=="+"){
+            count_rotation++;
+            sum_rotation += lb.rotationDegree;
+        }
+        else if (lb.rotationSign=="-"){
+            count_rotation_++;
+            sum_rotation_ += lb.rotationDegree;
+        }
+        if (lb.rollSign==">"){
+            count_roll++;
+            sum_roll += lb.rollDegree;
+        }
+        else if (lb.rollSign=="<"){
+            count_roll_++;
+            sum_roll_ += lb.rollDegree;
+        }
+        count_dis++;
+        sum_dis += lb.distance;
+    }
+
+    if (count_rotation!=0) avg_rotation = sum_rotation/count_rotation;
+    if (count_rotation_!=0) avg_rotation_ = sum_rotation_/count_rotation_;
+    if (count_roll!=0) avg_roll = sum_roll/count_roll;
+    if (count_roll_!=0) avg_roll_ = sum_roll_/count_roll_;
+    avg_dis = sum_dis/count_dis;
+
+    double grow_rotation, grow_rotation_, grow_roll, grow_roll_;
+///*  A test:
+    if (degrees_){
+        if (avg_rotation+30>360) grow_rotation = avg_rotation-30;
+        else grow_rotation = avg_rotation+30;
+        if (avg_rotation_-30 < -360) grow_rotation_ = avg_rotation_+30;
+        else grow_rotation_ = avg_rotation_-30;
+        if (avg_roll+30>360) grow_roll = avg_roll-30;
+        else grow_roll = avg_roll+30;
+        if (avg_roll_-30< -360) grow_roll_ = avg_roll_+30;
+        else grow_roll_ = avg_roll_-30;
+    }
+
+    else {
+        if (avg_rotation+30*M_PI/180>2*M_PI) grow_rotation = avg_rotation-30*M_PI/180;
+        else grow_rotation = avg_rotation+30*M_PI/180;
+        if (avg_rotation_-30*M_PI/180< -2*M_PI) grow_rotation_ = avg_rotation_+30*M_PI/180;
+        else grow_rotation_ = avg_rotation_+30*M_PI/180;
+        if (avg_roll+30*M_PI/180>2*M_PI) grow_roll = avg_roll-30*M_PI/180;
+        else grow_roll = avg_roll+30*M_PI/180;
+        if (avg_roll_-30*M_PI/180< -2*M_PI) grow_roll_ = avg_roll_+30*M_PI/180;
+        else grow_roll_ = avg_roll_-30*M_PI/180;
+    }
+
+    std::string r1, r2, r3, r4;
+    std::stringstream s1, s2, s3, s4;
+
+    s1 << "[+(";
+    s1 << std::fixed << std::setprecision(accuracy) << grow_rotation;
+    s1 << ")>(";
+    s1 << std::fixed << std::setprecision(accuracy) << grow_roll;
+    s1 << ")F(";
+    s1 << std::fixed << std::setprecision(accuracy) << avg_dis;
+    s1 << ")]";
+    r1 = s1.str();
+
+    s2 << "[-(";
+    s2 << std::fixed << std::setprecision(accuracy) << std::abs(grow_rotation_);
+    s2 << ")>(";
+    s2 << std::fixed << std::setprecision(accuracy) << grow_roll;
+    s2 << ")F(";
+    s2 << std::fixed << std::setprecision(accuracy) << avg_dis;
+    s2 << ")]";
+    r2 = s2.str();
+
+    s3 << "[+(";
+    s3 << std::fixed << std::setprecision(accuracy) << grow_rotation;
+    s3 << ")<(";
+    s3 << std::fixed << std::setprecision(accuracy) << std::abs(grow_roll_);
+    s3 << ")F(";
+    s3 << std::fixed << std::setprecision(accuracy) << avg_dis;
+    s3 << ")]";
+    r3 = s3.str();
+
+    s4 << "[-(";
+    s4 << std::fixed << std::setprecision(accuracy) << std::abs(grow_rotation_);
+    s4 << ")<(";
+    s4 << std::fixed << std::setprecision(accuracy) << std::abs(grow_roll_);
+    s4 << ")F(";
+    s4 << std::fixed << std::setprecision(accuracy) << avg_dis;
+    s4 << ")]";
+    r4 = s4.str();
+
+    grow_rules.push_back(r1);
+    grow_rules.push_back(r2);
+    grow_rules.push_back(r3);
+    grow_rules.push_back(r4);
+
+}
+
+// not growth
 void Lsystem::generalise() {
 //    int steps_to_average = 2;
 //    std::string rule_marker = "X";

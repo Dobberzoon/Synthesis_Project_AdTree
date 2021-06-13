@@ -24,7 +24,21 @@
 #include "3rd_party/nlohmann/json.hpp"
 #include "cylinder.h"
 
+struct LBranch {
+    std::string rotationSign;
+    double rotationDegree;
+    std::string rollSign;
+    double rollDegree;
+    double distance;
+};
 
+struct BranchNode {
+    unsigned degree;
+    int visit_time = 0;
+    easy3d::vec3 cVert;
+    size_t pre;
+    std::vector<size_t> nexts;
+};
 
 class Lsystem
 {
@@ -41,7 +55,7 @@ public:
     bool isDegrees(){return degrees_;};
 
     /// get a skeleton (from AdTree), convert it into an L-system, write it to output
-    void readSkeleton(Skeleton* skeleton, bool deg);
+    void readSkeleton(Skeleton* skeleton, bool deg, bool grow);
     /// traverse all children of a node
     SGraphVertexDescriptor traverse(SGraphVertexDescriptor prevV,
                   SGraphVertexDescriptor startV,
@@ -73,6 +87,19 @@ public:
     /// write the L-system to a txt file
     void lsysToText(const std::string &filename);
 
+    // growth
+    void buildBranches(Skeleton *skel);
+
+    bool sprout(int pos, SGraphVertexDescriptor vid, Skeleton *skel);
+
+    std::string selectRule(SGraphVertexDescriptor startV, SGraphVertexDescriptor nextV, Skeleton *skel);
+
+    std::vector<size_t> findNext(size_t vid, Skeleton *skel);
+
+    bool notLeaf(size_t vid, Skeleton *skel);
+
+    void buildRules(Skeleton *skel, int accuracy);
+
     /// generalisation call
     void generalise();
 
@@ -90,6 +117,21 @@ private:
     //trunk values;
     easy3d::vec3 anchor_ = {0,0,0};
     float radius_ = 0.2;
+
+    //grow parameters
+    bool grow_ = false;
+    int sprout_pos = 1;
+    float grow_co = 0.1;
+    float grow_sp = 0.1;
+    float ratio = 3.0;
+
+    //branches
+    std::map<size_t, int> node_pos;
+    std::vector<LBranch> last_branches;
+
+    // grow rules
+    std::vector<std::string> grow_rules;
+
 };
 
 #endif //L_SYSTEM_L_SYSTEM_H
