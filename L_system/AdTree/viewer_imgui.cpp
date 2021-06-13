@@ -239,23 +239,31 @@ namespace easy3d {
                 static bool deg = true;
                 static bool gen = false;
                 static bool grow = false;
-                static int generation = 1;
+                static int sprout_pos = 1;
+                static std::vector<float> species_info = {0.0, 0.0, 0.0};
                 ImGui::Checkbox("  Output in degrees", &deg);
                 ImGui::Checkbox("  Compress output by Generalisation        ", &gen);
                 ImGui::Checkbox("  Grow", &grow);
                 if (grow){
-                    ImGui::InputInt("Generations    ", &generation);
+                    ImGui::Text("Optional: (the default setting will be used if no changes)");
+
+//                    ImGui::InputInt("sprout position    ", &sprout_pos);
+                    ImGui::SliderInt("sprout position    ", &sprout_pos, 0, 5);
                     // set domain for generations input
-                    ImGui::Text("Choose value between 1 and 5");
-                    if (generation < 1){
-                        generation = 1;
-                    }
-                    else if (generation > 5){
-                        generation = 5;
-                    }
+//                    ImGui::Text("Choose value between 1 and 5");
+//                    if (sprout_pos < 1){
+//                        sprout_pos = 1;
+//                    }
+//                    else if (sprout_pos > 5){
+//                        sprout_pos = 5;
+//                    }
+                    ImGui::SliderFloat("grow speed    ", &species_info[0], 0.0, 1.0);
+                    ImGui::SliderFloat("speed ratio    ", &species_info[1], 0.0, 5.0);
+                    ImGui::SliderFloat("grow coefficient    ", &species_info[2], 0.0, 0.8);
+
                 }
                 if (ImGui::Button(" export  ")){
-                    if (export_lsystem(deg, gen)){
+                    if (export_lsystem(deg, gen, grow, sprout_pos, species_info)){
                         show_export = false;
                     }
                 }

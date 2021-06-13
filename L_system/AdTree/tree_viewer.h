@@ -70,7 +70,7 @@ protected:
 
     void export_skeleton() const override;
     void export_leaves() const override;
-    bool export_lsystem(bool deg, bool gen) const override;
+    bool export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, std::vector<float> species_info) const override;
 
     bool reconstruct_skeleton() override;
     bool add_leaves() override;

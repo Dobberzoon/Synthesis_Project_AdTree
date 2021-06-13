@@ -388,7 +388,7 @@ void TreeViewer::export_leaves() const {
         std::cerr << "failed saving the model of leaves" << std::endl;
 }
 
-bool TreeViewer::export_lsystem(bool deg, bool gen) const{
+bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, std::vector<float> species_info) const{
 
     if (!branches() || !skeleton_) {
         std::cerr << "model of skeleton does not exist" << std::endl;
@@ -401,7 +401,11 @@ bool TreeViewer::export_lsystem(bool deg, bool gen) const{
 
     /// L-system initialization
     auto *lsys = new Lsystem();
-    lsys->readSkeleton(skeleton_, deg);
+    if (sprout_pos!=0) lsys->sprout_pos = sprout_pos;
+    if (std::abs(species_info[0])>1e-6) lsys->grow_sp = species_info[0];
+    if (std::abs(species_info[1])>1e-6) lsys->ratio = species_info[1];
+    if (std::abs(species_info[2])>1e-6) lsys->grow_co = species_info[2];
+    lsys->readSkeleton(skeleton_, deg, grow);
 
     //lsys->printLsystem();
     std::cout << "--------------------\n" << std::endl;
