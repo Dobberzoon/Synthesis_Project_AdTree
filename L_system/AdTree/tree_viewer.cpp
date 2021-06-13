@@ -388,11 +388,11 @@ void TreeViewer::export_leaves() const {
         std::cerr << "failed saving the model of leaves" << std::endl;
 }
 
-void TreeViewer::export_lsystem(bool deg) const{
+bool TreeViewer::export_lsystem(bool deg, bool gen) const{
 
     if (!branches() || !skeleton_) {
         std::cerr << "model of skeleton does not exist" << std::endl;
-        return;
+        return false;
     }
 
     const std::vector<std::string> filetypes = {"*.json", "*.txt"};
@@ -403,12 +403,10 @@ void TreeViewer::export_lsystem(bool deg) const{
     auto *lsys = new Lsystem();
     lsys->readSkeleton(skeleton_, deg);
 
-    lsys->printLsystem();
+    //lsys->printLsystem();
     std::cout << "--------------------\n" << std::endl;
 
-    // TODO: generalisation part
-    bool generalise = true;
-    if (generalise){
+    if (gen){
         // Haoyang's parameters, I don't know what they do so I just left them... ~ Noortje
         float th_d = 0.1;
         float th_x = 0.00005;
@@ -417,7 +415,7 @@ void TreeViewer::export_lsystem(bool deg) const{
 
         lbranch->build_branches();
 
-        std::cout << "number of leaves: " << lbranch->get_leaves().size() << std::endl;
+        //std::cout << "number of leaves: " << lbranch->get_leaves().size() << std::endl;
 
         /// write rules for averaged tips of branches
         // TODO: steps_to_avergae is how many edges get generalised
@@ -439,10 +437,12 @@ void TreeViewer::export_lsystem(bool deg) const{
 
         /// check new generalised lsystem
         // can be removed later, if it is too big for larger datasets
-        lsys->printLsystem();
+        //lsys->printLsystem();
     }
 
     lsys->outputLsys(file_system::extension(file_name), file_name);
+
+    return true;
 }
 
 
