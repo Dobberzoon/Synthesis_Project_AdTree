@@ -230,27 +230,38 @@ namespace easy3d {
     void ViewerImGui::draw_menu_file() {
         static bool show_export = false;
         if (show_export) {
-            ImGui::SetNextWindowSize({500,220});
+            ImGui::SetNextWindowSize({0,0});
             int w, h;
             glfwGetWindowSize(window_, &w, &h);
             ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
-            if (ImGui::Begin("Export to L-system", &show_export, ImGuiWindowFlags_MenuBar))
+            if (ImGui::Begin("Export to L-system", &show_export, ImGuiWindowFlags_NoResize))
             {
                 static bool deg = true;
                 static bool gen = false;
                 static bool grow = false;
                 static int generation = 1;
                 ImGui::Checkbox("  Output in degrees", &deg);
-                ImGui::Checkbox("  Compress output by Generalisation", &gen);
+                ImGui::Checkbox("  Compress output by Generalisation        ", &gen);
                 ImGui::Checkbox("  Grow", &grow);
                 if (grow){
-                    ImGui::InputInt("Generations", &generation);
+                    ImGui::InputInt("Generations    ", &generation);
+                    // set domain for generations input
+                    ImGui::Text("Choose value between 1 and 5");
+                    if (generation < 1){
+                        generation = 1;
+                    }
+                    else if (generation > 5){
+                        generation = 5;
+                    }
                 }
-
                 if (ImGui::Button(" export  ")){
                     if (export_lsystem(deg, gen)){
                         show_export = false;
                     }
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(" cancel  ")){
+                    show_export = false;
                 }
             }
             ImGui::End();
