@@ -431,11 +431,12 @@ bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, s
         // clear axiom before writing with rules
         lsys->axiom = "";
         lsys->rules = lbranch->get_rules();
+        std::cout << "#######################\nBRANCHES TO LSYSTEM\n#######################" << std::endl;
         lbranch->branches_to_lsystem(lsys, rt);
 
         /// check new generalised lsystem
         // can be removed later, if it is too big for larger datasets
-        //lsys->printLsystem();
+        lsys->printLsystem();
     }
 
     lsys->outputLsys(file_system::extension(file_name), file_name);

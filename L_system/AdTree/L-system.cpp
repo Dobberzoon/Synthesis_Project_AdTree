@@ -160,6 +160,13 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
         }
         // todo: only the first child is fastest, other children are just in rotation order (not sure if it matters)
 
+        std::cout << "nexts: " << nextV << " ";
+        for (auto child:slower_children){
+            std::cout << child << " " ;
+        }
+        std::cout << "\n";
+
+
         /// start node has one child: straight segment
         if (out_degree(startV, skel->get_simplified_skeleton()) == 1) {
             return traverse(startV, nextV, skel);
@@ -303,8 +310,9 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         distance = distance*(1+grow_sp);
     }
 
-
-    // todo: generalisation
+//    std::cout << "--------------------" << std::endl;
+    std::cout << "node idx: " << nextV << std::endl;
+//    std::cout << "current node: " << graph_lsys[nextV].cVert << std::endl;
 
     /// write rotation
     // rounded to [accuracy] decimals
@@ -345,6 +353,12 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         Lstring_ += "F(" + dist_string + ")";
         graph_lsys[nextV].lstring["forward"] += "F(" + dist_string + ")";
     }
+
+//    std::cout << "forward: " << graph_lsys[nextV].lstring["forward"] << std::endl;
+//    std::cout << "rotation: " << graph_lsys[nextV].lstring["rotation"] << std::endl;
+//    std::cout << "roll: " << graph_lsys[nextV].lstring["roll"] << std::endl;
+
+//    std::cout << "--------------------\n" << std::endl;
 }
 
 

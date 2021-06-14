@@ -22,7 +22,7 @@ Lbranch::Lbranch(Lsystem *lsys, float th_d, float th_x, float th_y) {
             temp.node_skel = *vit;
             temp.lsys_motion = graph[*vit].lstring;
             if(notleaf(*vit)) {
-                temp.nexts = find_next(*vit);
+                temp.nexts = find_next_adjacencies(*vit);
             } else {
                 leaves.push_back(*vit);
             }
@@ -44,6 +44,20 @@ std::vector<size_t> Lbranch::find_next(size_t vid) {
     std::vector<size_t> nexts_;
     for (auto eit = outei.first; eit!=outei.second; ++eit){
         if (boost::target(*eit, graph)!=graph[vid].nParent) nexts_.push_back(boost::target(*eit, graph));
+    }
+    return nexts_;
+}
+
+
+std::vector<size_t> Lbranch::find_next_adjacencies(size_t vid){
+    double maxR = -1;
+    int isUsed = -1;
+    std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies = adjacent_vertices(vid, graph);
+    std::vector<size_t> nexts_;
+    for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter){
+        if (*cIter != graph[vid].nParent) {
+            nexts_.push_back(*cIter);
+        }
     }
     return nexts_;
 }
@@ -235,6 +249,15 @@ void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
         for (auto rule:rules){
             std::string forward_cur = graph[nd].lstring["forward"];
 
+//            std::cout << "--------------------" << std::endl;
+            std::cout << "node idx: " << nd << std::endl;
+//            std::cout << "current node: " << graph[nd].cVert << std::endl;
+//            std::cout << "forward: " << graph[nd].lstring["forward"] << std::endl;
+//            std::cout << "rotation: " << graph[nd].lstring["rotation"] << std::endl;
+//            std::cout << "roll: " << graph[nd].lstring["roll"] << std::endl;
+//
+//            std::cout << "--------------------\n" << std::endl;
+
             // start node of rule
             if (forward_cur == rule.first) {
                 rule_found = true;
@@ -285,6 +308,13 @@ void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
                 lsys->axiom += ']';
             }
         }
+        std::cout << "nexts: ";
+        for (auto nnd:pool[nd].nexts){
+            std::cout << nnd << " " ;
+        }
+        std::cout << "\n";
+
+
         // go down next step in traversal
         branches_to_lsystem(lsys, pool[nd].nexts);
     }

@@ -47,6 +47,7 @@ public:
     bool notleaf(size_t vid);
     void print_detail();
     std::vector<size_t> find_next(size_t vid);
+    std::vector<size_t> find_next_adjacencies(size_t vid);
     void build_branches();
 
     std::vector<std::string> get_Ls() {return Ls; }
