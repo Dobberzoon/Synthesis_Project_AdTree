@@ -33,19 +33,13 @@
 
 #include "L-system.h"
 
-#include "AdTree/turtle/Turtle.h" // Include turtle after definitions of adtree
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
-
 #include <easy3d/viewer/drawable.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/graph.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/soft_shadow.h>
 #include <easy3d/util/dialogs.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/fileio/graph_io.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/setting.h>
