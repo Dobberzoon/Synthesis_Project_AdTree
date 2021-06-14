@@ -241,7 +241,7 @@ namespace easy3d {
                 static bool grow = false;
                 static int sprout_pos = 0;
                 static std::vector<float> species_info = {0.0, 0.0, 0.0};
-                static int steps_to_average = 0;
+                static int steps_to_average = 1;
                 ImGui::Checkbox("  Output in degrees", &deg);
                 ImGui::Checkbox("  Compress output by Generalisation        ", &gen);
                 ImGui::Checkbox("  Grow", &grow);

@@ -115,7 +115,6 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
     }
     /// write movement towards current node, before traversing further
     writeMovement(prevV, startV, skel, 3);
-    std::cout << "orig node: " << startV << std::endl;
 
     vec3 start_coords = skel->get_simplified_skeleton()[startV].cVert;
     std::vector<SGraphVertexDescriptor> children;
@@ -135,13 +134,6 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
                 children.push_back(boost::target(*eit, skel->get_simplified_skeleton()));
             }
         }
-
-        std::cout << "orig nexts: " ;
-        for (auto nnd:children){
-            std::cout << nnd << " ";
-        }
-        std::cout << "\n" ;
-
         /// start node has one child: straight segment
         if (out_degree(startV, skel->get_simplified_skeleton()) == 1) {
             return traverse(startV, children[0], skel);

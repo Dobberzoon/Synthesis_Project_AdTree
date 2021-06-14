@@ -227,15 +227,6 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes,
 void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
     // traverse the given nodes
     for (auto nd:starts){
-        std::cout << "node: " << nd << std::endl;
-        std::cout << "forward: " << graph[nd].lstring["forward"] << std::endl;
-        std::cout << "nesting: " << graph[nd].lstring["nesting"] << std::endl;
-        std::cout << "nexts: ";
-        for (auto nnd:pool[nd].nexts){
-            std::cout << nnd << " ";
-        }
-        std::cout << "\n";
-
         bool rule_found = false;
         // check for rules
         for (auto rule:rules){
@@ -298,9 +289,6 @@ void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
                         lsys->axiom += "]";
                     }
                 }
-
-//                // just write nesting
-//                lsys->axiom += graph[nd].lstring["nesting"];
             }
         }
 
