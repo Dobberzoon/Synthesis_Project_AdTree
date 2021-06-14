@@ -30,7 +30,6 @@
 #include <easy3d/viewer/viewer.h>
 
 
-
 // A very good tutorial for imgui:
 // https://eliasdaler.github.io/using-imgui-with-sfml-pt1/
 // https://eliasdaler.github.io/using-imgui-with-sfml-pt2/

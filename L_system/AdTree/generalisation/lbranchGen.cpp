@@ -1,5 +1,5 @@
 //
-// Created by noort on 02/06/2021.
+// Created by noortje van der Horst on 02/06/2021.
 //
 
 #include "lbranchGen.h"

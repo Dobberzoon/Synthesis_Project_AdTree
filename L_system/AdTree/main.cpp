@@ -28,11 +28,9 @@
 
 
 #include <iostream>
-
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/types.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -41,11 +39,6 @@
 
 #include "skeleton.h"
 #include "tree_viewer.h"
-//#include "L-system.h"
-
-//#include <Generalization/generalization_methods.h>
-//#include <Generalization//l_branch_generalization.h>
-//#include "generalisation/lbranchGen.h"
 
 using namespace easy3d;
 

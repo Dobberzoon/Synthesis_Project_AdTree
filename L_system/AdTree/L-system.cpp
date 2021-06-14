@@ -1,5 +1,8 @@
 //
-// Created by noort on 06/05/2021.
+// Created by:
+// noortje van der Horst
+// Jasper van der Vaart
+// Haoyang Dong
 //
 
 #include "L-system.h"
