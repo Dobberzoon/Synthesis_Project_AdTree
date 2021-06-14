@@ -27,7 +27,7 @@
 
 class Lbranch {
 public:
-    explicit Lbranch(Lsystem* lsys, float th_d, float th_x, float th_y);
+    explicit Lbranch(Lsystem* lsys);
 
     bool degrees = true;
     Graph graph;                                        // simplified skeleton of graph
@@ -35,19 +35,16 @@ public:
     struct BranchNode {
         // Attributes
         unsigned degree;                                // nr. of neighbours
-        int visit_time = 0;                             // ?? (used for building branches)
+        int visit_time = 0;                             // used for building branches
         easy3d::vec3 cVert;                             // coordinates
         std::vector<size_t> nexts;                      // indices node branches to
         SGraphVertexDescriptor node_skel;               // node in skeleton (boost vertex index)
-        // Lstring description of movement towards this node (from its parent)
-        std::map<std::string, std::string> lsys_motion ;
-
+        std::map<std::string, std::string> lsys_motion; // Lstring description of relative movement towards this node
     };
 
     bool notleaf(size_t vid);
     void print_detail();
     std::vector<size_t> find_next(size_t vid);
-    std::vector<size_t> find_next_adjacencies(size_t vid);
     void build_branches();
 
     std::vector<std::string> get_Ls() {return Ls; }
@@ -61,21 +58,15 @@ public:
     void branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts);
 
 
-
 private:
     // Attributes
     std::vector<std::string> Ls;                                // Lsys node chain descriptor
-//    Skeleton* skl;                                            // ...
     SGraphVertexDescriptor root;                                // root node (used to be index; size_t)
-//    std::vector<size_t> vs;                                   // vertices
     std::vector<BranchNode> nodes;                              // custom branch node struct
     std::vector<SGraphVertexDescriptor> leaves;                 // list of all leaf nodes
     std::map<SGraphVertexDescriptor , BranchNode> pool;         // index <--> custom branch node struct
     std::vector<std::vector<SGraphVertexDescriptor> > branches; // list of lists of indexes
     std::map<std::string, std::string> rules;                   // rules map for axiom recursion
-    float th_d;                                                 // ??
-    float th_x;                                                 // ??
-    float th_y;                                                 // ??
 };
 
 

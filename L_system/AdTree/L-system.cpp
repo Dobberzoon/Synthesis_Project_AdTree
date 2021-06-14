@@ -119,14 +119,11 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
             Lstring_ += selectRule(prevV, startV, skel);
         }
     }
+    /// write movement towards current node, before traversing further
     writeMovement(prevV, startV, skel, 3);
 
-    // also writes index of node to the string, for debug only
-//    Lstring_ += "{" + std::to_string(startV) + "}";
-
     vec3 start_coords = skel->get_simplified_skeleton()[startV].cVert;
-    SGraphVertexDescriptor nextV;
-    std::vector<SGraphVertexDescriptor> slower_children;
+    std::vector<SGraphVertexDescriptor> children;
 
     // skip if node is leaf
     if ((out_degree(startV, skel->get_simplified_skeleton()) == 1)
@@ -134,64 +131,28 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
         return startV;
     }
     else {
+        /// find all next nodes
         std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei =
                 boost::out_edges(startV, skel->get_simplified_skeleton());
-//        std::vector<size_t> nexts_;
         for (auto eit = outei.first; eit!=outei.second; ++eit){
             if (boost::target(*eit, skel->get_simplified_skeleton())!=
                 skel->get_simplified_skeleton()[startV].nParent) {
-                slower_children.push_back(boost::target(*eit, skel->get_simplified_skeleton()));
+                children.push_back(boost::target(*eit, skel->get_simplified_skeleton()));
             }
         }
-
-        /*/// find children of start node
-        double maxR = -1;
-        int isUsed = -1;
-        std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies =
-                adjacent_vertices(startV, skel->get_simplified_skeleton());
-
-        // depth-first shortest path search, copied from AdTree's method for making simplified_skeleton_
-        for (SGraphAdjacencyIterator cIter = adjacencies.first; cIter != adjacencies.second; ++cIter) {
-            // exclude parent
-            if (*cIter != skel->get_simplified_skeleton()[startV].nParent) {
-                SGraphEdgeDescriptor currentE = edge(startV, *cIter, skel->get_simplified_skeleton()).first;
-                double radius = skel->get_simplified_skeleton()[currentE].nRadius;
-                if (maxR < radius) {
-                    maxR = radius;
-                    if (isUsed > -1)
-                        slower_children.push_back(nextV);
-                    else
-                        isUsed = 0;
-                    nextV = *cIter;
-                } else {
-                    slower_children.push_back(*cIter);
-                }
-            }
-        }
-        // todo: only the first child is fastest, other children are just in rotation order (not sure if it matters)*/
-
-        std::cout << "nexts: " << " ";
-        for (auto child:slower_children){
-            std::cout << child << " " ;
-        }
-        std::cout << "\n";
-
 
         /// start node has one child: straight segment
         if (out_degree(startV, skel->get_simplified_skeleton()) == 1) {
-            nextV = slower_children[0];
-            return traverse(startV, nextV, skel);
+            return traverse(startV, children[0], skel);
         }
         /// start node has multiple children: beginning of 2 or more branches
         else {
-//            slower_children.insert(slower_children.begin(), nextV);
-
             SGraphVertexDescriptor leaf;
             // also write all the other children
-            for (int nChild = 0; nChild < slower_children.size(); ++nChild) {
+            for (int nChild = 0; nChild < children.size(); ++nChild) {
                 Lstring_ += "[";
-                graph_lsys[slower_children[nChild]].lstring["nesting"] += "[";
-                leaf = traverse(startV, slower_children[nChild], skel);
+                graph_lsys[children[nChild]].lstring["nesting"] += "[";
+                leaf = traverse(startV, children[nChild], skel);
                 graph_lsys[leaf].lstring["nesting"] += "]";
                 Lstring_ += "]";
             }
@@ -321,10 +282,6 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         distance = distance*(1+grow_sp);
     }
 
-//    std::cout << "--------------------" << std::endl;
-    std::cout << "node idx: " << nextV << std::endl;
-//    std::cout << "current node: " << graph_lsys[nextV].cVert << std::endl;
-
     /// write rotation
     // rounded to [accuracy] decimals
     if (angle_y > 0){
@@ -364,12 +321,6 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
         Lstring_ += "F(" + dist_string + ")";
         graph_lsys[nextV].lstring["forward"] += "F(" + dist_string + ")";
     }
-
-//    std::cout << "forward: " << graph_lsys[nextV].lstring["forward"] << std::endl;
-//    std::cout << "rotation: " << graph_lsys[nextV].lstring["rotation"] << std::endl;
-//    std::cout << "roll: " << graph_lsys[nextV].lstring["roll"] << std::endl;
-
-//    std::cout << "--------------------\n" << std::endl;
 }
 
 
@@ -486,6 +437,7 @@ void Lsystem::buildBranches(Skeleton *skel) {
     }
 }
 
+
 bool Lsystem::sprout(int pos, SGraphVertexDescriptor vid, Skeleton *skel) {
     if (node_pos.count(vid)!=0 && boost::degree(vid, skel->get_simplified_skeleton())==2 &&
         skel->get_simplified_skeleton()[vid].nParent!=skel->get_root()){
@@ -493,6 +445,7 @@ bool Lsystem::sprout(int pos, SGraphVertexDescriptor vid, Skeleton *skel) {
     }
     return false;
 }
+
 
 std::string Lsystem::selectRule(SGraphVertexDescriptor startV, SGraphVertexDescriptor nextV, Skeleton *skel) {
 //    return "";
@@ -504,6 +457,7 @@ std::string Lsystem::selectRule(SGraphVertexDescriptor startV, SGraphVertexDescr
     return "";
 }
 
+
 std::vector<size_t> Lsystem::findNext(size_t vid, Skeleton *skel) {
 
     std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei = boost::out_edges(vid, skel->get_simplified_skeleton());
@@ -514,10 +468,12 @@ std::vector<size_t> Lsystem::findNext(size_t vid, Skeleton *skel) {
     return nexts_;
 }
 
+
 bool Lsystem::notLeaf(size_t vid, Skeleton *skel) {
     if (skel->get_simplified_skeleton()[vid].nParent != vid && boost::degree(vid, skel->get_simplified_skeleton())==1) return false;
     return true;
 }
+
 
 void Lsystem::buildRules(Skeleton *skel, int accuracy) {
     for (auto it=node_pos.begin(); it!=node_pos.end(); ++it){
@@ -672,23 +628,4 @@ void Lsystem::buildRules(Skeleton *skel, int accuracy) {
     rules.insert(std::make_pair("B", r2));
     rules.insert(std::make_pair("C", r3));
     rules.insert(std::make_pair("D", r4));
-}
-
-// not growth
-void Lsystem::generalise() {
-//    int steps_to_average = 2;
-//    std::string rule_marker = "X";
-//
-//    std::vector<SGraphVertexDescriptor> current_step = lbranch.get_leaves();
-//    lbranch.average_branch(current_step, steps_to_average, rule_marker);
-//
-//    /// write rules and axiom to L-system
-//    std::vector<size_t> rt;
-//    rt.push_back(lsys->get_root());
-//
-//    // clear axiom before writing with rules
-//    lsys->axiom = "";
-//    lsys->rules = lbranch.get_rules();
-//    lbranch.branches_to_lsystem(lsys, rt);
-//    lsys->printLsystem();
 }
