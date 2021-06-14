@@ -7,14 +7,12 @@
 
 // initialize graph & node organisation
 Lbranch::Lbranch(Lsystem *lsys) {
-//    skl = skeleton;
     graph = lsys->graph_lsys;
     root = lsys->get_root();
     degrees = lsys->isDegrees();
     std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
     for (auto vit = vi.first; vit != vi.second; ++vit){
         if (boost::degree(*vit, graph)!=0) {
-//            vs.push_back(*vit);
             BranchNode temp;
             temp.degree = boost::degree(*vit, graph);
             temp.cVert = graph[*vit].cVert;
@@ -229,6 +227,15 @@ void Lbranch::average_branch(std::vector<SGraphVertexDescriptor> starting_nodes,
 void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
     // traverse the given nodes
     for (auto nd:starts){
+        std::cout << "node: " << nd << std::endl;
+        std::cout << "forward: " << graph[nd].lstring["forward"] << std::endl;
+        std::cout << "nesting: " << graph[nd].lstring["nesting"] << std::endl;
+        std::cout << "nexts: ";
+        for (auto nnd:pool[nd].nexts){
+            std::cout << nnd << " ";
+        }
+        std::cout << "\n";
+
         bool rule_found = false;
         // check for rules
         for (auto rule:rules){
@@ -258,8 +265,42 @@ void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
             // continuation node of rule
             if (forward_cur == rule.first + '*'){
                 rule_found = true;
-                // just write nesting
-                lsys->axiom += graph[nd].lstring["nesting"];
+                int inward_cnt = 0;
+                int outward_cnt = 0;
+
+                for (auto nest:graph[nd].lstring["nesting"]) {
+                    if (nest == '[') {
+                        inward_cnt++;
+                    }
+                    if (nest == ']') {
+                        outward_cnt++;
+                    }
+                }
+
+                if (outward_cnt > 0 && inward_cnt > 0){
+                    if (outward_cnt >= inward_cnt){
+                        outward_cnt -= inward_cnt;
+                        inward_cnt = 0;
+                    }
+                    else {
+                        inward_cnt -= outward_cnt;
+                        outward_cnt = 0;
+                    }
+                }
+
+                for (int in_nest = 0; in_nest < inward_cnt; ++in_nest) {
+                    if (inward_cnt > 0){
+                        lsys->axiom += "[";
+                    }
+                }
+                for (int out_nest = 0; out_nest < outward_cnt; ++out_nest) {
+                    if (outward_cnt > 0) {
+                        lsys->axiom += "]";
+                    }
+                }
+
+//                // just write nesting
+//                lsys->axiom += graph[nd].lstring["nesting"];
             }
         }
 

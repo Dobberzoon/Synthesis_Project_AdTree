@@ -432,7 +432,7 @@ bool TreeViewer::export_lsystem(bool deg,
 
         /// check new generalised lsystem
         // can be removed later, if it is too big for larger datasets
-//        lsys->printLsystem();
+        lsys->printLsystem();
     }
 
     lsys->outputLsys(file_system::extension(file_name), file_name);
