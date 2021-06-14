@@ -382,7 +382,13 @@ void TreeViewer::export_leaves() const {
         std::cerr << "failed saving the model of leaves" << std::endl;
 }
 
-bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, std::vector<float> species_info) const{
+
+bool TreeViewer::export_lsystem(bool deg,
+                                bool gen,
+                                bool grow,
+                                int sprout_pos,
+                                std::vector<float> species_info,
+                                int steps_to_average) const{
 
     if (!branches() || !skeleton_) {
         std::cerr << "model of skeleton does not exist" << std::endl;
@@ -402,23 +408,14 @@ bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, s
     lsys->readSkeleton(skeleton_, deg, grow);
 
     //lsys->printLsystem();
-    std::cout << "--------------------\n" << std::endl;
+    std::cout << "-------------------------------------------\n" << std::endl;
 
     if (gen){
-        // Haoyang's parameters, I don't know what they do so I just left them... ~ Noortje
-        float th_d = 0.1;
-        float th_x = 0.00005;
-        float th_y = 0.5;
-        auto lbranch = new Lbranch(lsys, th_d, th_x, th_y);
-
+        auto lbranch = new Lbranch(lsys);
         lbranch->build_branches();
 
-        //std::cout << "number of leaves: " << lbranch->get_leaves().size() << std::endl;
-
         /// write rules for averaged tips of branches
-        // TODO: steps_to_avergae is how many edges get generalised
-        //  hardcoded now but can maybe be a parameter?
-        int steps_to_average = 1;
+        // todo: rule marker as a parameter
         std::string rule_marker = "X";
 
         std::vector<SGraphVertexDescriptor> current_step = lbranch->get_leaves();
@@ -435,7 +432,7 @@ bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, s
 
         /// check new generalised lsystem
         // can be removed later, if it is too big for larger datasets
-        //lsys->printLsystem();
+//        lsys->printLsystem();
     }
 
     lsys->outputLsys(file_system::extension(file_name), file_name);

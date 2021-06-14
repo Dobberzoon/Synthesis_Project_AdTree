@@ -6,16 +6,13 @@
 
 
 // initialize graph & node organisation
-Lbranch::Lbranch(Lsystem *lsys, float th_d, float th_x, float th_y) {
-//    skl = skeleton;
+Lbranch::Lbranch(Lsystem *lsys) {
     graph = lsys->graph_lsys;
     root = lsys->get_root();
     degrees = lsys->isDegrees();
-    this->th_d = th_d; this->th_x=th_x; this->th_y = th_y;
     std::pair<SGraphVertexIterator, SGraphVertexIterator> vi = boost::vertices(graph);
     for (auto vit = vi.first; vit != vi.second; ++vit){
         if (boost::degree(*vit, graph)!=0) {
-//            vs.push_back(*vit);
             BranchNode temp;
             temp.degree = boost::degree(*vit, graph);
             temp.cVert = graph[*vit].cVert;
@@ -259,11 +256,40 @@ void Lbranch::branches_to_lsystem(Lsystem *lsys, std::vector<size_t> starts){
             // continuation node of rule
             if (forward_cur == rule.first + '*'){
                 rule_found = true;
-                // just write nesting
-                lsys->axiom += graph[nd].lstring["nesting"];
-                // todo: remove useless nesting markers
+                int inward_cnt = 0;
+                int outward_cnt = 0;
+
+                for (auto nest:graph[nd].lstring["nesting"]) {
+                    if (nest == '[') {
+                        inward_cnt++;
+                    }
+                    if (nest == ']') {
+                        outward_cnt++;
+                    }
+                }
+
+                if (outward_cnt > 0 && inward_cnt > 0){
+                    if (outward_cnt >= inward_cnt){
+                        outward_cnt -= inward_cnt;
+                        inward_cnt = 0;
+                    }
+                    else {
+                        inward_cnt -= outward_cnt;
+                        outward_cnt = 0;
+                    }
+                }
+
+                for (int in_nest = 0; in_nest < inward_cnt; ++in_nest) {
+                    if (inward_cnt > 0){
+                        lsys->axiom += "[";
+                    }
+                }
+                for (int out_nest = 0; out_nest < outward_cnt; ++out_nest) {
+                    if (outward_cnt > 0) {
+                        lsys->axiom += "]";
+                    }
+                }
             }
-            // todo: write rules to lsystem rules
         }
 
         // if no rules, write all movement

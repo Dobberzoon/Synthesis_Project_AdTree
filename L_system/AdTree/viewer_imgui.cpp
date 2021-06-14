@@ -241,6 +241,7 @@ namespace easy3d {
                 static bool grow = false;
                 static int sprout_pos = 0;
                 static std::vector<float> species_info = {0.0, 0.0, 0.0};
+                static int steps_to_average = 1;
                 ImGui::Checkbox("  Output in degrees", &deg);
                 ImGui::Checkbox("  Compress output by Generalisation        ", &gen);
                 ImGui::Checkbox("  Grow", &grow);
@@ -251,8 +252,12 @@ namespace easy3d {
                     ImGui::SliderFloat("speed ratio    ", &species_info[1], 0.0, 5.0);
                     ImGui::SliderFloat("grow coefficient    ", &species_info[2], 0.0, 0.8);
                 }
+                if (gen){
+                    ImGui::Text("Optional: (the default setting will be used if no changes)");
+                    ImGui::SliderInt("number of steps to average    ", &steps_to_average, 1, 10);
+                }
                 if (ImGui::Button(" export  ")){
-                    if (export_lsystem(deg, gen, grow, sprout_pos, species_info)){
+                    if (export_lsystem(deg, gen, grow, sprout_pos, species_info, steps_to_average)){
                         show_export = false;
                     }
                 }
