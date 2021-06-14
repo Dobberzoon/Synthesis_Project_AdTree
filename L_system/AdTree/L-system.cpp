@@ -99,13 +99,7 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg, bool grow) {
     traverse(root, root, skel);
     axiom = Lstring_;  // initially axiom is the full string
 
-    // todo: generalisation call here?
-
-
-
     std::cout << "converting to L-system: done" << std::endl;
-
-    // todo: add more parameters to the L-system (branch diameters, subtrees, ...)
 }
 
 

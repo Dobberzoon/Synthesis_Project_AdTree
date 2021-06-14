@@ -382,7 +382,13 @@ void TreeViewer::export_leaves() const {
         std::cerr << "failed saving the model of leaves" << std::endl;
 }
 
-bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, std::vector<float> species_info) const{
+
+bool TreeViewer::export_lsystem(bool deg,
+                                bool gen,
+                                bool grow,
+                                int sprout_pos,
+                                std::vector<float> species_info,
+                                int steps_to_average) const{
 
     if (!branches() || !skeleton_) {
         std::cerr << "model of skeleton does not exist" << std::endl;
@@ -409,8 +415,7 @@ bool TreeViewer::export_lsystem(bool deg, bool gen, bool grow, int sprout_pos, s
         lbranch->build_branches();
 
         /// write rules for averaged tips of branches
-        // todo: steps_to_average as a parameter
-        int steps_to_average = 1;
+        // todo: rule marker as a parameter
         std::string rule_marker = "X";
 
         std::vector<SGraphVertexDescriptor> current_step = lbranch->get_leaves();
