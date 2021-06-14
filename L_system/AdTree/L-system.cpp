@@ -134,7 +134,17 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
         return startV;
     }
     else {
-        /// find children of start node
+        std::pair<Graph::out_edge_iterator, Graph::out_edge_iterator> outei =
+                boost::out_edges(startV, skel->get_simplified_skeleton());
+//        std::vector<size_t> nexts_;
+        for (auto eit = outei.first; eit!=outei.second; ++eit){
+            if (boost::target(*eit, skel->get_simplified_skeleton())!=
+                skel->get_simplified_skeleton()[startV].nParent) {
+                slower_children.push_back(boost::target(*eit, skel->get_simplified_skeleton()));
+            }
+        }
+
+        /*/// find children of start node
         double maxR = -1;
         int isUsed = -1;
         std::pair<SGraphAdjacencyIterator, SGraphAdjacencyIterator> adjacencies =
@@ -158,9 +168,9 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
                 }
             }
         }
-        // todo: only the first child is fastest, other children are just in rotation order (not sure if it matters)
+        // todo: only the first child is fastest, other children are just in rotation order (not sure if it matters)*/
 
-        std::cout << "nexts: " << nextV << " ";
+        std::cout << "nexts: " << " ";
         for (auto child:slower_children){
             std::cout << child << " " ;
         }
@@ -169,11 +179,12 @@ SGraphVertexDescriptor Lsystem::traverse(SGraphVertexDescriptor prevV,
 
         /// start node has one child: straight segment
         if (out_degree(startV, skel->get_simplified_skeleton()) == 1) {
+            nextV = slower_children[0];
             return traverse(startV, nextV, skel);
         }
         /// start node has multiple children: beginning of 2 or more branches
         else {
-            slower_children.insert(slower_children.begin(), nextV);
+//            slower_children.insert(slower_children.begin(), nextV);
 
             SGraphVertexDescriptor leaf;
             // also write all the other children
