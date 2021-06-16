@@ -80,7 +80,8 @@ void Lsystem::readSkeleton(Skeleton *skel, bool deg, bool grow) {
     } else {
         radius_ = skel->getRadius();
     }
-    anchor_ = skel->getAnchor();
+    auto trans = skel->get_translation();
+    anchor_ = skel->getAnchor() + trans;
 
     if (grow_) {
         // l-branches

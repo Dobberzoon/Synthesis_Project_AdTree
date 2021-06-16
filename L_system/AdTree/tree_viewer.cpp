@@ -351,7 +351,7 @@ void TreeViewer::export_skeleton() const {
     storageFile << "end_header" << std::endl << std::endl;
 
     for (auto &vertex : vertices) {
-        storageFile << vertex << std::endl;
+        storageFile << vertex + skeleton_->get_translation() << std::endl;
     }
 
     storageFile << std::endl;
@@ -636,6 +636,8 @@ bool TreeViewer::reconstruct_skeleton() {
     if (status) {
         auto offset = cloud()->get_model_property<dvec3>("translation");
         if (offset) {
+            easy3d::vec3 translation = {(float) offset[0][0], (float) offset[0][1], (float) offset[0][2]};
+            skeleton_->set_translation(translation);
             auto prop = mesh->model_property<dvec3>("translation");
             prop[0] = offset[0];
         }
