@@ -84,9 +84,11 @@ public:
     const Graph& get_mst() const { return MST_; }
     const Graph& get_simplified_skeleton() const { return simplified_skeleton_; }
     const Graph& get_smoothed_skeleton() const { return smoothed_skeleton_; }
+    easy3d::vec3 get_translation() const { return translation_; }
 
     Graph& set_mst() { return MST_; }
     Graph& set_simplified_skeleton() { return simplified_skeleton_; }
+    void set_translation(easy3d::vec3 trans);
 
     struct Branch {
         std::vector<easy3d::vec3> points;
@@ -241,6 +243,7 @@ private:
 	/*store important vertex and geometrical attributes*/
 	SGraphVertexDescriptor RootV_;
 	Vector3D RootPos_;
+    easy3d::vec3 translation_;
 
 
 	double TrunkRadius_;

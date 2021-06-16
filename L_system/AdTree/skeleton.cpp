@@ -1453,3 +1453,9 @@ bool Skeleton::extract_branch_surfaces(SurfaceMesh *result) {
 
     return true;
 }
+
+void Skeleton::set_translation(easy3d::vec3 trans) {
+    translation_ = trans;
+}
+
+
