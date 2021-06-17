@@ -247,10 +247,13 @@ namespace easy3d {
                 ImGui::Checkbox("  Grow", &grow);
                 if (grow){
                     ImGui::Text("Optional: (the default setting will be used if no changes)");
-                    ImGui::SliderInt("sprout position    ", &sprout_pos, 0, 5);
-                    ImGui::SliderFloat("grow speed    ", &species_info[0], 0.0, 1.0);
-                    ImGui::SliderFloat("speed ratio    ", &species_info[1], 0.0, 5.0);
-                    ImGui::SliderFloat("grow coefficient    ", &species_info[2], 0.0, 0.8);
+                    ImGui::SliderInt("sprout position    ", &sprout_pos, 1, 5);
+                    ImGui::SliderFloat("basic branch growth speed    ", &species_info[0], 0.1, 1.0);
+                    ImGui::SliderFloat("branch growth speed ratio    ", &species_info[1], 1.5, 5.0);
+                    ImGui::Text("segments near tips growth speed = basic speed * speed ratio");
+                    ImGui::SliderFloat("thickness growth speed coefficient    ", &species_info[2], 0.1, 0.8);
+                    ImGui::Text("thickness growth speed = basic speed * speed coefficient");
+
                 }
                 if (gen){
                     ImGui::Text("Optional: (the default setting will be used if no changes)");
