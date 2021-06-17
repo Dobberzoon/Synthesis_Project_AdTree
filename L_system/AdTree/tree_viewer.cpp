@@ -401,12 +401,14 @@ bool TreeViewer::export_lsystem(bool deg,
 
     /// L-system initialization
     auto *lsys = new Lsystem();
-    if (sprout_pos!=0) lsys->sprout_pos = sprout_pos;
-    if (std::abs(species_info[0])>1e-6) lsys->grow_sp = species_info[0];
-    if (std::abs(species_info[1])>1e-6) lsys->ratio = species_info[1];
-    if (std::abs(species_info[2])>1e-6) lsys->grow_co = species_info[2];
+    if (sprout_pos>lsys->sprout_pos) lsys->sprout_pos = sprout_pos;
+    if (species_info[0]>lsys->grow_sp) lsys->grow_sp = species_info[0];
+    if (species_info[1]>lsys->ratio) lsys->ratio = species_info[1];
+    if (species_info[2]>lsys->grow_co) lsys->grow_co = species_info[2];
     lsys->readSkeleton(skeleton_, deg, grow);
-
+    std::cout << "sprout postion: " << lsys->sprout_pos << ", ";
+    std::cout << "basic branch growth speed: " << lsys->grow_sp << ", segments near tips growth speed: " <<
+    lsys->ratio*lsys->grow_sp << ", thickness growth speed: " << lsys->grow_co*lsys->grow_sp << std::endl;
     //lsys->printLsystem();
     std::cout << "-------------------------------------------\n" << std::endl;
 

@@ -58,7 +58,7 @@ public:
     int sprout_pos = 1;
     float grow_co = 0.1;
     float grow_sp = 0.1;
-    float ratio = 3.0;
+    float ratio = 1.5;
 
     //generalisation parameters
     bool gen_ = false;

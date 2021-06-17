@@ -272,8 +272,8 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
     }
     double distance = std::get<2>(movement);
     if (grow_){
-        //if (fast) distance = distance*(1+grow_sp*ratio);
-        distance = distance*(1+grow_sp);
+        if (node_pos[startV]<4) distance = distance*(1+grow_sp*ratio);
+        else distance = distance*(1+grow_sp);
     }
 
     /// write rotation
@@ -422,7 +422,7 @@ void Lsystem::buildBranches(Skeleton *skel) {
         pool[next_].visit_time += 1;
 
         for (int i=0; i<branch.size(); i++){
-            if (node_pos.count(branch[i])!=0 && node_pos[branch[i]] < branch.size()-i-1) continue;
+            if (node_pos.count(branch[i])!=0 && node_pos[branch[i]] > branch.size()-i-1) continue;
 
             else node_pos[branch[i]] = branch.size()-i-1;
 
