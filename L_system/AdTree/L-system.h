@@ -53,6 +53,9 @@ public:
     std::string axiom;
     std::map<std::string, std::string> rules;
 
+    /// vector with ordered coordinates, for rsults in the report
+    std::vector<easy3d::vec3> ordered_coords;
+
     //grow parameters
     bool grow_ = false;
     int sprout_pos = 1;
@@ -99,6 +102,8 @@ public:
     void lsysToJson(const std::string &filenamel);
     /// write the L-system to a txt file
     void lsysToText(const std::string &filename);
+    /// write coordinates in order, for results section of report
+    void lsysToXYZ(const std::string &filename);
 
     // growth
     void buildBranches(Skeleton *skel);

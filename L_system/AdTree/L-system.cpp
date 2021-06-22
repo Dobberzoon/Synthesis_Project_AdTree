@@ -260,6 +260,9 @@ void Lsystem::writeMovement(SGraphVertexDescriptor startV,
                             SGraphVertexDescriptor nextV,
                             Skeleton *skel,
                             int accuracy){
+    /// write coords to vector for report results
+    ordered_coords.push_back(graph_lsys[nextV].cVert);
+
     // get relative movement between startV and nextV
     std::tuple<double, double, double> movement = moveToNext(startV, nextV, skel);
     // angles are rounded to int
@@ -366,7 +369,20 @@ void Lsystem::outputLsys(const std::string& out_type, const std::string& path){
     } else if (out_type == "txt"){
         lsysToText(path);
     }
+    std::string xyzfile = "../../data/lsys_coords.xyz";
+    lsysToXYZ(xyzfile);
 }
+
+void Lsystem::lsysToXYZ(const std::string &filename){
+    std::ofstream storageFile(filename);
+    for (auto coords:ordered_coords){
+        storageFile << coords << std::endl;
+    }
+    storageFile.close();
+
+    std::cout << "writing to XZY file: done" << std::endl;
+}
+
 
 // growth
 void Lsystem::buildBranches(Skeleton *skel) {
