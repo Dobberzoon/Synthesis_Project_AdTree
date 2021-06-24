@@ -454,6 +454,70 @@ bool TreeViewer::export_lsystem(bool deg,
     return true;
 }
 
+bool TreeViewer::export_city_json() const {
+    if (!branches() || !skeleton_) {
+        std::cerr << "model does not exist" << std::endl;
+        return false;
+    }
+    const ::Graph& skeleton = skeleton_->get_simplified_skeleton();
+    if (boost::num_edges(skeleton) == 0) {
+        std::cerr << "skeleton has 0 edges" << std::endl;
+        return false;
+    }
+
+    const std::vector<std::string> filetypes = {"*.json", "*.txt"};
+    const std::string& initial_name = file_system::base_name(cloud()->name()) + "_City.json";
+    const std::string& file_name = FileDialog::save(filetypes, initial_name);
+
+    //store verts and edges
+    // TODO make function
+    // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
+    std::vector<std::vector<float>> vertices;
+    std::vector<std::tuple<int, int>> edges;
+    std::map<int,int> off_map;
+    int off_value = 0;
+
+    auto vts = boost::vertices(skeleton);
+    for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
+        int vd = *iter;
+        if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
+            auto v = skeleton[vd].cVert;
+            auto v_f = {v.x, v.y, v.z};
+            vertices.emplace_back(v_f);
+            off_map.insert({vd, off_value});
+        } else {
+            off_value ++;
+        }
+    }
+
+    auto egs = boost::edges(skeleton);
+    for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
+        int s_b = boost::source(*iter, skeleton);
+        int t_b = boost::target(*iter, skeleton);
+
+        std::tuple<int,int> i = { s_b - off_map[s_b], t_b - off_map[t_b] };
+        edges.emplace_back(i);
+    }
+
+    // TODO function until here
+    nlohmann::json j;
+    nlohmann::json geometry;
+
+    geometry["boundaries"] = edges;
+    geometry["geometry"] = 2;
+
+    j["geometry"] = {geometry};
+    j["vertices"] = vertices;
+    j["type"] = "CityJSON";
+    j["version"] = "1.0";
+
+    std::ofstream storageFile(file_name);
+    storageFile << std::setw(4) << j << std::endl;
+    storageFile.close();
+
+
+}
+
 
 void TreeViewer::draw() {
     if (!shadowing_enabled_) {

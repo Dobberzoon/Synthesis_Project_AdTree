@@ -280,6 +280,9 @@ namespace easy3d {
                 open_lsystem();
             ImGui::Separator();
             if (ImGui::MenuItem("Export to L-system", nullptr, &show_export));
+            if (ImGui::MenuItem("Export to CityJSON"))
+                export_city_json();
+            ImGui::Separator();
             if (ImGui::MenuItem("Save branches ...", "Ctrl+S"))
                 save();
             if (ImGui::MenuItem("Save skeleton ..."))
