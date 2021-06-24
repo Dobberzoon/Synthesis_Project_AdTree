@@ -43,6 +43,8 @@ namespace easy3d {
 				return false;
 			}
 
+
+
 			io::LineInputStream in(input);
 
             double x0, y0, z0;  // the first point
