@@ -350,8 +350,11 @@ void TreeViewer::export_skeleton() const {
     storageFile << "property int vertex2" << std::endl;
     storageFile << "end_header" << std::endl << std::endl;
 
+    vec3 trans = skeleton_->get_translation();
+    storageFile << std::setprecision(10);
     for (auto &vertex : vertices) {
-        storageFile << vertex + skeleton_->get_translation() << std::endl;
+        std::cout << vertex + trans << std::endl;
+        storageFile << vertex + trans << std::endl;
     }
 
     storageFile << std::endl;
