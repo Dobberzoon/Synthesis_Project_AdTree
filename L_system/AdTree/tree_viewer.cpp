@@ -469,6 +469,14 @@ bool TreeViewer::export_city_json() const {
     const std::string& initial_name = file_system::base_name(cloud()->name()) + "_City.json";
     const std::string& file_name = FileDialog::save(filetypes, initial_name);
 
+    vec3 trans;
+    // very cheap fix
+    if (isLsystem) {
+        trans = skeleton_->getAnchor();
+    } else {
+        trans = skeleton_->get_translation();
+    }
+
     //store verts and edges
     // TODO make function
     // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
@@ -481,7 +489,7 @@ bool TreeViewer::export_city_json() const {
     for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
         int vd = *iter;
         if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
-            auto v = skeleton[vd].cVert;
+            auto v = skeleton[vd].cVert + trans;
             auto v_f = {v.x, v.y, v.z};
             vertices.emplace_back(v_f);
             off_map.insert({vd, off_value});
