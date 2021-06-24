@@ -222,10 +222,11 @@ bool TreeViewer::open_lsystem()
 
     // populate cloud
     auto pointList = turtle.getStoredPoints();
-    for (auto p: pointList){baseCloud->add_vertex(p);}
+    auto anchor = turtle.getAnchor();
+    for (auto p: pointList){baseCloud->add_vertex(p - anchor);}
 
     // check if cloud is populated
-    if (baseCloud->n_vertices() == 0){
+    if (pointList.size() == 0){
         std::cerr << "could not create cloud" << std::endl;
         return false;
     }
@@ -350,10 +351,9 @@ void TreeViewer::export_skeleton() const {
     storageFile << "property int vertex2" << std::endl;
     storageFile << "end_header" << std::endl << std::endl;
 
-    vec3 trans = skeleton_->get_translation();
-    storageFile << std::setprecision(10);
+    vec3 trans = skeleton_->getAnchor();
+    storageFile << std::setprecision(10); // allow for larger values being written to avoid rounding
     for (auto &vertex : vertices) {
-        std::cout << vertex + trans << std::endl;
         storageFile << vertex + trans << std::endl;
     }
 
