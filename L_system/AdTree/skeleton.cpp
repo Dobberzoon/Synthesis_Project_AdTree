@@ -1229,9 +1229,8 @@ bool Skeleton::clone_skeleton(const Turtle& turtle) {
     std::vector<vec3> trans_nodes;
     for (auto &vert : otherSkeleton.m_vertices) {
         vert.m_property.cVert = vert.m_property.cVert - turtle.getAnchor();
-        std::cout << vert.m_property.cVert << std::endl;
     }
-    
+
     set_simplified_skeleton() = otherSkeleton;
     RootV_ = 0;
     RootPos_ = turtle.getAnchor();

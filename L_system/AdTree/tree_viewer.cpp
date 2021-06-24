@@ -351,10 +351,19 @@ void TreeViewer::export_skeleton() const {
     storageFile << "property int vertex2" << std::endl;
     storageFile << "end_header" << std::endl << std::endl;
 
-    vec3 trans = skeleton_->getAnchor();
+
     storageFile << std::setprecision(10); // allow for larger values being written to avoid rounding
-    for (auto &vertex : vertices) {
-        storageFile << vertex + trans << std::endl;
+    // very cheap fix
+    if (isLsystem) {
+        vec3 trans = skeleton_->getAnchor();
+        for (auto &vertex : vertices) {
+            storageFile << vertex + trans << std::endl;
+        }
+    } else {
+        vec3 trans = skeleton_->get_translation();
+        for (auto &vertex : vertices) {
+            storageFile << vertex + trans << std::endl;
+        }
     }
 
     storageFile << std::endl;
