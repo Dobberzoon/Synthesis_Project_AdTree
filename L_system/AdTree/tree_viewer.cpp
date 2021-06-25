@@ -508,22 +508,37 @@ bool TreeViewer::export_city_json() const {
     }
 
     // TODO function until here
-    nlohmann::json j;
-    nlohmann::json geometry;
+    nlohmann::ordered_json j;
+    nlohmann::ordered_json geometry;
 
+    nlohmann::ordered_json object;
+    nlohmann::ordered_json cityobject;
+
+
+    geometry["type"] = "MultiLineString";
+    geometry["lod"] = 2;
     geometry["boundaries"] = edges;
-    geometry["geometry"] = 2;
+//    geometry["geometry"] = 2;
 
-    j["geometry"] = {geometry};
-    j["vertices"] = vertices;
+    object["type"] = "SolitaryVegetationObject";
+    object["geometry"] = geometry;
+
+    cityobject["oneTree"] = object;
+
     j["type"] = "CityJSON";
     j["version"] = "1.0";
+
+    j["CityObjects"] = cityobject;
+
+//    j["geometry"] = {geometry};
+    j["vertices"] = vertices;
+
 
     std::ofstream storageFile(file_name);
     storageFile << std::setw(4) << j << std::endl;
     storageFile.close();
 
-
+    return true;
 }
 
 
