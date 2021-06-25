@@ -481,101 +481,97 @@ bool TreeViewer::export_city_json() const {
     //store verts and edges
     // TODO make function
     // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
-//    std::vector<std::vector<float>> vertices;
-//    std::vector<std::tuple<int, int>> edges;
-//    std::map<int,int> off_map;
-//    int off_value = 0;
-//
-//    auto vts = boost::vertices(skeleton);
-//    for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
-//        int vd = *iter;
-//        if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
-//            auto v = skeleton[vd].cVert + trans;
-//            auto v_f = {v.x, v.y, v.z};
-//            vertices.emplace_back(v_f);
-//            off_map.insert({vd, off_value});
-//        } else {
-//            off_value ++;
-//        }
-//    }
-//
-//    auto egs = boost::edges(skeleton);
-//    for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
-//        int s_b = boost::source(*iter, skeleton);
-//        int t_b = boost::target(*iter, skeleton);
-//
-//        std::tuple<int,int> i = { s_b - off_map[s_b], t_b - off_map[t_b] };
-//        edges.emplace_back(i);
-//    }
+    std::vector<std::vector<float>> vertices;
+    std::vector<std::tuple<int, int>> edges;
+    std::vector<float> radii;
+    std::vector<int> leaves;
+    float rootR = 0.0;
+    std::map<int,int> off_map;
+    int off_value = 0;
 
-    std::map<int, std::vector<float>> Vertices;
-    std::map<int, std::vector<int>> Branches;
-    std::map<int, float> BranchRadii;
-    std::map<int, int> EndBranch;
-    int ID=0;
-    int end_vertex_count = 0;
-    //initial a rootRadius
-    double rootRadius = 0;
-    //for each edge, find its corresponding points
-    SGraphEdgeDescriptor currentE;
-    std::pair<SGraphEdgeIterator, SGraphEdgeIterator> ep = boost::edges(skeleton);
+    auto vts = boost::vertices(skeleton);
+    for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
+        int vd = *iter;
+        if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
+            auto v = skeleton[vd].cVert + trans;
+            auto v_f = {v.x, v.y, v.z};
+            vertices.emplace_back(v_f);
+            off_map.insert({vd, off_value});
+//            std::cout << boost::degree(vd, skeleton) << std::endl;
+        } else {
+            off_value ++;
+        }
+    }
 
-    for (SGraphEdgeIterator eIter = ep.first; eIter != ep.second; ++eIter)
-    {
-        bool end_vertex = 0; //initialize boolean end-vertex attribute for each edge
-        //extract two end vertices of the current edge
-        currentE = *eIter;
-//        skeleton[currentE].vecPoints.clear();
-        double currentR = skeleton[currentE].nRadius;
+    auto egs = boost::edges(skeleton);
+    for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
+        int s_b = boost::source(*iter, skeleton);
+        int t_b = boost::target(*iter, skeleton);
+        double currentR = skeleton[*iter].nRadius;
+
+//        std::cout << boost::degree(s_b, skeleton) << " " << boost::degree(t_b, skeleton) << std::endl;
+
         SGraphVertexDescriptor sourceV, targetV;
-        if (boost::source(currentE, skeleton) == skeleton[boost::target(currentE, skeleton)].nParent)
+        if (boost::source(*iter, skeleton) == skeleton[boost::target(*iter, skeleton)].nParent)
         {
-            sourceV = boost::source(currentE, skeleton);
-            targetV = boost::target(currentE, skeleton);
+            sourceV = boost::source(*iter, skeleton);
+            targetV = boost::target(*iter, skeleton);
         }
         else
         {
-            sourceV = boost::target(currentE, skeleton);
-            targetV = boost::source(currentE, skeleton);
-        }
-        Vector3D pSource(skeleton[sourceV].cVert.x, skeleton[sourceV].cVert.y, skeleton[sourceV].cVert.z);
-        Vector3D pTarget(skeleton[targetV].cVert.x, skeleton[targetV].cVert.y, skeleton[targetV].cVert.z);
-
-        //search the biggest radius
-        if(currentR>rootRadius){
-            rootRadius=currentR;
+            sourceV = boost::target(*iter, skeleton);
+            targetV = boost::source(*iter, skeleton);
         }
 
-        // determine for each edge if its the end-vertex
-        double lengthOfSubtree = skeleton[targetV].lengthOfSubtree;
-        //std::cout << "length of subtree: " << lengthOfSubtree << std::endl;
-
-        if (lengthOfSubtree == 0)
-        {
-            end_vertex = 1;
-            end_vertex_count += 1;
+        if (boost::degree(targetV, skeleton) == 1) {
+//            std::cout << "here: " << currentR << std::endl;
+            leaves.emplace_back(1);
         }
+        else leaves.emplace_back(0);
+//        std::cout << skeleton[targetV].lengthOfSubtree << std::endl;
 
-        //extract the indices for both vertices of currentEdge
-        //std::cout << "current E: " << currentE << std::endl;
-        int source_index = boost::source(currentE, skeleton);
-        //std::cout << "index source: " << source_index << std::endl;
-        int target_index = boost::target(currentE, skeleton);
-        //std::cout << "index target: " << target_index << std::endl;
+        if (currentR>rootR) rootR=currentR;
+        radii.emplace_back(currentR);
+        std::tuple<int,int> i = { s_b - off_map[s_b], t_b - off_map[t_b] };
+        edges.emplace_back(i);
+    }
 
-        // write data to file
-        //pSource.x, pSource.y, pSource.z, pTarget.x, pTarget.y, pTarget.z, currentR
-//        std::cout <<" "<<ID<<"      "<< source_index<<"      "<< target_index<<"      "<<pSource.x<<"      "<<pSource.y<<"      "<<pSource.z<<"      "
-//               <<pTarget.x<<"      "<<pTarget.y<<"      "<<pTarget.z<<"      "<<currentR<<"      "<<end_vertex<< std::endl;
-        std::vector<float> source = {pSource.x, pSource.y, pSource.z};
-        std::vector<float> target = {pTarget.x, pTarget.y, pTarget.z};
-        Vertices[source_index] = source;
-        Vertices[target_index] = target;
-        std::vector<int> branch = {source_index, target_index};
-        Branches[ID] = branch;
-        BranchRadii[ID] = currentR;
-        EndBranch[ID] = end_vertex;
-        ID += 1;
+    nlohmann::json semantics;
+    nlohmann::json types_j;
+    std::map <int, float> types;
+
+//    std::cout << rootR << std::endl;
+    for (int i=1; i < 11; i++){
+        float radius = (rootR*i)/10;
+//        float radius = std::exp(std::log(rootR)/10*i);
+        nlohmann::json classtemp { { "class",i},{"radius",radius} };
+        types_j.emplace_back(classtemp);
+//        std::cout << radius << std::endl;
+        types.insert(std::make_pair(i, radius));
+    }
+
+    nlohmann::json classtemp { { "class",11},{"radius",rootR/11} };
+    types_j.emplace_back(classtemp);
+    types.insert(std::make_pair(11, rootR/11));
+
+    std::vector<int> values;
+    for (int i=0; i<radii.size();++i){
+        bool find = false;
+        if (leaves[i]==1) {
+            values.emplace_back(11);
+            continue;
+        }
+        for (auto it=types.begin(); it!=types.end(); ++it){
+            if (radii[i]<=it->second) {
+                values.emplace_back(it->first);
+                find = true;
+                continue;
+            }
+        }
+        if (!find) {
+//            std::cout << "here: " << radii[i] << std::endl;
+            values.emplace_back(10);
+        }
     }
 
     // TODO function until here
@@ -585,78 +581,13 @@ bool TreeViewer::export_city_json() const {
     nlohmann::ordered_json object;
     nlohmann::ordered_json cityobject;
 
-
-//    std::cout<<"creating object with all vertices "<<std::endl;
-    nlohmann::json vertices= nlohmann::json::array();
-
-    for (int i=0; i < Vertices.size(); i++){
-        if (Vertices.find(i)==Vertices.end()){
-            nlohmann::json subvertices= nlohmann::json::array();
-            subvertices.push_back(0.0);
-            subvertices.push_back(0.0);
-            subvertices.push_back(0.0);
-            vertices.emplace_back(subvertices);
-        }
-        else{
-            std::vector<float> array1={Vertices[i][0], Vertices[i][1], Vertices[i][2]};
-            nlohmann::json subvertices= nlohmann::json::array();
-            for (int j = 0; j < 3; j++){
-                std::string inputval = std::to_string(floorf(array1[j] * 1000000) / 1000000);
-                subvertices.push_back(std::stod(inputval));
-            }
-            vertices.emplace_back(subvertices);
-        }
-    }
-
-//    std::cout<<"creating boundaries"<<std::endl;
-    nlohmann::json boundaries= nlohmann::json::array();
-    for (int i=0; i < Branches.size(); i++){
-        nlohmann::json branch = nlohmann::json::array();
-        branch.emplace_back(Branches[i][0]);
-        branch.emplace_back(Branches[i][1]);
-
-        boundaries.emplace_back(branch);
-    }
-
-//    std::cout<<"create semantic classes"<<std::endl;
-    nlohmann::json semantics;
-    nlohmann::json types;
-
-    for (int i=1; i < 11; i++){
-        float radius = (rootRadius*i)/11;
-        nlohmann::json classtemp { { "class",i},{"radius",radius} };
-        types.emplace_back(classtemp);
-    }
-    nlohmann::json typestemp{ {"class", 11}, {"radius", rootRadius / 12 } };
-    types.emplace_back(typestemp); // cleass for ends of branches
-
-    //assigning branches to classes and putting them into values array
-//    std::cout<<"assigning branches to classes and putting them into values array"<<std::endl;
-    nlohmann::json values;
-    for (int i=0; i < BranchRadii.size(); i++){
-        for (int j=1; j <= 11; j++){
-            if ((BranchRadii[i] > ((rootRadius*j-1)/11)) && (BranchRadii[i] <= (rootRadius*(j)/11))){
-                values[i] = j;
-            }
-            // if( ((BranchRadii[i] < ((rootRadius)/11)))){
-            //      values[i] = 1;
-            // }
-        }
-    }
-
-    for (int i=1; i < EndBranch.size(); i++){
-        if (EndBranch[i] == 1){
-            values[i] = 11;
-        }
-    }
-
-    semantics["types"] = types;
+    semantics["types"] = types_j;
     semantics["values"] = values;
 
 
     geometry["type"] = "MultiLineString";
     geometry["lod"] = 2;
-    geometry["boundaries"] = boundaries;
+    geometry["boundaries"] = edges;
     geometry["semantics"] = semantics;
 //    geometry["geometry"] = 2;
 
@@ -678,7 +609,7 @@ bool TreeViewer::export_city_json() const {
     std::ofstream storageFile(file_name);
     storageFile << std::setw(4) << j << std::endl;
     storageFile.close();
-
+    std::cout << "CityJSON has been written." << std::endl;
     return true;
 }
 
