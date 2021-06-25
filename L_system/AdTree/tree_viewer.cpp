@@ -521,7 +521,8 @@ bool TreeViewer::export_city_json() const {
 //    geometry["geometry"] = 2;
 
     object["type"] = "SolitaryVegetationObject";
-    object["geometry"] = geometry;
+    std::vector<nlohmann::ordered_json> g = {geometry};
+    object["geometry"] = g;
 
     cityobject["oneTree"] = object;
 
