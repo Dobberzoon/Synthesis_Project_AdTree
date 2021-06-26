@@ -50,6 +50,7 @@
 #include "AdTree/generalisation/lbranchGen.h"
 
 using namespace easy3d;
+//using namespace boost;
 
 TreeViewer::TreeViewer()
     : ViewerImGui("AdTree")
@@ -451,6 +452,139 @@ bool TreeViewer::export_lsystem(bool deg,
 
     lsys->outputLsys(file_system::extension(file_name), file_name);
 
+    return true;
+}
+
+bool TreeViewer::export_city_json() const {
+    if (!branches() || !skeleton_) {
+        std::cerr << "model does not exist" << std::endl;
+        return false;
+    }
+    const ::Graph& skeleton = skeleton_->get_simplified_skeleton();
+    if (boost::num_edges(skeleton) == 0) {
+        std::cerr << "skeleton has 0 edges" << std::endl;
+        return false;
+    }
+
+    const std::vector<std::string> filetypes = {"*.json", "*.txt"};
+    const std::string& initial_name = file_system::base_name(cloud()->name()) + "_City.json";
+    const std::string& file_name = FileDialog::save(filetypes, initial_name);
+
+    vec3 trans;
+    // very cheap fix
+    if (isLsystem) {
+        trans = skeleton_->getAnchor();
+    } else {
+        trans = skeleton_->get_translation();
+    }
+
+    //store verts and edges
+    // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
+    std::vector<std::vector<float>> vertices;
+    std::vector<std::tuple<int, int>> edges;
+    std::vector<float> radii;
+    //std::vector<int> leaves;
+    float rootR = 0.0;
+    std::map<int,int> off_map;
+    int off_value = 0;
+
+    auto vts = boost::vertices(skeleton);
+    for (SGraphVertexIterator iter = vts.first; iter != vts.second; ++iter) {
+        int vd = *iter;
+        if (boost::degree(vd, skeleton) != 0 ) { // ignore isolated vertices
+            auto v = skeleton[vd].cVert + trans;
+            auto v_f = {v.x, v.y, v.z};
+            vertices.emplace_back(v_f);
+            off_map.insert({vd, off_value});
+
+        } else {
+            off_value ++;
+        }
+    }
+
+    auto egs = boost::edges(skeleton);
+    for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
+        int s_b = boost::source(*iter, skeleton);
+        int t_b = boost::target(*iter, skeleton);
+
+        radii.emplace_back(skeleton[*iter].nRadius);
+
+        std::tuple<int,int> i = { s_b - off_map[s_b], t_b - off_map[t_b] };
+        edges.emplace_back(i);
+    }
+
+    int steps = 10;
+    float max_radius = *max_element(std::begin(radii), std::end(radii));
+    std::cout << max_radius << std::endl;
+    float delta_radius = max_radius/steps;
+    std::vector<float> classes;
+    std::vector<int> values;
+
+
+    nlohmann::json types;
+
+    for (int l = 0; l < steps; ++l) {
+        classes.emplace_back(delta_radius * ((float) l + 1));
+        nlohmann::json temp_type;
+
+        temp_type = {{"class", l + 1},
+                     {"radius", delta_radius * ((float) l + 1)}};
+        types.emplace_back(temp_type);
+    }
+
+    for (float r : radii) {
+        if (r < classes[0]){
+            values.emplace_back(0);
+            continue;
+        } else if (r >= classes[steps - 1]) {
+            values.emplace_back(steps - 1);
+            continue;
+        }
+        for (int m = 1; m < classes.size(); ++m) {
+            if (r > classes[m - 1] && r < classes[m]) {
+                values.emplace_back(m);
+                break;
+            }
+        }
+
+    }
+
+    nlohmann::ordered_json j;
+    nlohmann::ordered_json geometry;
+    nlohmann::ordered_json semantics;
+
+    nlohmann::ordered_json object;
+    nlohmann::ordered_json cityobject;
+
+    semantics["types"] = types;
+    semantics["values"] = values;
+
+
+    geometry["type"] = "MultiLineString";
+    geometry["lod"] = 2;
+    geometry["boundaries"] = edges;
+    geometry["semantics"] = semantics;
+//    geometry["geometry"] = 2;
+
+    object["type"] = "SolitaryVegetationObject";
+    std::vector<nlohmann::ordered_json> g = {geometry};
+    object["geometry"] = g;
+
+    cityobject["oneTree"] = object;
+
+    j["type"] = "CityJSON";
+    j["version"] = "1.0";
+
+    j["CityObjects"] = cityobject;
+
+//    j["geometry"] = {geometry};
+    j["vertices"] = vertices;
+
+
+    std::ofstream storageFile(file_name);
+    storageFile << std::setw(4) << j << std::endl;
+    storageFile.close();
+    std::cout << "CityJSON has been written." << std::endl;
     return true;
 }
 
