@@ -479,12 +479,11 @@ bool TreeViewer::export_city_json() const {
     }
 
     //store verts and edges
-    // TODO make function
     // convert the boost graph to Graph (avoid modifying easy3d's GraphIO, or writing IO for boost graph)
     std::vector<std::vector<float>> vertices;
     std::vector<std::tuple<int, int>> edges;
     std::vector<float> radii;
-    std::vector<int> leaves;
+    //std::vector<int> leaves;
     float rootR = 0.0;
     std::map<int,int> off_map;
     int off_value = 0;
@@ -497,7 +496,7 @@ bool TreeViewer::export_city_json() const {
             auto v_f = {v.x, v.y, v.z};
             vertices.emplace_back(v_f);
             off_map.insert({vd, off_value});
-//            std::cout << boost::degree(vd, skeleton) << std::endl;
+
         } else {
             off_value ++;
         }
@@ -507,81 +506,57 @@ bool TreeViewer::export_city_json() const {
     for (SGraphEdgeIterator iter = egs.first; iter != egs.second; ++iter) {
         int s_b = boost::source(*iter, skeleton);
         int t_b = boost::target(*iter, skeleton);
-        double currentR = skeleton[*iter].nRadius;
 
-//        std::cout << boost::degree(s_b, skeleton) << " " << boost::degree(t_b, skeleton) << std::endl;
+        radii.emplace_back(skeleton[*iter].nRadius);
 
-        SGraphVertexDescriptor sourceV, targetV;
-        if (boost::source(*iter, skeleton) == skeleton[boost::target(*iter, skeleton)].nParent)
-        {
-            sourceV = boost::source(*iter, skeleton);
-            targetV = boost::target(*iter, skeleton);
-        }
-        else
-        {
-            sourceV = boost::target(*iter, skeleton);
-            targetV = boost::source(*iter, skeleton);
-        }
-
-        if (boost::degree(targetV, skeleton) == 1) {
-//            std::cout << "here: " << currentR << std::endl;
-            leaves.emplace_back(1);
-        }
-        else leaves.emplace_back(0);
-//        std::cout << skeleton[targetV].lengthOfSubtree << std::endl;
-
-        if (currentR>rootR) rootR=currentR;
-        radii.emplace_back(currentR);
         std::tuple<int,int> i = { s_b - off_map[s_b], t_b - off_map[t_b] };
         edges.emplace_back(i);
     }
 
-    nlohmann::json semantics;
-    nlohmann::json types_j;
-    std::map <int, float> types;
+    int steps = 10;
+    float max_radius = *max_element(std::begin(radii), std::end(radii));
+    std::cout << max_radius << std::endl;
+    float delta_radius = max_radius/steps;
+    std::vector<float> classes;
+    std::vector<int> values;
 
-//    std::cout << rootR << std::endl;
-    for (int i=1; i < 11; i++){
-        float radius = (rootR*i)/10;
-//        float radius = std::exp(std::log(rootR)/10*i);
-        nlohmann::json classtemp { { "class",i},{"radius",radius} };
-        types_j.emplace_back(classtemp);
-//        std::cout << radius << std::endl;
-        types.insert(std::make_pair(i, radius));
+
+    nlohmann::json types;
+
+    for (int l = 0; l < steps; ++l) {
+        classes.emplace_back(delta_radius * ((float) l + 1));
+        nlohmann::json temp_type;
+
+        temp_type = {{"class", l + 1},
+                     {"radius", delta_radius * ((float) l + 1)}};
+        types.emplace_back(temp_type);
     }
 
-    nlohmann::json classtemp { { "class",11},{"radius",rootR/11} };
-    types_j.emplace_back(classtemp);
-    types.insert(std::make_pair(11, rootR/11));
-
-    std::vector<int> values;
-    for (int i=0; i<radii.size();++i){
-        bool find = false;
-        if (leaves[i]==1) {
-            values.emplace_back(11);
+    for (float r : radii) {
+        if (r < classes[0]){
+            values.emplace_back(0);
+            continue;
+        } else if (r >= classes[steps - 1]) {
+            values.emplace_back(steps - 1);
             continue;
         }
-        for (auto it=types.begin(); it!=types.end(); ++it){
-            if (radii[i]<=it->second) {
-                values.emplace_back(it->first);
-                find = true;
-                continue;
+        for (int m = 1; m < classes.size(); ++m) {
+            if (r > classes[m - 1] && r < classes[m]) {
+                values.emplace_back(m);
+                break;
             }
         }
-        if (!find) {
-//            std::cout << "here: " << radii[i] << std::endl;
-            values.emplace_back(10);
-        }
+
     }
 
-    // TODO function until here
     nlohmann::ordered_json j;
     nlohmann::ordered_json geometry;
+    nlohmann::ordered_json semantics;
 
     nlohmann::ordered_json object;
     nlohmann::ordered_json cityobject;
 
-    semantics["types"] = types_j;
+    semantics["types"] = types;
     semantics["values"] = values;
 
 
