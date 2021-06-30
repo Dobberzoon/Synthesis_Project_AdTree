@@ -366,7 +366,7 @@ void TreeViewer::export_skeleton() const {
             vertex[i] = ((float) std::roundf((vertex[i] + trans[i])*1000))/1000;
             storageFile << std::setprecision(std::to_string((int) vertex[i]).length() + 3);
             storageFile << vertex[i] << " ";
-            storageFile << std::setprecision(10);
+            storageFile << std::setprecision(-1);
         }
         storageFile << std::endl;
     }
