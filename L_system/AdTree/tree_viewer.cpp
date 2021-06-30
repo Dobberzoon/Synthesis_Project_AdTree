@@ -353,18 +353,22 @@ void TreeViewer::export_skeleton() const {
     storageFile << "end_header" << std::endl << std::endl;
 
 
-    storageFile << std::setprecision(10); // allow for larger values being written to avoid rounding
-    // very cheap fix
+    // allow for larger values being written to avoid rounding
+    vec3 trans;
     if (isLsystem) {
-        vec3 trans = skeleton_->getAnchor();
-        for (auto &vertex : vertices) {
-            storageFile << vertex + trans << std::endl;
-        }
+        trans = skeleton_->getAnchor();
     } else {
-        vec3 trans = skeleton_->get_translation();
-        for (auto &vertex : vertices) {
-            storageFile << vertex + trans << std::endl;
+        trans = skeleton_->get_translation();
+    }
+
+    for (auto &vertex : vertices) {
+        for (int i = 0; i < 3; ++i) {
+            vertex[i] = ((float) std::roundf((vertex[i] + trans[i])*1000))/1000;
+            storageFile << std::setprecision(std::to_string((int) vertex[i]).length() + 3);
+            storageFile << vertex[i] << " ";
+            storageFile << std::setprecision(10);
         }
+        storageFile << std::endl;
     }
 
     storageFile << std::endl;
